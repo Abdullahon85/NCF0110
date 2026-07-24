@@ -138,29 +138,32 @@
             </div>
           </div>
 
-          <!-- Characteristics preview (first 5) -->
+          <!-- Characteristics preview with Read More toggler -->
           <div v-if="groupedFeatures.length > 0" class="pd-features-preview">
             <h3 class="pd-section-title">Характеристики</h3>
-            <div class="pd-features-list">
-              <div
-                v-for="(feature, i) in groupedFeatures.slice(0, 5)"
-                :key="i"
-                class="pd-feat-row"
-              >
-                <span class="pd-feat-name">{{ feature.feature_name }}</span>
-                <span class="pd-feat-dots"></span>
-                <span class="pd-feat-val">{{ feature.values.join(", ") }}</span>
+            <div
+              class="pd-specs-body"
+              :class="{ 'pd-specs-body--expanded': specsExpanded }"
+            >
+              <div class="pd-features-list">
+                <div
+                  v-for="(feature, i) in groupedFeatures"
+                  :key="i"
+                  class="pd-feat-row"
+                >
+                  <span class="pd-feat-name">{{ feature.feature_name }}</span>
+                  <span class="pd-feat-dots"></span>
+                  <span class="pd-feat-val">{{ feature.values.join(", ") }}</span>
+                </div>
               </div>
+              <div v-if="!specsExpanded && groupedFeatures.length > 5" class="pd-specs-fade"></div>
             </div>
             <button
               v-if="groupedFeatures.length > 5"
               class="pd-all-chars-link"
-              @click="
-                activeTab = 'characteristics';
-                scrollToTabs();
-              "
+              @click="specsExpanded = !specsExpanded"
             >
-              Все характеристики
+              <span>{{ specsExpanded ? 'Свернуть' : 'Читать далее' }}</span>
               <svg
                 width="14"
                 height="14"
@@ -168,24 +171,15 @@
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
+                class="pd-specs-chevron"
+                :class="{ 'pd-specs-chevron--up': specsExpanded }"
               >
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </button>
           </div>
 
-          <!-- Tags (tag_groups) -->
-          <div v-if="product.tag_groups && product.tag_groups.length > 0" class="pd-tags-section">
-            <h3 class="pd-section-title">Теги</h3>
-            <div class="pd-tag-groups">
-              <div v-for="group in product.tag_groups" :key="group.id" class="pd-tag-group">
-                <span class="pd-tag-group-label">{{ group.group_name }}:</span>
-                <div class="pd-tag-list">
-                  <span v-for="tag in group.tags" :key="tag.id" class="pd-tag-chip">{{ tag.name }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          
 
           <!-- Description preview -->
           <div v-if="product.description" class="pd-desc-preview">
@@ -498,18 +492,7 @@
               <p>Характеристики отсутствуют</p>
             </div>
 
-            <!-- Tags in characteristics tab -->
-            <div v-if="product.tag_groups && product.tag_groups.length > 0" class="chars-tags-section">
-              <h4 class="chars-tags-title">Теги</h4>
-              <div class="chars-tag-groups">
-                <div v-for="group in product.tag_groups" :key="group.id" class="chars-tag-group">
-                  <span class="chars-tag-group-label">{{ group.group_name }}</span>
-                  <div class="chars-tag-list">
-                    <span v-for="tag in group.tags" :key="tag.id" class="pd-tag-chip">{{ tag.name }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
           </div>
 
           <!-- Reviews Tab -->
@@ -1313,6 +1296,42 @@ onMounted(async () => {
   font-size: 14px;
   line-height: 1.7;
   color: var(--gray-600);
+}
+
+/* Specs read-more toggler */
+.pd-specs-body {
+  position: relative;
+  max-height: calc(5 * (14px * 1.6 + 14px));  /* ~5 rows */
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pd-specs-body--expanded {
+  max-height: 2000px;
+}
+
+.pd-specs-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  pointer-events: none;
+}
+
+.pd-specs-chevron {
+  transition: transform 0.3s ease;
+  /* default: pointing right (→ = 0deg) acts as ↓ visually via the chevron path */
+  transform: rotate(90deg);
+}
+
+.pd-specs-chevron--up {
+  transform: rotate(-90deg);
 }
 
 /* Zone 3: Price sidebar */
@@ -2135,92 +2154,4 @@ onMounted(async () => {
   }
 }
 
-/* ==================== TAGS ==================== */
-.pd-tags-section {
-  padding-top: 4px;
-}
-
-.pd-tag-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.pd-tag-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.pd-tag-group-label {
-  font-size: 13px;
-  color: var(--gray-500);
-  font-weight: 500;
-  white-space: nowrap;
-  padding-top: 3px;
-  min-width: 80px;
-}
-
-.pd-tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.pd-tag-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  background: var(--primary-light, #e8f5e9);
-  color: var(--primary, #1b4332);
-  border: 1px solid rgba(27, 67, 50, 0.15);
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  transition: background 0.15s;
-  cursor: default;
-}
-
-.pd-tag-chip:hover {
-  background: rgba(27, 67, 50, 0.12);
-}
-
-/* Tags in Characteristics tab */
-.chars-tags-section {
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid #e9ecef;
-}
-
-.chars-tags-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--gray-800);
-  margin: 0 0 14px;
-}
-
-.chars-tag-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.chars-tag-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.chars-tag-group-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gray-600);
-}
-
-.chars-tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
 </style>
