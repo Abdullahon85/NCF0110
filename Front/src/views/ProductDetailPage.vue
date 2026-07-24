@@ -138,32 +138,29 @@
             </div>
           </div>
 
-          <!-- Characteristics preview with Read More toggler -->
+          <!-- Characteristics preview (first 5) -->
           <div v-if="groupedFeatures.length > 0" class="pd-features-preview">
             <h3 class="pd-section-title">Характеристики</h3>
-            <div
-              class="pd-specs-body"
-              :class="{ 'pd-specs-body--expanded': specsExpanded }"
-            >
-              <div class="pd-features-list">
-                <div
-                  v-for="(feature, i) in groupedFeatures"
-                  :key="i"
-                  class="pd-feat-row"
-                >
-                  <span class="pd-feat-name">{{ feature.feature_name }}</span>
-                  <span class="pd-feat-dots"></span>
-                  <span class="pd-feat-val">{{ feature.values.join(", ") }}</span>
-                </div>
+            <div class="pd-features-list">
+              <div
+                v-for="(feature, i) in groupedFeatures.slice(0, 5)"
+                :key="i"
+                class="pd-feat-row"
+              >
+                <span class="pd-feat-name">{{ feature.feature_name }}</span>
+                <span class="pd-feat-dots"></span>
+                <span class="pd-feat-val">{{ feature.values.join(", ") }}</span>
               </div>
-              <div v-if="!specsExpanded && groupedFeatures.length > 5" class="pd-specs-fade"></div>
             </div>
             <button
               v-if="groupedFeatures.length > 5"
               class="pd-all-chars-link"
-              @click="specsExpanded = !specsExpanded"
+              @click="
+                activeTab = 'characteristics';
+                scrollToTabs();
+              "
             >
-              <span>{{ specsExpanded ? 'Свернуть' : 'Читать далее' }}</span>
+              Читать далее
               <svg
                 width="14"
                 height="14"
@@ -171,8 +168,6 @@
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
-                class="pd-specs-chevron"
-                :class="{ 'pd-specs-chevron--up': specsExpanded }"
               >
                 <path d="M9 18l6-6-6-6" />
               </svg>
@@ -1296,42 +1291,6 @@ onMounted(async () => {
   font-size: 14px;
   line-height: 1.7;
   color: var(--gray-600);
-}
-
-/* Specs read-more toggler */
-.pd-specs-body {
-  position: relative;
-  max-height: calc(5 * (14px * 1.6 + 14px));  /* ~5 rows */
-  overflow: hidden;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.pd-specs-body--expanded {
-  max-height: 2000px;
-}
-
-.pd-specs-fade {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.95) 100%
-  );
-  pointer-events: none;
-}
-
-.pd-specs-chevron {
-  transition: transform 0.3s ease;
-  /* default: pointing right (→ = 0deg) acts as ↓ visually via the chevron path */
-  transform: rotate(90deg);
-}
-
-.pd-specs-chevron--up {
-  transform: rotate(-90deg);
 }
 
 /* Zone 3: Price sidebar */
