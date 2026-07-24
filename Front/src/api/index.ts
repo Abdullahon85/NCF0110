@@ -92,7 +92,8 @@ export const categoriesAPI = {
     return api.get(`/categories/${categorySlug}/price-range/`);
   },
 
-  getBrands: (slug: string) => api.get<Brand[]>(`/categories/${slug}/brands/`),
+  getBrands: (slug: string, params?: Record<string, any>) =>
+    api.get<Brand[]>(`/categories/${slug}/brands/`, { params }),
   // Endpoint may return either a flat Tag[] or grouped ProductTagGroup[] depending on backend.
   getTags: (
     slug: string,

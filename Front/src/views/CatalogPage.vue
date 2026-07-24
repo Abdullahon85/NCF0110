@@ -87,35 +87,8 @@
               </router-link>
             </div>
 
-            <!-- Subcategories grid -->
-            <div v-if="category.children && category.children.length" class="subcategories-grid">
-              <div
-                v-for="subcat in category.children"
-                :key="subcat.id"
-                class="subcategory-card"
-              >
-                <router-link :to="`/catalog/${subcat.slug}`">
-                  <div class="subcat-image">
-                    <img v-if="subcat.image" :src="subcat.image" :alt="subcat.name" loading="lazy" />
-                    <div v-else class="subcat-placeholder">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="subcat-content">
-                    <h3>{{ subcat.name }}</h3>
-                    <span class="subcat-count">{{ subcat.products_count }} тов.</span>
-                    <svg class="subcat-arrow" width="16" height="16" viewBox="0 0 20 20" fill="none">
-                      <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                </router-link>
-              </div>
-            </div>
-
-            <!-- No subcategories — single full-width card -->
-            <div v-else class="no-subcategories">
+            <!-- Category card — always shown as a centered preview -->
+            <div class="no-subcategories">
               <router-link :to="`/catalog/${category.slug}`" class="category-main-link">
                 <div class="category-main-image" v-if="category.image">
                   <img :src="category.image" :alt="category.name" />
@@ -363,104 +336,24 @@ watch(
   border-color: rgba(27,67,50,0.2);
 }
 
-.subcategory-card a {
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-  height: 100%;
-}
-
-.subcat-image {
-  height: 150px;
-  overflow: hidden;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.subcat-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 12px;
-  transition: transform 0.25s ease;
-}
-
-.subcategory-card:hover .subcat-image img {
-  transform: scale(1.06);
-}
-
-.subcat-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #c0c8c0;
-}
-
-.subcat-content {
-  padding: 12px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  position: relative;
-}
-
-.subcat-content h3 {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
-  line-height: 1.35;
-  transition: color 0.18s ease;
-}
-
-.subcategory-card:hover .subcat-content h3 {
-  color: var(--primary, #1b4332);
-}
-
-.subcat-count {
-  font-size: 11.5px;
-  color: #888;
-  font-weight: 500;
-}
-
-.subcat-arrow {
-  position: absolute;
-  bottom: 14px;
-  right: 14px;
-  color: #c0c8c0;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease;
-}
-
-.subcategory-card:hover .subcat-arrow {
-  opacity: 1;
-  transform: translateX(0);
-  color: var(--primary, #1b4332);
-}
-
-/* ── No subcategories (single direct link) ── */
+/* ── Category card (centered preview) ── */
 .no-subcategories {
   margin-top: 4px;
 }
 
 .category-main-link {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  padding: 20px 24px;
+  justify-content: center;
+  gap: 14px;
+  padding: 32px 24px 28px;
   background: #f8faf8;
   border-radius: 14px;
   border: 1px dashed rgba(27,67,50,0.2);
   text-decoration: none;
   color: inherit;
+  text-align: center;
   transition: background 0.18s ease, border-color 0.18s ease;
 }
 
@@ -470,9 +363,9 @@ watch(
 }
 
 .category-main-image {
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
+  width: 96px;
+  height: 96px;
+  border-radius: 14px;
   overflow: hidden;
   background: #fff;
   flex-shrink: 0;
@@ -483,19 +376,24 @@ watch(
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 8px;
+  padding: 10px;
+  transition: transform 0.25s ease;
+}
+
+.category-main-link:hover .category-main-image img {
+  transform: scale(1.06);
 }
 
 .placeholder-image {
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
+  width: 96px;
+  height: 96px;
+  border-radius: 14px;
   background: var(--primary-gradient, linear-gradient(135deg,#1b4332,#2d6a4f));
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 1.6rem;
+  font-size: 2rem;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -503,6 +401,7 @@ watch(
 .category-main-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
 }
 
@@ -557,21 +456,5 @@ watch(
     font-size: 1rem;
   }
 
-  .subcategories-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .subcat-image {
-    height: 100px;
-  }
-
-  .subcat-content {
-    padding: 9px 10px 10px;
-  }
-
-  .subcat-content h3 {
-    font-size: 12px;
-  }
 }
 </style>

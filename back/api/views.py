@@ -490,10 +490,50 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
             category = self.get_object()
         except Http404:
             return Response({'error': 'Категория не найдена'}, status=404)
-        products = category.get_all_products()
-        brands = Brand.objects.filter(products__in=products).distinct()
-        serializer = BrandSerializer(brands, many=True)
-        return Response(serializer.data)
+
+        all_products = category.get_all_products()
+
+        # Apply optional filters so per-brand counts reflect active filters
+        price_min = request.query_params.get('price_min')
+        price_max = request.query_params.get('price_max')
+        tag_param = request.query_params.get('tag', '')
+
+        filtered_products = all_products
+        if price_min:
+            try:
+                filtered_products = filtered_products.filter(price__gte=float(price_min))
+            except ValueError:
+                pass
+        if price_max:
+            try:
+                filtered_products = filtered_products.filter(price__lte=float(price_max))
+            except ValueError:
+                pass
+        if tag_param:
+            tag_slugs = [s.strip() for s in tag_param.split(',') if s.strip()]
+            if tag_slugs:
+                tag_objs = Tag.objects.filter(slug__in=tag_slugs).values('slug', 'tag_name_id')
+                group_to_slugs: dict = {}
+                for t in tag_objs:
+                    gid = t['tag_name_id'] if t['tag_name_id'] is not None else '__none__'
+                    group_to_slugs.setdefault(gid, []).append(t['slug'])
+                for gid, slugs in group_to_slugs.items():
+                    filtered_products = filtered_products.filter(
+                        tag_groups__tags__slug__in=slugs
+                    ).distinct()
+
+        filtered_ids = filtered_products.values_list('id', flat=True)
+        brands = Brand.objects.filter(products__id__in=filtered_ids).annotate(
+            product_count=Count('products', filter=Q(products__id__in=filtered_ids), distinct=True)
+        ).distinct()
+
+        data = []
+        for brand in brands:
+            item = BrandSerializer(brand, context={'request': request}).data
+            item['product_count'] = brand.product_count
+            data.append(item)
+
+        return Response(data)
 
     @action(detail=True, methods=['get'])
     def tags(self, request, slug=None):
@@ -1437,19 +1477,38 @@ class ProductQuestionViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 def similar_products(request, slug):
-    """Get similar products from the same category"""
+    """Get similar products from the same category with at least 1 matching attribute (brand or shared tags)"""
     try:
-        product = Product.objects.select_related('category').get(slug=slug)
+        product = Product.objects.select_related('category', 'brand').get(slug=slug)
     except Product.DoesNotExist:
         return Response({'detail': 'Not found'}, status=404)
 
-    similar = Product.objects.filter(
-        category=product.category,
-        is_available=True
-    ).exclude(id=product.id).select_related(
-        'category', 'brand'
-    ).prefetch_related('images')[:12]
+    # Collect this product's tag IDs
+    product_tag_ids = list(
+        Tag.objects.filter(producttaggroup_tags__product=product).values_list('id', flat=True)
+    )
 
+    same_category_qs = Product.objects.filter(
+        category=product.category,
+        is_available=True,
+    ).exclude(id=product.id)
+
+    # Build a condition: same brand (non-null) OR at least one shared tag
+    match_conditions = Q()
+    if product.brand_id:
+        match_conditions |= Q(brand_id=product.brand_id)
+    if product_tag_ids:
+        match_conditions |= Q(tag_groups__tags__id__in=product_tag_ids)
+
+    if match_conditions:
+        matched = same_category_qs.filter(match_conditions).distinct()
+        # Fall back to same category only when no attribute-matched products exist
+        if not matched.exists():
+            matched = same_category_qs
+    else:
+        matched = same_category_qs
+
+    similar = matched.select_related('category', 'brand').prefetch_related('images')[:10]
     serializer = ProductListSerializer(similar, many=True, context={'request': request})
     return Response(serializer.data)
 

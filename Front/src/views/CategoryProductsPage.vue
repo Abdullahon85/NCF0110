@@ -79,7 +79,7 @@
                 :checked="filters.brands.includes(brand.slug)"
                 @change="toggleBrand(brand.slug)"
               />
-              <span>{{ brand.name }}</span>
+              <span>{{ brand.name }}<span v-if="brand.product_count !== undefined" class="tag-count">&nbsp;({{ brand.product_count }})</span></span>
             </label>
           </div>
         </div>
@@ -263,12 +263,30 @@ const categorySlug = computed(
 // ============================================
 
 /**
- * Загрузка брендов для текущего каталога
+ * Загрузка брендов для текущего каталога (с учётом активных фильтров тегов и цены)
  */
 const loadBrands = async (): Promise<void> => {
   if (!categorySlug.value) return;
   try {
-    const response = await categoriesAPI.getBrands(categorySlug.value);
+    const params: Record<string, any> = {};
+    if (filters.tags.length > 0) {
+      params.tag = filters.tags.join(',');
+    }
+    if (
+      filters.priceMin !== null &&
+      priceRange.min !== null &&
+      filters.priceMin > priceRange.min
+    ) {
+      params.price_min = filters.priceMin;
+    }
+    if (
+      filters.priceMax !== null &&
+      priceRange.max !== null &&
+      filters.priceMax < priceRange.max
+    ) {
+      params.price_max = filters.priceMax;
+    }
+    const response = await categoriesAPI.getBrands(categorySlug.value, params);
     brandsOptions.value = response.data || [];
   } catch (err) {
     console.error("Ошибка загрузки брендов:", err);
@@ -488,11 +506,12 @@ const onPriceFilterChange = (value: {
     pagination.page = 1;
     loadProducts();
     loadTags();
+    loadBrands();
   }, 800);
 };
 
 /**
- * Переключение бренда
+ * Переключение бренда — реактивно обновляет теги и товары
  */
 const toggleBrand = (brandSlug: string) => {
   const index = filters.brands.indexOf(brandSlug);
@@ -503,10 +522,11 @@ const toggleBrand = (brandSlug: string) => {
   }
   pagination.page = 1;
   loadProducts();
+  loadTags();
 };
 
 /**
- * Переключение тега
+ * Переключение тега — реактивно обновляет бренды и товары
  */
 const toggleTag = (tagSlug: string) => {
   const index = filters.tags.indexOf(tagSlug);
@@ -518,6 +538,7 @@ const toggleTag = (tagSlug: string) => {
   pagination.page = 1;
   loadProducts();
   loadTags();
+  loadBrands();
 };
 
 /**
@@ -581,6 +602,7 @@ const resetFilters = () => {
   pagination.page = 1;
   showFilters.value = false;
   loadTags();
+  loadBrands();
   loadProducts();
 };
 

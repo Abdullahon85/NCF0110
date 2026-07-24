@@ -26,6 +26,7 @@ export interface Brand {
   image: string | null;
   description: string | null;
   products_count?: number;
+  product_count?: number;
 }
 
 export interface BrandFilters {
