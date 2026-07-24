@@ -1477,39 +1477,70 @@ class ProductQuestionViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 def similar_products(request, slug):
-    """Get similar products from the same category with at least 1 matching attribute (brand or shared tags)"""
+    """
+    Similarity Score Algorithm (e-commerce standard):
+    Hard filters: same category, exclude self.
+    Scoring:
+      +3  same brand
+      +2  price within ±20% of current product price
+      +1  per matching feature value (ProductFeature.value_id)
+    Products with 0 points are excluded.
+    Sorted by score desc, limited to top 6.
+    """
     try:
         product = Product.objects.select_related('category', 'brand').get(slug=slug)
     except Product.DoesNotExist:
         return Response({'detail': 'Not found'}, status=404)
 
-    # Collect this product's tag IDs
-    product_tag_ids = list(
-        Tag.objects.filter(producttaggroup_tags__product=product).values_list('id', flat=True)
+    # -- Collect current product's feature value IDs for attribute matching --
+    current_value_ids = set(
+        ProductFeature.objects.filter(product=product, value__isnull=False)
+        .values_list('value_id', flat=True)
     )
 
-    same_category_qs = Product.objects.filter(
-        category=product.category,
-        is_available=True,
-    ).exclude(id=product.id)
+    # -- Strict base filter: same category, available, not self --
+    candidates = (
+        Product.objects
+        .filter(category=product.category, is_available=True)
+        .exclude(id=product.id)
+        .select_related('category', 'brand')
+        .prefetch_related('images', 'features__value')
+    )
 
-    # Build a condition: same brand (non-null) OR at least one shared tag
-    match_conditions = Q()
-    if product.brand_id:
-        match_conditions |= Q(brand_id=product.brand_id)
-    if product_tag_ids:
-        match_conditions |= Q(tag_groups__tags__id__in=product_tag_ids)
+    # -- Price bounds for ±20% check --
+    price_lower = price_upper = None
+    if product.price is not None:
+        price_lower = product.price * Decimal('0.80')
+        price_upper = product.price * Decimal('1.20')
 
-    if match_conditions:
-        matched = same_category_qs.filter(match_conditions).distinct()
-        # Fall back to same category only when no attribute-matched products exist
-        if not matched.exists():
-            matched = same_category_qs
-    else:
-        matched = same_category_qs
+    scored = []
+    for candidate in candidates:
+        score = 0
 
-    similar = matched.select_related('category', 'brand').prefetch_related('images')[:10]
-    serializer = ProductListSerializer(similar, many=True, context={'request': request})
+        # +3 — brand match
+        if product.brand_id and candidate.brand_id == product.brand_id:
+            score += 3
+
+        # +2 — price proximity ±20%
+        if price_lower is not None and candidate.price is not None:
+            if price_lower <= candidate.price <= price_upper:
+                score += 2
+
+        # +1 per matching feature value
+        if current_value_ids:
+            candidate_value_ids = set(
+                pf.value_id for pf in candidate.features.all() if pf.value_id is not None
+            )
+            score += len(current_value_ids & candidate_value_ids)
+
+        if score > 0:
+            scored.append((score, candidate))
+
+    # Sort by score descending, take top 6
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_products = [p for _, p in scored[:6]]
+
+    serializer = ProductListSerializer(top_products, many=True, context={'request': request})
     return Response(serializer.data)
 
 

@@ -3905,6 +3905,7 @@ p {
 /* Filter Actions */
 .filter-actions {
   margin-top: var(--space-4);
+
 }
 
 .filter-actions .btn {
@@ -3921,6 +3922,7 @@ p {
   font-size: var(--text-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
+  margin-bottom: 5px;
 }
 
 .btn.muted:hover {

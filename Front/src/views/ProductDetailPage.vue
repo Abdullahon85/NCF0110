@@ -143,7 +143,7 @@
             <h3 class="pd-section-title">Характеристики</h3>
             <div class="pd-features-list">
               <div
-                v-for="(feature, i) in groupedFeatures.slice(0, 5)"
+                v-for="(feature, i) in groupedFeatures.slice(0, 2)"
                 :key="i"
                 class="pd-feat-row"
               >
@@ -153,7 +153,7 @@
               </div>
             </div>
             <button
-              v-if="groupedFeatures.length > 5"
+              v-if="groupedFeatures.length > 2"
               class="pd-all-chars-link"
               @click="
                 activeTab = 'characteristics';
@@ -181,7 +181,7 @@
             <h3 class="pd-section-title">Описание</h3>
             <div class="pd-desc-text" v-html="truncatedDescription"></div>
             <button
-              v-if="product.description.length > 300"
+              v-if="product.description.length > 100"
               class="pd-all-chars-link"
               @click="
                 activeTab = 'description';
@@ -981,8 +981,8 @@ const loadSimilarProducts = async () => {
 const truncatedDescription = computed(() => {
   if (!product.value?.description) return "";
   const text = product.value.description;
-  if (text.length <= 300) return formatContent(text);
-  return formatContent(text.substring(0, 300) + "...");
+  if (text.length <= 100) return formatContent(text);
+  return formatContent(text.substring(0, 100) + "...");
 });
 
 // Группировка характеристик по feature_name
