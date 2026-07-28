@@ -312,6 +312,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['get'], url_path='price-range')
     def price_range(self, request, *args, **kwargs):
         category_slug = request.query_params.get('category')
+        brand_slug = request.query_params.get('brand')
 
         if category_slug:
             try:
@@ -319,6 +320,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                 qs = category.get_all_products().exclude(price__isnull=True)
             except Category.DoesNotExist:
                 return Response({'min_price': None, 'max_price': None})
+        elif brand_slug:
+            qs = Product.objects.filter(brand__slug=brand_slug).exclude(price__isnull=True)
         else:
             qs = Product.objects.exclude(price__isnull=True)
 
