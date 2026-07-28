@@ -244,14 +244,19 @@ watch(
 
 /* ── Categories section ── */
 .categories-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 32px;
 }
-@media (max-width: 768px) {
-  .categories-section {
-    display: flex;
-    flex-direction: column;
+.categories-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+    gap: 32px;
+  }
+@media (max-width: 768px){
+  .categories-section{
+  display: flex;
+  flex-direction: column;
   }
 }
 /* ── Category block ── */

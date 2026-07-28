@@ -558,6 +558,13 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
             except ValueError:
                 pass
 
+        # Apply brand filter if provided
+        brand_param = request.query_params.get('brand', '')
+        if brand_param:
+            brand_slugs = [s.strip() for s in brand_param.split(',') if s.strip()]
+            if brand_slugs:
+                all_products = all_products.filter(brand__slug__in=brand_slugs)
+
         # --- Faceted filtering: apply selected tags with AND-across-groups / OR-within-group ---
         selected_tags_param = request.query_params.get('selected_tags', '')
         selected_slugs = [s.strip() for s in selected_tags_param.split(',') if s.strip()]

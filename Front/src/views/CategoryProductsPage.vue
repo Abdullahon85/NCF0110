@@ -363,7 +363,7 @@ const loadCategoryInfo = async (): Promise<void> => {
 const loadTags = async (): Promise<void> => {
   if (!categorySlug.value) return;
   try {
-    const params: { price_min?: number; price_max?: number; selected_tags?: string } = {};
+    const params: { price_min?: number; price_max?: number; selected_tags?: string; brand?: string } = {};
     if (
       filters.priceMin !== null &&
       priceRange.min !== null &&
@@ -380,6 +380,9 @@ const loadTags = async (): Promise<void> => {
     }
     if (filters.tags.length > 0) {
       params.selected_tags = filters.tags.join(',');
+    }
+    if (filters.brands.length > 0) {
+      params.brand = filters.brands.join(',');
     }
     const response = await categoriesAPI.getTags(categorySlug.value, params);
     const data = response.data;
