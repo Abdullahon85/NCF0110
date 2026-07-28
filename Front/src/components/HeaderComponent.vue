@@ -243,7 +243,9 @@ const onMqChange = (e: MediaQueryListEvent) => {
 const scrolled = ref(false);
 const SCROLL_THRESHOLD = 60;
 const onScroll = () => {
-  scrolled.value = window.scrollY > SCROLL_THRESHOLD;
+  const isScrolled = window.scrollY > SCROLL_THRESHOLD;
+  scrolled.value = isScrolled;
+  document.body.classList.toggle("header-is-fixed", isScrolled);
 };
 
 
