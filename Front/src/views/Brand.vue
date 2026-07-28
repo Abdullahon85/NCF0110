@@ -122,19 +122,16 @@
               </div>
 
               <!-- Price -->
-              <div class="filter-group">
-                <label class="filter-group-label">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>
-                  Цена (сум)
-                </label>
-                <div class="price-range">
-                  <input type="number" v-model.number="filters.priceMin" placeholder="От" @change="applyFilters" />
-                  <span>—</span>
-                  <input type="number" v-model.number="filters.priceMax" placeholder="До" @change="applyFilters" />
-                </div>
-              </div>
+              <PriceFilter
+                v-if="priceRange.min !== null && priceRange.max !== null"
+                :min="priceRange.min"
+                :max="priceRange.max"
+                :model-value="{
+                  min: filters.priceMin ?? priceRange.min,
+                  max: filters.priceMax ?? priceRange.max,
+                }"
+                @update:model-value="onPriceFilterChange"
+              />
 
               <div class="filter-actions">
                 <button class="btn muted" @click="resetFilters">Сбросить</button>
@@ -190,10 +187,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
-import { brandsAPI, getImageUrl } from "@/api";
+import { api, brandsAPI, getImageUrl } from "@/api";
 import type { Brand, Product } from "@/types";
 import ProductGrid from "@/components/ProductGrid.vue";
 import Pagination from "@/components/Pagination.vue";
+import PriceFilter from "@/components/PriceFilter.vue";
 
 const route = useRoute();
 
@@ -206,6 +204,9 @@ const showFilters = ref(false);
 
 const brandCategories = ref<any[]>([]);
 const brandTags = ref<any[]>([]);
+
+const priceRange = reactive({ min: null as number | null, max: null as number | null });
+let priceDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const filters = reactive({
   categories: [] as string[],
@@ -293,6 +294,23 @@ const loadBrandTags = async (slug: string) => {
   } catch (e) { console.error(e); }
 };
 
+const fetchBrandPriceRange = async (slug: string): Promise<void> => {
+  try {
+    const res = await api.get("/products/price-range/", { params: { brand: slug } });
+    if (res.data.min_price != null) priceRange.min = Math.floor(Number(res.data.min_price));
+    if (res.data.max_price != null) priceRange.max = Math.ceil(Number(res.data.max_price));
+  } catch (e) {
+    console.error("Ошибка загрузки диапазона цен:", e);
+  }
+};
+
+const onPriceFilterChange = (value: { min: number | null; max: number | null }) => {
+  filters.priceMin = value.min;
+  filters.priceMax = value.max;
+  if (priceDebounceTimer) clearTimeout(priceDebounceTimer);
+  priceDebounceTimer = setTimeout(() => applyFilters(), 400);
+};
+
 const loadBrand = async (): Promise<void> => {
   const slug = route.params.slug as string;
   if (!slug) { error.value = "Бренд не найден"; loading.value = false; return; }
@@ -301,7 +319,11 @@ const loadBrand = async (): Promise<void> => {
     error.value = null;
     const brandResponse = await brandsAPI.getBySlug(slug);
     brand.value = brandResponse.data;
-    await Promise.all([loadBrandCategories(slug), loadBrandTags(slug)]);
+    await Promise.all([
+      loadBrandCategories(slug),
+      loadBrandTags(slug),
+      fetchBrandPriceRange(slug),
+    ]);
     await loadProducts(slug);
   } catch (err: any) {
     error.value = err.response?.status === 404 ? "Бренд не найден" : "Не удалось загрузить бренд";
@@ -425,7 +447,7 @@ watch(() => route.params.slug, () => { pagination.page = 1; loadBrand(); });
 }
 .brand-hero-logo {
   width: 96px; height: 96px;
-  background: white;
+  background: linear-gradient(135deg, #081c15 0%,);
   border-radius: 20px;
   flex-shrink: 0;
   display: flex;

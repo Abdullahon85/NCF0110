@@ -963,7 +963,7 @@ onUnmounted(() => {
   background: var(--dark);
   border-top: 1px solid rgba(212,165,116,0.1);
   border-bottom: 1px solid rgba(212,165,116,0.1);
-  padding: 18px 0;
+  padding: 12px 0;
   overflow: hidden;
 }
 .marquee-track { overflow: hidden; }
@@ -979,10 +979,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: #fff;
-  border-radius: 12px;
-  padding: 10px 24px;
-  height: 60px;
+  height: 50px;
   min-width: 130px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.18);
   border: 1px solid rgba(255,255,255,0.06);
@@ -1373,7 +1370,7 @@ onUnmounted(() => {
   height: 100%;
 }
 .brand-logo {
-  max-height: 52px;
+  max-height: 85px;
   max-width: 130px;
   width: auto;
   height: auto;
@@ -1388,7 +1385,7 @@ onUnmounted(() => {
   filter: drop-shadow(0 4px 12px rgba(27,67,50,0.2));
 }
 .brand-name-text {
-  font-weight: 800;
+  font-weight: 400;
   font-size: 1rem;
   color: var(--gray-700);
   transition: color 0.3s;

@@ -4479,7 +4479,7 @@ p {
    Brand Detail Page
    ======================================== */
 .brand-page {
-  padding: var(--space-8) 0;
+  padding: 0;
   min-height: 80vh;
 }
 
