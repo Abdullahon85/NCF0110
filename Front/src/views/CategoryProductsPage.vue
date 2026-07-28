@@ -252,6 +252,55 @@ let priceDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
 let searchDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // ============================================
+// LOCALSTORAGE — сохранение / восстановление фильтров
+// ============================================
+
+const storageKey = () => `catalog_filters_${categorySlug.value}`;
+
+const saveFiltersToStorage = () => {
+  try {
+    localStorage.setItem(
+      storageKey(),
+      JSON.stringify({
+        priceMin: filters.priceMin,
+        priceMax: filters.priceMax,
+        brands: [...filters.brands],
+        tags: [...filters.tags],
+        ordering: filters.ordering,
+        onlyAvailable: filters.onlyAvailable,
+        search: filters.search,
+        page: pagination.page,
+      }),
+    );
+  } catch {}
+};
+
+const restoreFiltersFromStorage = (): boolean => {
+  try {
+    const raw = localStorage.getItem(storageKey());
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    filters.ordering = s.ordering ?? "-created_at";
+    filters.brands = Array.isArray(s.brands) ? s.brands : [];
+    filters.tags = Array.isArray(s.tags) ? s.tags : [];
+    filters.onlyAvailable = s.onlyAvailable ?? false;
+    filters.search = s.search ?? "";
+    searchInput.value = filters.search;
+    pagination.page = s.page ?? 1;
+    // Цены: восстанавливаем как есть; loadPriceRange уже не перезапишет их (они не null)
+    filters.priceMin = s.priceMin ?? null;
+    filters.priceMax = s.priceMax ?? null;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const clearFiltersFromStorage = () => {
+  try { localStorage.removeItem(storageKey()); } catch {}
+};
+
+// ============================================
 // COMPUTED
 // ============================================
 const categorySlug = computed(
@@ -504,6 +553,7 @@ const onPriceFilterChange = (value: {
   // Запускаем новый таймер на 800ms
   priceDebounceTimeout = setTimeout(() => {
     pagination.page = 1;
+    saveFiltersToStorage();
     loadProducts();
     loadTags();
     loadBrands();
@@ -521,6 +571,7 @@ const toggleBrand = (brandSlug: string) => {
     filters.brands.push(brandSlug);
   }
   pagination.page = 1;
+  saveFiltersToStorage();
   loadProducts();
   loadTags();
 };
@@ -536,6 +587,7 @@ const toggleTag = (tagSlug: string) => {
     filters.tags.push(tagSlug);
   }
   pagination.page = 1;
+  saveFiltersToStorage();
   loadProducts();
   loadTags();
   loadBrands();
@@ -546,6 +598,7 @@ const toggleTag = (tagSlug: string) => {
  */
 const onOrderingChange = () => {
   pagination.page = 1;
+  saveFiltersToStorage();
   loadProducts();
 };
 
@@ -554,6 +607,7 @@ const onOrderingChange = () => {
  */
 const onAvailabilityChange = () => {
   pagination.page = 1;
+  saveFiltersToStorage();
   loadProducts();
 };
 
@@ -570,6 +624,7 @@ const onSearchInput = () => {
   searchDebounceTimeout = setTimeout(() => {
     filters.search = searchInput.value;
     pagination.page = 1;
+    saveFiltersToStorage();
     loadProducts();
   }, 600);
 };
@@ -578,12 +633,12 @@ const onSearchInput = () => {
  * Нажатие Enter или кнопки поиска
  */
 const onSearchSubmit = () => {
-  // Отменяем debounce и сразу ищем
   if (searchDebounceTimeout) {
     clearTimeout(searchDebounceTimeout);
   }
   filters.search = searchInput.value;
   pagination.page = 1;
+  saveFiltersToStorage();
   loadProducts();
 };
 
@@ -601,6 +656,7 @@ const resetFilters = () => {
   searchInput.value = "";
   pagination.page = 1;
   showFilters.value = false;
+  clearFiltersFromStorage();
   loadTags();
   loadBrands();
   loadProducts();
@@ -614,8 +670,8 @@ const changePage = (page: number) => {
     return;
   }
   pagination.page = page;
+  saveFiltersToStorage();
   loadProducts();
-  // Прокручиваем страницу вверх
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
@@ -627,14 +683,16 @@ const changePage = (page: number) => {
  * Инициализация при монтировании
  */
 onMounted(async () => {
-  // Сначала загружаем метаданные
+  // Восстанавливаем сохранённые фильтры до первой загрузки
+  restoreFiltersFromStorage();
+
+  // Загружаем метаданные (loadPriceRange не перезапишет priceMin/Max, если они уже не null)
   await Promise.all([
     loadCategoryInfo(),
     loadBrands(),
     loadTags(),
     loadPriceRange(),
   ]);
-  // Затем загружаем продукты
   await loadProducts();
 });
 
@@ -646,7 +704,7 @@ watch(
   async (newSlug, oldSlug) => {
     if (newSlug === oldSlug) return;
 
-    // Полный сброс состояния
+    // Полный сброс состояния реактивных переменных
     products.value = [];
     brandsOptions.value = [];
     tagGroups.value = [];
@@ -663,7 +721,9 @@ watch(
     filters.onlyAvailable = false;
     pagination.page = 1;
 
-    // Загружаем данные для нового каталога
+    // Восстанавливаем сохранённые фильтры для новой категории (если есть)
+    restoreFiltersFromStorage();
+
     await Promise.all([
       loadCategoryInfo(),
       loadBrands(),

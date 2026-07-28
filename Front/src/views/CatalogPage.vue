@@ -244,11 +244,16 @@ watch(
 
 /* ── Categories section ── */
 .categories-section {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
   gap: 32px;
 }
-
+@media (max-width: 768px) {
+  .categories-section {
+    display: flex;
+    flex-direction: column;
+  }
+}
 /* ── Category block ── */
 .category-block {
   background: #fff;
