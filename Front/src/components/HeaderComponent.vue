@@ -1,5 +1,5 @@
 <template>
-  <header class="header" ref="headerRef">
+  <header class="header" :class="{ 'header--scrolled': scrolled }" ref="headerRef">
     <div class="container">
       <nav class="navbar">
         <router-link to="/" class="logo" @click="closeMobileMenu">
@@ -239,6 +239,14 @@ const onMqChange = (e: MediaQueryListEvent) => {
   }
 };
 
+// ---- Scrolled (compact) state ----
+const scrolled = ref(false);
+const SCROLL_THRESHOLD = 60;
+const onScroll = () => {
+  scrolled.value = window.scrollY > SCROLL_THRESHOLD;
+};
+
+
 // Hover delays for smooth feel
 let openTimer: ReturnType<typeof setTimeout> | null = null;
 let closeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -301,6 +309,8 @@ onMounted(async () => {
   mq = window.matchMedia("(max-width: 768px)");
   mq.addEventListener("change", onMqChange);
   document.addEventListener("keydown", onKeydown);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll(); // sync on mount in case page loads mid-scroll
   try {
     const res = await categoriesAPI.getAll(100);
     categories.value = res.data.results;
@@ -312,6 +322,7 @@ onMounted(async () => {
 onUnmounted(() => {
   mq?.removeEventListener("change", onMqChange);
   document.removeEventListener("keydown", onKeydown);
+  window.removeEventListener("scroll", onScroll);
   if (openTimer) clearTimeout(openTimer);
   if (closeTimer) clearTimeout(closeTimer);
 });
