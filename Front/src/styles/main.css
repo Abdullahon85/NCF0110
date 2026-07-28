@@ -3902,6 +3902,12 @@ p {
   font-weight: 600;
 }
 
+.tag-item.tag-disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Filter Actions */
 .filter-actions {
   margin-top: var(--space-4);

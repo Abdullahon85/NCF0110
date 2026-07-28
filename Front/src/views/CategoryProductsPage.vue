@@ -89,16 +89,24 @@
           <label>{{ group.group_name }}</label>
           <div class="tags-list">
             <label
-              v-for="tag in group.tags.filter(
-                (t) => (t.product_count ?? 1) > 0,
-              )"
+              v-for="tag in group.tags"
               :key="tag.slug"
-              class="tag-item"
+              :class="[
+                'tag-item',
+                {
+                  'tag-disabled':
+                    tag.product_count === 0 &&
+                    !filters.tags.includes(tag.slug),
+                },
+              ]"
             >
               <input
                 type="checkbox"
                 :value="tag.slug"
                 :checked="filters.tags.includes(tag.slug)"
+                :disabled="
+                  tag.product_count === 0 && !filters.tags.includes(tag.slug)
+                "
                 @change="toggleTag(tag.slug)"
               />
               <span
