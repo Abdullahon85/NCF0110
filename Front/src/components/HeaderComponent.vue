@@ -133,63 +133,70 @@
         @mouseleave="onMegaLeave"
       >
         <div class="mega-inner container">
-          <!-- Left: category list -->
-          <ul class="mega-cats">
-            <li
-              v-for="cat in categories"
-              :key="cat.id"
-              class="mega-cat-item"
-              :class="{ active: hoveredCat?.id === cat.id }"
-              @mouseenter="hoveredCat = cat"
-            >
-              <router-link :to="`/catalog/${cat.slug}`" @click="megaOpen = false">
-                <span class="mega-cat-dot"></span>
-                {{ cat.name }}
-                <svg class="mega-cat-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-              </router-link>
-            </li>
-          </ul>
 
-          <!-- Right: featured panel -->
-          <div class="mega-panel">
-            <div v-if="hoveredCat" class="mega-panel-content">
-              <div class="mega-panel-header">
-                <h3>{{ hoveredCat.name }}</h3>
-                <router-link :to="`/catalog/${hoveredCat.slug}`" class="mega-see-all" @click="megaOpen = false">
-                  Смотреть все →
-                </router-link>
-              </div>
-              <div class="mega-panel-body">
-                <router-link
-                  :to="`/catalog/${hoveredCat.slug}`"
-                  class="mega-feature-card"
-                  @click="megaOpen = false"
-                >
-                  <div class="mega-feature-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <!-- Left: category list + footer -->
+          <div class="mega-left">
+            <ul class="mega-cats">
+              <li
+                v-for="cat in categories"
+                :key="cat.id"
+                class="mega-cat-item"
+                :class="{ active: hoveredCat?.id === cat.id }"
+                @mouseenter="hoveredCat = cat"
+              >
+                <router-link :to="`/catalog/${cat.slug}`" @click="megaOpen = false">
+                  <div class="mega-cat-thumb">
+                    <img v-if="cat.image" :src="cat.image" :alt="cat.name" />
+                    <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                   </div>
-                  <div>
-                    <div class="mega-feature-title">Все товары</div>
-                    <div class="mega-feature-sub">в категории «{{ hoveredCat.name }}»</div>
-                  </div>
+                  <span class="mega-cat-name">{{ cat.name }}</span>
+                  <span class="mega-cat-count">{{ cat.products_count }}</span>
+                  <svg class="mega-cat-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
                 </router-link>
-              </div>
-            </div>
-            <div v-else class="mega-panel-placeholder">
-              <div class="mega-placeholder-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-              </div>
-              <p>Выберите категорию</p>
-            </div>
+              </li>
+            </ul>
 
-            <!-- Bottom CTA -->
-            <div class="mega-panel-footer">
-              <router-link to="/catalog" class="mega-all-btn" @click="megaOpen = false">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <div class="mega-left-footer">
+              <router-link to="/catalog" class="mega-all-link" @click="megaOpen = false">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 Весь каталог
               </router-link>
             </div>
           </div>
+
+          <!-- Right: visual scene panel -->
+          <div class="mega-panel">
+            <Transition name="scene" mode="out-in">
+              <router-link
+                v-if="hoveredCat"
+                :key="hoveredCat.id"
+                :to="`/catalog/${hoveredCat.slug}`"
+                class="mega-scene"
+                @click="megaOpen = false"
+              >
+                <!-- Background image -->
+                <div
+                  class="mega-scene-bg"
+                  :style="hoveredCat.image ? `background-image:url(${hoveredCat.image})` : ''"
+                ></div>
+                <!-- Gradient overlay -->
+                <div class="mega-scene-overlay"></div>
+                <!-- Content -->
+                <div class="mega-scene-content">
+                  <span class="mega-scene-badge">
+                    {{ hoveredCat.products_count }}
+                    {{ hoveredCat.products_count === 1 ? 'товар' : hoveredCat.products_count < 5 ? 'товара' : 'товаров' }}
+                  </span>
+                  <h3 class="mega-scene-title">{{ hoveredCat.name }}</h3>
+                  <span class="mega-scene-cta">
+                    Смотреть все
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </span>
+                </div>
+              </router-link>
+            </Transition>
+          </div>
+
         </div>
       </div>
     </Transition>
@@ -302,6 +309,14 @@ const onKeydown = (e: KeyboardEvent) => {
 
 watch(() => route.path, () => { closeMobileMenu(); searchQuery.value = ""; });
 
+// Auto-select first category the moment the mega menu opens
+watch(megaOpen, (open) => {
+  if (open && categories.value.length && !hoveredCat.value) {
+    hoveredCat.value = categories.value[0];
+  }
+  if (!open) hoveredCat.value = null;
+});
+
 watch(mobileMenuOpen, (open) => {
   document.body.style.overflow = open ? "hidden" : "";
   if (!open) accordionOpen.value = false;
@@ -380,211 +395,281 @@ onUnmounted(() => {
   top: 100%;
   left: 0;
   right: 0;
-  background: #fff;
-  border-top: 2px solid var(--accent);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  background: #0e1813;
+  border-top: 1px solid rgba(212,165,116,0.2);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.3);
   z-index: 999;
 }
 .mega-inner {
   display: flex;
-  min-height: 320px;
-  max-height: 480px;
+  height: 340px;
 }
 
-/* Left column: category list */
-.mega-cats {
+/* ---- Left column ---- */
+.mega-left {
   width: 260px;
   flex-shrink: 0;
-  border-right: 1px solid #f0f0f0;
-  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.2);
+}
+.mega-cats {
+  flex: 1;
+  list-style: none;
+  padding: 10px 0;
+  margin: 0;
   overflow-y: auto;
 }
+.mega-cats::-webkit-scrollbar { width: 3px; }
+.mega-cats::-webkit-scrollbar-track { background: transparent; }
+.mega-cats::-webkit-scrollbar-thumb { background: rgba(212,165,116,0.25); border-radius: 3px; }
+
 .mega-cat-item a {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 20px;
-  color: #333 !important;
-  font-size: 14px;
+  gap: 11px;
+  padding: 10px 16px;
+  color: rgba(255,255,255,0.65) !important;
+  font-size: 13.5px;
   font-weight: 500;
   text-transform: none !important;
   letter-spacing: normal !important;
-  transition: background 0.15s, color 0.15s, padding-left 0.15s;
-  border-radius: 0;
+  text-decoration: none;
+  transition: background 0.18s, color 0.18s;
+  position: relative;
 }
 .mega-cat-item a::before { display: none !important; }
+
 .mega-cat-item.active a,
 .mega-cat-item a:hover {
-  background: #f8f4ef;
-  color: var(--primary) !important;
-  padding-left: 26px;
+  background: rgba(212,165,116,0.08);
+  color: #fff !important;
 }
-.mega-cat-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
+.mega-cat-item.active a {
+  color: var(--accent) !important;
+}
+
+/* Accent bar on active item */
+.mega-cat-item.active a::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 60%;
+  background: var(--accent-gradient);
+  border-radius: 0 2px 2px 0;
+}
+
+.mega-cat-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.15s;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(212,165,116,0.6);
+  transition: opacity 0.18s;
 }
-.mega-cat-item.active .mega-cat-dot,
-.mega-cat-item a:hover .mega-cat-dot {
+.mega-cat-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.mega-cat-item.active .mega-cat-thumb,
+.mega-cat-item a:hover .mega-cat-thumb {
   opacity: 1;
 }
+
+.mega-cat-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mega-cat-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(212,165,116,0.7);
+  background: rgba(212,165,116,0.1);
+  border-radius: 20px;
+  padding: 1px 7px;
+  flex-shrink: 0;
+  transition: background 0.18s, color 0.18s;
+}
+.mega-cat-item.active .mega-cat-count,
+.mega-cat-item a:hover .mega-cat-count {
+  background: rgba(212,165,116,0.18);
+  color: var(--accent);
+}
+
 .mega-cat-arrow {
-  margin-left: auto;
+  flex-shrink: 0;
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.15s;
+  color: rgba(255,255,255,0.4);
 }
 .mega-cat-item.active .mega-cat-arrow,
 .mega-cat-item a:hover .mega-cat-arrow {
-  opacity: 0.5;
+  opacity: 1;
+  transform: translateX(2px);
 }
 
-/* Right panel */
-.mega-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 28px;
+/* Left footer */
+.mega-left-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
-.mega-panel-content {
-  flex: 1;
-}
-.mega-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-.mega-panel-header h3 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0;
-}
-.mega-see-all {
-  font-size: 13px;
-  color: var(--accent) !important;
-  font-weight: 500;
-  text-transform: none !important;
-  letter-spacing: normal !important;
-  transition: opacity 0.15s;
-}
-.mega-see-all:hover { opacity: 0.7; }
-.mega-see-all::before { display: none !important; }
-.mega-panel-body {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-}
-.mega-feature-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border: 1.5px solid #f0f0f0;
-  border-radius: 12px;
-  text-decoration: none;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-  color: #333 !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
-}
-.mega-feature-card::before { display: none !important; }
-.mega-feature-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 4px 16px rgba(212,165,116,0.15);
-  transform: translateY(-2px);
-}
-.mega-feature-icon {
-  width: 52px;
-  height: 52px;
-  background: linear-gradient(135deg, #f8f4ef 0%, #f0e8dc 100%);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--accent);
-}
-.mega-feature-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
-  line-height: 1.3;
-}
-.mega-feature-sub {
-  font-size: 12px;
-  color: #888;
-  margin-top: 2px;
-  line-height: 1.4;
-}
-.mega-panel-placeholder {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #bbb;
-  gap: 12px;
-  font-size: 14px;
-}
-.mega-placeholder-icon { opacity: 0.3; }
-.mega-panel-footer {
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-.mega-all-btn {
+.mega-all-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  background: var(--accent-gradient);
-  color: #fff !important;
-  font-size: 14px;
+  padding: 8px 16px;
+  width: 100%;
+  background: rgba(212,165,116,0.1);
+  border: 1px solid rgba(212,165,116,0.2);
+  color: var(--accent) !important;
+  font-size: 13px;
   font-weight: 600;
   border-radius: 8px;
   text-decoration: none;
   text-transform: none !important;
   letter-spacing: normal !important;
-  transition: opacity 0.15s, transform 0.15s;
+  transition: background 0.18s, border-color 0.18s;
+  box-sizing: border-box;
 }
-.mega-all-btn::before { display: none !important; }
-.mega-all-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.mega-all-link::before { display: none !important; }
+.mega-all-link:hover {
+  background: rgba(212,165,116,0.18);
+  border-color: rgba(212,165,116,0.35);
+}
+
+/* ---- Right scene panel ---- */
+.mega-panel {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.mega-scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+.mega-scene::before { display: none !important; }
+
+.mega-scene-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-color: #1a2e22;
+  transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.mega-scene:hover .mega-scene-bg {
+  transform: scale(1.04);
+}
+
+.mega-scene-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(6,10,8,0.78) 0%,
+    rgba(10,18,13,0.55) 50%,
+    rgba(6,10,8,0.3) 100%
+  );
+}
+
+.mega-scene-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 28px 32px;
+  gap: 10px;
+}
+
+.mega-scene-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(212,165,116,0.14);
+  border: 1px solid rgba(212,165,116,0.25);
+  border-radius: 20px;
+  padding: 3px 10px;
+  width: fit-content;
+}
+
+.mega-scene-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.5);
+}
+
+.mega-scene-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  transition: color 0.2s, gap 0.2s;
+  width: fit-content;
+}
+.mega-scene:hover .mega-scene-cta {
+  color: #fff;
+  gap: 10px;
+}
+
+/* Scene crossfade transition */
+.scene-enter-active { transition: opacity 0.22s ease, transform 0.22s ease; }
+.scene-leave-active { transition: opacity 0.15s ease; }
+.scene-enter-from   { opacity: 0; transform: scale(1.03); }
+.scene-leave-to     { opacity: 0; }
 
 /* Overlay */
 .mega-overlay {
   position: fixed;
   inset: 0;
   top: var(--header-height, 72px);
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.4);
   z-index: 998;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
 }
 
-/* Transitions */
+/* Mega open/close transitions */
 .mega-enter-active,
 .mega-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 .mega-enter-from,
 .mega-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-6px);
 }
 .overlay-enter-active,
-.overlay-leave-active {
-  transition: opacity 0.2s ease;
-}
+.overlay-leave-active { transition: opacity 0.22s ease; }
 .overlay-enter-from,
-.overlay-leave-to {
-  opacity: 0;
-}
+.overlay-leave-to     { opacity: 0; }
 
 /* ---- MOBILE ACCORDION ---- */
 .mobile-accordion {
