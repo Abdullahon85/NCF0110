@@ -977,24 +977,38 @@ onUnmounted(() => {
 .marquee-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  opacity: 0.5;
-  transition: opacity 0.3s;
+  justify-content: center;
   flex-shrink: 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 24px;
+  height: 60px;
+  min-width: 130px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
+              box-shadow 0.3s ease;
 }
-.marquee-item:hover { opacity: 1; }
+.marquee-item:hover {
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(212,165,116,0.35);
+}
 .marquee-item img {
-  height: 28px;
+  height: 36px;
   width: auto;
-  max-width: 120px;
+  max-width: 110px;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  /* Full color — no filter */
+  filter: none;
+  opacity: 1;
+  display: block;
 }
 .marquee-item span {
-  color: rgba(255,255,255,0.6);
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: var(--gray-700);
+  font-size: 0.95rem;
+  font-weight: 800;
   white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1333,46 +1347,52 @@ onUnmounted(() => {
 
 .brand-card-3d {
   cursor: pointer;
-  border-radius: 16px;
-  border: 1.5px solid rgba(27,67,50,0.1);
-  padding: 22px 28px;
+  border-radius: 18px;
+  border: 1.5px solid rgba(27,67,50,0.12);
+  padding: 20px 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 88px;
-  min-width: 148px;
-  background: white;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  height: 100px;
+  min-width: 168px;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
   transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
   flex-shrink: 0;
 }
 .brand-card-3d:hover {
-  border-color: rgba(27,67,50,0.35);
-  transform: translateY(-5px) scale(1.05);
-  box-shadow: 0 16px 40px rgba(27,67,50,0.14);
+  border-color: rgba(212,165,116,0.5);
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 20px 48px rgba(27,67,50,0.16), 0 0 0 1px rgba(212,165,116,0.2);
 }
 .brand-inner {
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 .brand-logo {
-  max-height: 38px;
-  max-width: 110px;
+  max-height: 52px;
+  max-width: 130px;
   width: auto;
+  height: auto;
   object-fit: contain;
-  filter: grayscale(1);
-  opacity: 0.55;
-  transition: all 0.3s ease;
+  /* Full color, full opacity — always visible */
+  filter: none;
+  opacity: 1;
+  transition: transform 0.3s ease, filter 0.3s ease;
 }
 .brand-card-3d:hover .brand-logo {
-  filter: grayscale(0);
-  opacity: 1;
+  transform: scale(1.08);
+  filter: drop-shadow(0 4px 12px rgba(27,67,50,0.2));
 }
 .brand-name-text {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--gray-500);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--gray-700);
   transition: color 0.3s;
+  letter-spacing: -0.01em;
 }
 .brand-card-3d:hover .brand-name-text { color: var(--primary); }
 
