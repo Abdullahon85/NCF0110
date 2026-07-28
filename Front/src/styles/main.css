@@ -628,81 +628,81 @@ p {
 }
 
 /* =============================================
-   Scrolled state — fixed to viewport, outer shell
-   transparent; .container becomes the floating pill
+   Scrolled / pill state — desktop only (≥ 1025px)
+   On mobile & tablet the header stays sticky as-is.
    ============================================= */
-.header--scrolled {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: transparent;
-  border-bottom-color: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  padding: 7px 0 6px;
-}
+@media (min-width: 1025px) {
+  .header--scrolled {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: transparent;
+    border-bottom-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 7px 0 6px;
+  }
 
-/* Compensate layout gap while header is fixed */
-body.header-is-fixed {
-  padding-top: var(--header-height);
-}
-
-.header--scrolled::before {
-  opacity: 0;
-}
-
-/* The pill itself */
-.header--scrolled .container {
-  max-width: 900px;
-  background: linear-gradient(
-    135deg,
-    rgba(18, 48, 34, 0.97) 0%,
-    rgba(6, 6, 8, 0.99) 100%
-  );
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border-radius: 999px;
-  border: 1px solid rgba(212, 165, 116, 0.22);
-  box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.55),
-    0 2px 8px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  padding-left: 24px;
-  padding-right: 24px;
-  overflow: hidden;
-  position: relative;
-  /* Animate in from above */
-  animation: pill-drop 0.38s cubic-bezier(0.34, 1.3, 0.64, 1) both;
-}
-
-@keyframes pill-drop {
-  from {
+  .header--scrolled::before {
     opacity: 0;
-    transform: translateY(-10px) scaleX(0.96);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scaleX(1);
+
+  .header--scrolled .navbar {
+    height: 60px;
   }
-}
 
-/* Gold sweep line across the top of the pill */
-.header--scrolled .container::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-radius: 999px 999px 0 0;
-  background: var(--accent-gradient);
-  animation: sweep-in 0.5s 0.15s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
+  /* The pill itself */
+  .header--scrolled .container {
+    max-width: 900px;
+    background: linear-gradient(
+      135deg,
+      rgba(18, 48, 34, 0.97) 0%,
+      rgba(6, 6, 8, 0.99) 100%
+    );
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(212, 165, 116, 0.22);
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.55),
+      0 2px 8px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    animation: pill-drop 0.38s cubic-bezier(0.34, 1.3, 0.64, 1) both;
+  }
 
-@keyframes sweep-in {
-  from { transform: scaleX(0); transform-origin: left center; }
-  to   { transform: scaleX(1); transform-origin: left center; }
+  @keyframes pill-drop {
+    from { opacity: 0; transform: translateY(-10px) scaleX(0.96); }
+    to   { opacity: 1; transform: translateY(0) scaleX(1); }
+  }
+
+  /* Gold sweep line across the top of the pill */
+  .header--scrolled .container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: 999px 999px 0 0;
+    background: var(--accent-gradient);
+    animation: sweep-in 0.5s 0.15s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  @keyframes sweep-in {
+    from { transform: scaleX(0); transform-origin: left center; }
+    to   { transform: scaleX(1); transform-origin: left center; }
+  }
+
+  /* Compensate layout gap while header is fixed */
+  body.header-is-fixed {
+    padding-top: var(--header-height);
+  }
 }
 
 .navbar {
@@ -716,10 +716,6 @@ body.header-is-fixed {
 }
 
 /* Compact navbar inside the pill */
-.header--scrolled .navbar {
-  height: 52px;
-  padding: 0;
-}
 
 /* Search Container */
 .search-container {
