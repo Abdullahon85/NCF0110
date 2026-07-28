@@ -89,7 +89,12 @@
           <label>{{ group.group_name }}</label>
           <div class="tags-list">
             <label
-              v-for="tag in group.tags"
+              v-for="tag in group.tags.filter(
+                (t) =>
+                  (t.product_count ?? 0) > 0 ||
+                  filters.tags.includes(t.slug) ||
+                  hasActiveBrandOrTagFilter,
+              )"
               :key="tag.slug"
               :class="[
                 'tag-item',
@@ -313,6 +318,12 @@ const clearFiltersFromStorage = () => {
 // ============================================
 const categorySlug = computed(
   () => (route.params.categorySlug as string) || "",
+);
+
+// True when brand or tag filters are active — used to decide whether to show
+// zero-count tags (grayed out as "filtered out") vs. hide them (genuinely orphaned).
+const hasActiveBrandOrTagFilter = computed(
+  () => filters.brands.length > 0 || filters.tags.length > 0,
 );
 
 // ============================================
