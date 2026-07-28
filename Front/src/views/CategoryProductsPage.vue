@@ -281,8 +281,8 @@ const restoreFiltersFromStorage = (): boolean => {
     if (!raw) return false;
     const s = JSON.parse(raw);
     filters.ordering = s.ordering ?? "-created_at";
-    filters.brands = Array.isArray(s.brands) ? s.brands : [];
-    filters.tags = Array.isArray(s.tags) ? s.tags : [];
+    filters.brands = Array.isArray(s.brands) ? s.brands.filter(Boolean) : [];
+    filters.tags = Array.isArray(s.tags) ? s.tags.filter(Boolean) : [];
     filters.onlyAvailable = s.onlyAvailable ?? false;
     filters.search = s.search ?? "";
     searchInput.value = filters.search;
