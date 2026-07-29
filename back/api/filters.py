@@ -23,8 +23,14 @@ class BrandFilter(filters.BaseFilterBackend):
             )
 
         # Фильтр по категориям через связанные продукты (поддержка нескольких через запятую)
+        # Accepts a single slug or a comma-separated list of slugs;
+        # blank entries are ignored so that ',cameras,' behaves like 'cameras'.
+        # On detail views this filter is intentionally skipped so that
+        # get_object() is never affected by category params that are meant
+        # for the products sub-action, not the brand lookup itself.
+        is_list_view = getattr(view, 'action', None) == 'list'
         category = request.query_params.get('category')
-        if category:
+        if category and is_list_view:
             slugs = [s.strip() for s in category.split(',') if s.strip()]
             if slugs:
                 queryset = queryset.filter(products__category__slug__in=slugs).distinct()
