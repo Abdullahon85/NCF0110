@@ -260,19 +260,23 @@ def apply_product_filters(request, queryset):
     # --- фильтр по категории с рекурсией ---
     category_slug = params.get('category')
     if category_slug:
-        try:
-            category = Category.objects.get(slug=category_slug)
-
+        slugs = [s.strip() for s in category_slug.split(',') if s.strip()]
+        if slugs:
             def collect_category_ids(cat):
                 ids = [cat.id]
                 for child in cat.children.all():
                     ids.extend(collect_category_ids(child))
                 return ids
 
-            category_ids = collect_category_ids(category)
-            queryset = queryset.filter(category_id__in=category_ids)
-        except Category.DoesNotExist:
-            queryset = queryset.none()
+            categories = Category.objects.filter(slug__in=slugs)
+            all_category_ids = []
+            for category in categories:
+                all_category_ids.extend(collect_category_ids(category))
+
+            if all_category_ids:
+                queryset = queryset.filter(category_id__in=all_category_ids)
+            else:
+                queryset = queryset.none()
     # --- фильтр по группам тегов ---
     for key, val in params.items():
         if key.startswith('taggroup_') and val:
