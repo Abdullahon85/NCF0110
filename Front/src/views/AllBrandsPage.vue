@@ -473,7 +473,7 @@ const buildApiParams = () => {
   }
 
   if (filters.categories.length > 0) {
-    params.category = filters.categories.join(",");
+    params.category = filters.categories.filter(Boolean).join(",");
   }
 
   if (filters.hasProducts) {

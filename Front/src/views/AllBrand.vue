@@ -289,7 +289,7 @@ const loadBrands = async () => {
       page: pagination.page,
       page_size: pagination.pageSize,
       search: filters.search,
-      category: filters.categories.join(","),
+      category: filters.categories.filter(Boolean).join(","),
       // only send these flags when true — sending 'false' string caused backend to treat as present
       has_products: filters.hasProducts ? true : undefined,
       has_available: filters.hasAvailable ? true : undefined,

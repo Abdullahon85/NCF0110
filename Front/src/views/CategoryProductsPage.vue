@@ -338,7 +338,7 @@ const loadBrands = async (): Promise<void> => {
   try {
     const params: Record<string, any> = {};
     if (filters.tags.length > 0) {
-      params.tag = filters.tags.join(',');
+      params.tag = filters.tags.filter(Boolean).join(',');
     }
     if (
       filters.priceMin !== null &&
@@ -398,10 +398,10 @@ const loadTags = async (): Promise<void> => {
       params.price_max = filters.priceMax;
     }
     if (filters.tags.length > 0) {
-      params.selected_tags = filters.tags.join(',');
+      params.selected_tags = filters.tags.filter(Boolean).join(',');
     }
     if (filters.brands.length > 0) {
-      params.brand = filters.brands.join(',');
+      params.brand = filters.brands.filter(Boolean).join(',');
     }
     const response = await categoriesAPI.getTags(categorySlug.value, params);
     const data = response.data;
@@ -486,12 +486,12 @@ const buildApiParams = (): Record<string, any> => {
 
   // Бренды
   if (filters.brands.length > 0) {
-    params.brand = filters.brands.join(",");
+    params.brand = filters.brands.filter(Boolean).join(",");
   }
 
   // Теги
   if (filters.tags.length > 0) {
-    params.tag = filters.tags.join(",");
+    params.tag = filters.tags.filter(Boolean).join(",");
   }
 
   // Наличие
