@@ -274,8 +274,8 @@ const buildBrandParams = () => {
     page_size: pagination.pageSize,
     ordering:  filters.ordering,
   };
-  if (filters.categories.length) params.category  = filters.categories.join(",");
-  if (filters.tags.length)       params.tag        = filters.tags.join(",");
+  if (filters.categories.length) params.category  = filters.categories.filter(Boolean).join(",");
+  if (filters.tags.length)       params.tag        = filters.tags.filter(Boolean).join(",");
   if (filters.priceMin != null)  params.price_min  = filters.priceMin;
   if (filters.priceMax != null)  params.price_max  = filters.priceMax;
   return params;
