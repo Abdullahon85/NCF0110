@@ -88,7 +88,7 @@
                 </button>
               </h3>
 
-              <!-- Categories -->
+              <!-- ── Categories ── -->
               <div class="filter-group" v-if="brandCategories.length">
                 <label>Категории</label>
                 <div class="categories-list">
@@ -101,34 +101,47 @@
                       type="checkbox"
                       :value="c.slug"
                       v-model="filters.categories"
-                      @change="applyFilters"
+                      @change="onCategoryChange"
                     />
                     <span>{{ c.name }}</span>
                   </label>
                 </div>
               </div>
 
-              <!-- Tags -->
-              <div class="filter-group" v-if="brandTags.length">
-                <label>Теги</label>
-                <div class="tags-list">
-                  <label
-                    v-for="t in brandTags"
-                    :key="t.slug"
-                    class="tag-item"
+              <!-- ── Tags (grouped by tag-name / group) ── -->
+              <div class="filter-group" v-if="brandTagGroups.length">
+                <label>
+                  Теги
+                  <span v-if="tagsLoading" class="tags-loading-dot"></span>
+                </label>
+
+                <transition-group name="tag-group-fade" tag="div">
+                  <div
+                    v-for="group in brandTagGroups"
+                    :key="group.id"
+                    class="tag-group"
                   >
-                    <input
-                      type="checkbox"
-                      :value="t.slug"
-                      v-model="filters.tags"
-                      @change="applyFilters"
-                    />
-                    <span>{{ t.name }}</span>
-                  </label>
-                </div>
+                    <div class="tag-group-name">{{ group.group_name }}</div>
+                    <div class="tags-list">
+                      <label
+                        v-for="t in group.tags.filter((t: any) => t.slug)"
+                        :key="t.id"
+                        class="tag-item"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="t.slug"
+                          v-model="filters.tags"
+                          @change="applyFilters"
+                        />
+                        <span>{{ t.name }}</span>
+                      </label>
+                    </div>
+                  </div>
+                </transition-group>
               </div>
 
-              <!-- Price (untouched) -->
+              <!-- ── Price (untouched) ── -->
               <PriceFilter
                 v-if="priceRange.min !== null && priceRange.max !== null"
                 :min="priceRange.min"
@@ -203,15 +216,23 @@ import PriceFilter from "@/components/PriceFilter.vue";
 const route = useRoute();
 
 // ── State ─────────────────────────────────────────────────────────────────
-const brand        = ref<Brand | null>(null);
-const products     = ref<Product[]>([]);
-const loading      = ref(true);
+const brand           = ref<Brand | null>(null);
+const products        = ref<Product[]>([]);
+const loading         = ref(true);
 const productsLoading = ref(false);
-const error        = ref<string | null>(null);
-const showFilters  = ref(false);
+const tagsLoading     = ref(false);
+const error           = ref<string | null>(null);
+const showFilters     = ref(false);
 
 const brandCategories = ref<any[]>([]);
-const brandTags       = ref<any[]>([]);
+
+/**
+ * Tag groups as returned by the API:
+ *   [{ id, group_name, tags: [{ id, name, slug }] }]
+ * When categories are selected this list is narrowed to only the tags that
+ * belong to products in those categories.
+ */
+const brandTagGroups = ref<any[]>([]);
 
 // Price range bounds (populated per brand, drives the PriceFilter slider)
 const priceRange = reactive({ min: null as number | null, max: null as number | null });
@@ -237,8 +258,22 @@ const pagination = reactive({
 // ── Computed ───────────────────────────────────────────────────────────────
 
 /**
- * True when the user has narrowed the price slider away from the full range.
- * Counts as a single filter regardless of whether min, max, or both changed.
+ * Flat set of every slug currently present in the visible tag groups.
+ * Used to prune stale tag selections when the category filter changes.
+ */
+const visibleTagSlugs = computed<Set<string>>(() => {
+  const s = new Set<string>();
+  for (const group of brandTagGroups.value) {
+    for (const tag of group.tags as any[]) {
+      if (tag.slug) s.add(tag.slug);
+    }
+  }
+  return s;
+});
+
+/**
+ * True when the slider has been moved away from the full brand range.
+ * Counts as a single active filter regardless of how many handles changed.
  */
 const isPriceFiltered = computed(() => {
   if (priceRange.min === null || priceRange.max === null) return false;
@@ -254,10 +289,10 @@ const activeFilterCount = computed(() =>
 );
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-const formatContent = (content: string): string =>
+const formatContent = (content: string) =>
   content ? content.replace(/\n/g, "<br>") : "";
 
-const pluralize = (count: number): string => {
+const pluralize = (count: number) => {
   const cases  = [2, 0, 1, 1, 1, 2];
   const titles = ["товар", "товара", "товаров"];
   return titles[
@@ -274,10 +309,10 @@ const buildBrandParams = () => {
     page_size: pagination.pageSize,
     ordering:  filters.ordering,
   };
-  if (filters.categories.length) params.category  = filters.categories.filter(Boolean).join(",");
-  if (filters.tags.length)       params.tag        = filters.tags.filter(Boolean).join(",");
-  if (filters.priceMin != null)  params.price_min  = filters.priceMin;
-  if (filters.priceMax != null)  params.price_max  = filters.priceMax;
+  if (filters.categories.length) params.category = filters.categories.filter(Boolean).join(",");
+  if (filters.tags.length)       params.tag       = filters.tags.filter(Boolean).join(",");
+  if (filters.priceMin != null)  params.price_min = filters.priceMin;
+  if (filters.priceMax != null)  params.price_max = filters.priceMax;
   return params;
 };
 
@@ -286,7 +321,7 @@ const loadProducts = async (slug: string): Promise<void> => {
     productsLoading.value = true;
     const response = await brandsAPI.getProducts(slug, buildBrandParams());
     const data = response.data;
-    products.value      = data.results || [];
+    products.value        = data.results || [];
     pagination.total      = Number(data.count ?? 0);
     pagination.totalPages = Math.max(1, Math.ceil(pagination.total / pagination.pageSize));
   } catch (err) {
@@ -306,30 +341,28 @@ const loadBrandCategories = async (slug: string): Promise<void> => {
   }
 };
 
-const loadBrandTags = async (slug: string): Promise<void> => {
+/**
+ * Loads tag groups for the brand, optionally scoped to the given category slugs.
+ * When categorySlugs is empty the full brand tag pool is returned.
+ * The backend returns the data already grouped by tag-name, so no flattening needed.
+ */
+const loadBrandTags = async (slug: string, categorySlugs: string[] = []): Promise<void> => {
   try {
-    const res = await brandsAPI.getTags(slug);
-    const data = res.data || [];
+    tagsLoading.value = true;
+    const params: Record<string, string> = {};
+    const validCats = categorySlugs.filter(Boolean);
+    if (validCats.length) params.category = validCats.join(",");
 
-    // The API may return grouped tags — flatten them, de-duplicating by id.
-    if (Array.isArray(data) && data.length > 0 && (data[0] as any).group_name) {
-      const flat: any[]       = [];
-      const seen = new Set<number>();
-      for (const group of data as any[]) {
-        for (const tag of (group.tags ?? []) as any[]) {
-          if (!seen.has(tag.id)) { flat.push(tag); seen.add(tag.id); }
-        }
-      }
-      brandTags.value = flat;
-    } else {
-      brandTags.value = data;
-    }
+    const res = await api.get(`/brands/${slug}/tags/`, { params });
+    brandTagGroups.value = (res.data as any[]) || [];
   } catch (e) {
     console.error("Ошибка загрузки тегов:", e);
+  } finally {
+    tagsLoading.value = false;
   }
 };
 
-// Price filter (untouched — already working correctly)
+// Price filter — untouched, already working correctly
 const fetchBrandPriceRange = async (slug: string): Promise<void> => {
   try {
     const res = await api.get("/products/price-range/", { params: { brand: slug } });
@@ -348,6 +381,53 @@ const onPriceFilterChange = (value: { min: number | null; max: number | null }) 
 };
 
 // ── Actions ────────────────────────────────────────────────────────────────
+
+/**
+ * Called when a category checkbox changes.
+ * Reloads the relevant tag pool, prunes orphaned tag selections, then
+ * refreshes the product list — all without separate round-trips.
+ */
+const onCategoryChange = async (): Promise<void> => {
+  const slug = route.params.slug as string;
+
+  // Reload tags scoped to the currently selected categories.
+  await loadBrandTags(slug, filters.categories);
+
+  // Remove any selected tags that are no longer in the visible pool.
+  if (filters.tags.length) {
+    filters.tags = filters.tags.filter(t => visibleTagSlugs.value.has(t));
+  }
+
+  // Refresh products (resets to page 1).
+  pagination.page = 1;
+  await loadProducts(slug);
+};
+
+const applyFilters = async (): Promise<void> => {
+  pagination.page = 1;
+  await loadProducts(route.params.slug as string);
+};
+
+const resetFilters = async (): Promise<void> => {
+  const slug = route.params.slug as string;
+  filters.categories = [];
+  filters.tags       = [];
+  filters.priceMin   = null;
+  filters.priceMax   = null;
+  filters.ordering   = "-created_at";
+  // Restore the full tag pool for this brand.
+  await loadBrandTags(slug, []);
+  await applyFilters();
+};
+
+const changePage = async (page: number): Promise<void> => {
+  if (page < 1 || page > pagination.totalPages) return;
+  pagination.page = page;
+  await loadProducts(route.params.slug as string);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+// ── Initial load ────────────────────────────────────────────────────────────
 const loadBrand = async (): Promise<void> => {
   const slug = route.params.slug as string;
   if (!slug) { error.value = "Бренд не найден"; loading.value = false; return; }
@@ -358,7 +438,7 @@ const loadBrand = async (): Promise<void> => {
     brand.value = brandResponse.data;
     await Promise.all([
       loadBrandCategories(slug),
-      loadBrandTags(slug),
+      loadBrandTags(slug, []),       // full pool — no category filter yet
       fetchBrandPriceRange(slug),
     ]);
     await loadProducts(slug);
@@ -372,27 +452,6 @@ const loadBrand = async (): Promise<void> => {
   }
 };
 
-const applyFilters = async (): Promise<void> => {
-  pagination.page = 1;
-  await loadProducts(route.params.slug as string);
-};
-
-const resetFilters = async (): Promise<void> => {
-  filters.categories = [];
-  filters.tags       = [];
-  filters.priceMin   = null;
-  filters.priceMax   = null;
-  filters.ordering   = "-created_at";
-  await applyFilters();
-};
-
-const changePage = async (page: number): Promise<void> => {
-  if (page < 1 || page > pagination.totalPages) return;
-  pagination.page = page;
-  await loadProducts(route.params.slug as string);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-};
-
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(() => loadBrand());
 
@@ -400,20 +459,19 @@ onUnmounted(() => {
   if (priceDebounceTimer) clearTimeout(priceDebounceTimer);
 });
 
-// When navigating between brand pages, fully reset UI state before reloading.
+// Full reset when navigating between brand pages.
 watch(
   () => route.params.slug,
   () => {
-    // Reset filter state so stale values from the previous brand don't bleed over.
     filters.categories = [];
     filters.tags       = [];
     filters.priceMin   = null;
     filters.priceMax   = null;
     filters.ordering   = "-created_at";
-    // Hide the PriceFilter slider until the new brand's range arrives.
-    priceRange.min = null;
-    priceRange.max = null;
-    pagination.page = 1;
+    priceRange.min     = null;
+    priceRange.max     = null;
+    pagination.page    = 1;
+    brandTagGroups.value = [];
     loadBrand();
   }
 );
@@ -485,10 +543,7 @@ watch(
     radial-gradient(circle at 85% 25%, rgba(64,145,108,0.14) 0%, transparent 50%);
   pointer-events: none;
 }
-.brand-hero-inner {
-  position: relative;
-  z-index: 1;
-}
+.brand-hero-inner { position: relative; z-index: 1; }
 .brand-hero-back {
   display: inline-flex;
   align-items: center;
@@ -502,11 +557,7 @@ watch(
 }
 .brand-hero-back:hover { color: rgba(255,255,255,0.9); }
 
-.brand-hero-card {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
+.brand-hero-card { display: flex; align-items: center; gap: 28px; }
 .brand-hero-logo {
   width: 96px; height: 96px;
   background: rgba(255,255,255,0.06);
@@ -554,10 +605,7 @@ watch(
 .brand-hero-stat strong { color: #d4a574; font-weight: 700; }
 
 /* ── Container ── */
-.brand-container {
-  padding-top: 8px;
-  padding-bottom: 60px;
-}
+.brand-container { padding-top: 8px; padding-bottom: 60px; }
 
 /* ── Products section ── */
 .brand-products-col { min-width: 0; }
@@ -574,11 +622,7 @@ watch(
   gap: 12px;
   flex-wrap: wrap;
 }
-.products-topbar-count {
-  font-size: 14px;
-  color: #4b5563;
-  font-weight: 500;
-}
+.products-topbar-count { font-size: 14px; color: #4b5563; font-weight: 500; }
 .sort-select-inline {
   padding: 8px 12px;
   border: 1.5px solid #e5e7eb;
@@ -619,7 +663,7 @@ watch(
 }
 .brand-empty p { font-size: 15px; margin: 0; }
 
-/* ── Panel reset pill (lives inside the global panel h3 flex row) ── */
+/* ── Panel reset pill ── */
 .panel-reset-btn {
   margin-left: auto;
   display: inline-flex;
@@ -639,7 +683,7 @@ watch(
 }
 .panel-reset-btn:hover { background: #fde68a; }
 
-/* ── Filter badge on the mobile trigger ── */
+/* ── Filter badge on mobile trigger ── */
 .filter-badge {
   display: inline-flex;
   align-items: center;
@@ -653,6 +697,40 @@ watch(
   font-size: 11px;
   font-weight: 700;
 }
+
+/* ── Tags loading indicator ── */
+.tags-loading-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #40916c;
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: blink 0.8s ease-in-out infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+/* ── Tag groups (hierarchical) ── */
+.tag-group {
+  margin-bottom: 10px;
+}
+.tag-group:last-child { margin-bottom: 0; }
+
+.tag-group-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #9ca3af;
+  margin-bottom: 2px;
+  padding: 0 4px;
+}
+
+/* ── Tag group entrance/exit transition ── */
+.tag-group-fade-enter-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.tag-group-fade-leave-active { transition: opacity 0.15s ease; }
+.tag-group-fade-enter-from   { opacity: 0; transform: translateY(4px); }
+.tag-group-fade-leave-to     { opacity: 0; }
 
 /* ── Mobile breakpoints ── */
 @media (max-width: 768px) {

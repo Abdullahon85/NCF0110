@@ -405,10 +405,20 @@ class BrandViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get'])
     def tags(self, request, slug=None):
-        """Получить список тегов, которые используются в товарах данного бренда"""
+        """Получить список тегов, которые используются в товарах данного бренда.
+
+        Accepts an optional ?category=slug1,slug2 query param to restrict the
+        tag pool to products that belong to those specific categories.
+        """
         brand = self.get_object()
-        # Get ProductTagGroups for this brand's products
         products = Product.objects.filter(brand=brand)
+
+        # Optional category filter — narrow tags to the selected categories.
+        category_param = request.query_params.get('category', '')
+        category_slugs = [s.strip() for s in category_param.split(',') if s.strip()]
+        if category_slugs:
+            products = products.filter(category__slug__in=category_slugs).distinct()
+
         tag_groups = ProductTagGroup.objects.filter(
             product__in=products
         ).prefetch_related('tags').distinct()

@@ -22,10 +22,12 @@ class BrandFilter(filters.BaseFilterBackend):
                 Q(name__icontains=search) | Q(description__icontains=search)
             )
 
-        # Фильтр по категориям через связанные продукты
+        # Фильтр по категориям через связанные продукты (поддержка нескольких через запятую)
         category = request.query_params.get('category')
         if category:
-            queryset = queryset.filter(products__category__slug=category).distinct()
+            slugs = [s.strip() for s in category.split(',') if s.strip()]
+            if slugs:
+                queryset = queryset.filter(products__category__slug__in=slugs).distinct()
 
         # Фильтр по наличию товаров
         has_products = request.query_params.get('has_products')
