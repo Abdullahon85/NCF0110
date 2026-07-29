@@ -51,7 +51,7 @@
       <!-- Main content -->
       <div class="container brand-container">
         <!-- Mobile filter trigger -->
-        <button class="mobile-filter-btn brand-mobile-filter" @click="showFilters = true">
+        <button class="mobile-filter-btn" @click="showFilters = true">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="4" y1="6" x2="20" y2="6"/>
             <line x1="4" y1="12" x2="20" y2="12"/>
@@ -76,28 +76,33 @@
                 </svg>
               </button>
 
-              <div class="panel-header">
-                <h3>Фильтры</h3>
-                <button v-if="activeFilterCount" class="panel-reset" @click="resetFilters" title="Сбросить">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-                  </svg>
+              <h3>
+                Фильтры
+                <button
+                  v-if="activeFilterCount"
+                  class="panel-reset-btn"
+                  @click="resetFilters"
+                  title="Сбросить все фильтры"
+                >
+                  Сбросить
                 </button>
-              </div>
+              </h3>
 
               <!-- Categories -->
               <div class="filter-group" v-if="brandCategories.length">
-                <label class="filter-group-label">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                  </svg>
-                  Категории
-                </label>
+                <label>Категории</label>
                 <div class="categories-list">
-                  <label v-for="c in brandCategories" :key="c.slug" class="category-item">
-                    <input type="checkbox" :value="c.slug" v-model="filters.categories" @change="applyFilters" />
-                    <span class="checkmark"></span>
+                  <label
+                    v-for="c in brandCategories"
+                    :key="c.slug"
+                    class="category-item"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="c.slug"
+                      v-model="filters.categories"
+                      @change="applyFilters"
+                    />
                     <span>{{ c.name }}</span>
                   </label>
                 </div>
@@ -105,23 +110,25 @@
 
               <!-- Tags -->
               <div class="filter-group" v-if="brandTags.length">
-                <label class="filter-group-label">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                    <line x1="7" y1="7" x2="7.01" y2="7"/>
-                  </svg>
-                  Теги
-                </label>
+                <label>Теги</label>
                 <div class="tags-list">
-                  <label v-for="t in brandTags" :key="t.slug" class="tag-item">
-                    <input type="checkbox" :value="t.slug" v-model="filters.tags" @change="applyFilters" />
-                    <span class="checkmark"></span>
+                  <label
+                    v-for="t in brandTags"
+                    :key="t.slug"
+                    class="tag-item"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="t.slug"
+                      v-model="filters.tags"
+                      @change="applyFilters"
+                    />
                     <span>{{ t.name }}</span>
                   </label>
                 </div>
               </div>
 
-              <!-- Price -->
+              <!-- Price (untouched) -->
               <PriceFilter
                 v-if="priceRange.min !== null && priceRange.max !== null"
                 :min="priceRange.min"
@@ -157,7 +164,7 @@
             </div>
 
             <div v-if="productsLoading" class="products-skeleton">
-              <div v-for="n in 4" :key="n" class="skeleton-card"></div>
+              <div v-for="n in 6" :key="n" class="skeleton-card"></div>
             </div>
 
             <div v-else-if="products.length === 0" class="brand-empty">
@@ -185,7 +192,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch, computed } from "vue";
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api, brandsAPI, getImageUrl } from "@/api";
 import type { Brand, Product } from "@/types";
@@ -195,58 +202,82 @@ import PriceFilter from "@/components/PriceFilter.vue";
 
 const route = useRoute();
 
-const brand = ref<Brand | null>(null);
-const products = ref<Product[]>([]);
-const loading = ref(true);
+// ── State ─────────────────────────────────────────────────────────────────
+const brand        = ref<Brand | null>(null);
+const products     = ref<Product[]>([]);
+const loading      = ref(true);
 const productsLoading = ref(false);
-const error = ref<string | null>(null);
-const showFilters = ref(false);
+const error        = ref<string | null>(null);
+const showFilters  = ref(false);
 
 const brandCategories = ref<any[]>([]);
-const brandTags = ref<any[]>([]);
+const brandTags       = ref<any[]>([]);
 
+// Price range bounds (populated per brand, drives the PriceFilter slider)
 const priceRange = reactive({ min: null as number | null, max: null as number | null });
+
+// Debounce handle for price input changes
 let priceDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const filters = reactive({
   categories: [] as string[],
-  tags: [] as string[],
-  priceMin: null as number | null,
-  priceMax: null as number | null,
-  ordering: "-created_at",
+  tags:       [] as string[],
+  priceMin:   null as number | null,
+  priceMax:   null as number | null,
+  ordering:   "-created_at",
 });
 
 const pagination = reactive({
-  page: 1,
-  pageSize: 12,
+  page:       1,
+  pageSize:   12,
   totalPages: 1,
-  total: 0,
+  total:      0,
+});
+
+// ── Computed ───────────────────────────────────────────────────────────────
+
+/**
+ * True when the user has narrowed the price slider away from the full range.
+ * Counts as a single filter regardless of whether min, max, or both changed.
+ */
+const isPriceFiltered = computed(() => {
+  if (priceRange.min === null || priceRange.max === null) return false;
+  const lo = filters.priceMin ?? priceRange.min;
+  const hi = filters.priceMax ?? priceRange.max;
+  return lo > priceRange.min || hi < priceRange.max;
 });
 
 const activeFilterCount = computed(() =>
-  filters.categories.length + filters.tags.length +
-  (filters.priceMin != null ? 1 : 0) + (filters.priceMax != null ? 1 : 0)
+  filters.categories.length +
+  filters.tags.length +
+  (isPriceFiltered.value ? 1 : 0)
 );
 
+// ── Helpers ────────────────────────────────────────────────────────────────
 const formatContent = (content: string): string =>
   content ? content.replace(/\n/g, "<br>") : "";
 
 const pluralize = (count: number): string => {
-  const cases = [2, 0, 1, 1, 1, 2];
+  const cases  = [2, 0, 1, 1, 1, 2];
   const titles = ["товар", "товара", "товаров"];
-  return titles[count % 100 > 4 && count % 100 < 20 ? 2 : cases[count % 10 < 5 ? count % 10 : 5]];
+  return titles[
+    count % 100 > 4 && count % 100 < 20
+      ? 2
+      : cases[count % 10 < 5 ? count % 10 : 5]
+  ];
 };
 
+// ── API helpers ────────────────────────────────────────────────────────────
 const buildBrandParams = () => {
   const params: Record<string, any> = {
-    page: pagination.page,
+    page:      pagination.page,
     page_size: pagination.pageSize,
-    ordering: filters.ordering,
+    ordering:  filters.ordering,
   };
-  if (filters.categories.length) params.category = filters.categories.join(",");
-  if (filters.tags.length) params.tag = filters.tags.join(",");
-  if (filters.priceMin != null) params.price_min = filters.priceMin;
-  if (filters.priceMax != null) params.price_max = filters.priceMax;
+  if (filters.categories.length) params.category  = filters.categories.join(",");
+  if (filters.tags.length)       params.tag        = filters.tags.join(",");
+  if (filters.priceMin != null)  params.price_min  = filters.priceMin;
+  if (filters.priceMax != null)  params.price_max  = filters.priceMax;
   return params;
 };
 
@@ -255,8 +286,8 @@ const loadProducts = async (slug: string): Promise<void> => {
     productsLoading.value = true;
     const response = await brandsAPI.getProducts(slug, buildBrandParams());
     const data = response.data;
-    products.value = data.results || [];
-    pagination.total = Number(data.count ?? 0);
+    products.value      = data.results || [];
+    pagination.total      = Number(data.count ?? 0);
     pagination.totalPages = Math.max(1, Math.ceil(pagination.total / pagination.pageSize));
   } catch (err) {
     console.error("Ошибка загрузки товаров:", err);
@@ -266,34 +297,39 @@ const loadProducts = async (slug: string): Promise<void> => {
   }
 };
 
-const loadBrandCategories = async (slug: string) => {
+const loadBrandCategories = async (slug: string): Promise<void> => {
   try {
     const res = await brandsAPI.getCategories(slug);
     brandCategories.value = res.data || [];
-  } catch (e) { console.error(e); }
+  } catch (e) {
+    console.error("Ошибка загрузки категорий:", e);
+  }
 };
 
-const loadBrandTags = async (slug: string) => {
+const loadBrandTags = async (slug: string): Promise<void> => {
   try {
     const res = await brandsAPI.getTags(slug);
     const data = res.data || [];
+
+    // The API may return grouped tags — flatten them, de-duplicating by id.
     if (Array.isArray(data) && data.length > 0 && (data[0] as any).group_name) {
-      const flatTags: any[] = [];
-      const seenIds = new Set<number>();
+      const flat: any[]       = [];
+      const seen = new Set<number>();
       for (const group of data as any[]) {
-        if (group.tags && Array.isArray(group.tags)) {
-          for (const tag of group.tags) {
-            if (!seenIds.has(tag.id)) { flatTags.push(tag); seenIds.add(tag.id); }
-          }
+        for (const tag of (group.tags ?? []) as any[]) {
+          if (!seen.has(tag.id)) { flat.push(tag); seen.add(tag.id); }
         }
       }
-      brandTags.value = flatTags;
+      brandTags.value = flat;
     } else {
       brandTags.value = data;
     }
-  } catch (e) { console.error(e); }
+  } catch (e) {
+    console.error("Ошибка загрузки тегов:", e);
+  }
 };
 
+// Price filter (untouched — already working correctly)
 const fetchBrandPriceRange = async (slug: string): Promise<void> => {
   try {
     const res = await api.get("/products/price-range/", { params: { brand: slug } });
@@ -311,12 +347,13 @@ const onPriceFilterChange = (value: { min: number | null; max: number | null }) 
   priceDebounceTimer = setTimeout(() => applyFilters(), 400);
 };
 
+// ── Actions ────────────────────────────────────────────────────────────────
 const loadBrand = async (): Promise<void> => {
   const slug = route.params.slug as string;
   if (!slug) { error.value = "Бренд не найден"; loading.value = false; return; }
   try {
     loading.value = true;
-    error.value = null;
+    error.value   = null;
     const brandResponse = await brandsAPI.getBySlug(slug);
     brand.value = brandResponse.data;
     await Promise.all([
@@ -326,35 +363,60 @@ const loadBrand = async (): Promise<void> => {
     ]);
     await loadProducts(slug);
   } catch (err: any) {
-    error.value = err.response?.status === 404 ? "Бренд не найден" : "Не удалось загрузить бренд";
+    error.value =
+      err.response?.status === 404
+        ? "Бренд не найден"
+        : "Не удалось загрузить бренд";
   } finally {
     loading.value = false;
   }
 };
 
-const applyFilters = async () => {
+const applyFilters = async (): Promise<void> => {
   pagination.page = 1;
   await loadProducts(route.params.slug as string);
 };
 
-const resetFilters = async () => {
+const resetFilters = async (): Promise<void> => {
   filters.categories = [];
-  filters.tags = [];
-  filters.priceMin = null;
-  filters.priceMax = null;
-  filters.ordering = "-created_at";
+  filters.tags       = [];
+  filters.priceMin   = null;
+  filters.priceMax   = null;
+  filters.ordering   = "-created_at";
   await applyFilters();
 };
 
 const changePage = async (page: number): Promise<void> => {
   if (page < 1 || page > pagination.totalPages) return;
   pagination.page = page;
-  await applyFilters();
+  await loadProducts(route.params.slug as string);
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+// ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(() => loadBrand());
-watch(() => route.params.slug, () => { pagination.page = 1; loadBrand(); });
+
+onUnmounted(() => {
+  if (priceDebounceTimer) clearTimeout(priceDebounceTimer);
+});
+
+// When navigating between brand pages, fully reset UI state before reloading.
+watch(
+  () => route.params.slug,
+  () => {
+    // Reset filter state so stale values from the previous brand don't bleed over.
+    filters.categories = [];
+    filters.tags       = [];
+    filters.priceMin   = null;
+    filters.priceMax   = null;
+    filters.ordering   = "-created_at";
+    // Hide the PriceFilter slider until the new brand's range arrives.
+    priceRange.min = null;
+    priceRange.max = null;
+    pagination.page = 1;
+    loadBrand();
+  }
+);
 </script>
 
 <style scoped>
@@ -447,7 +509,7 @@ watch(() => route.params.slug, () => { pagination.page = 1; loadBrand(); });
 }
 .brand-hero-logo {
   width: 96px; height: 96px;
-  background: linear-gradient(135deg, #081c15 0%,);
+  background: rgba(255,255,255,0.06);
   border-radius: 20px;
   flex-shrink: 0;
   display: flex;
@@ -477,10 +539,7 @@ watch(() => route.params.slug, () => { pagination.page = 1; loadBrand(); });
   margin: 0 0 14px;
   max-width: 560px;
 }
-.brand-hero-stats {
-  display: flex;
-  gap: 16px;
-}
+.brand-hero-stats { display: flex; gap: 16px; }
 .brand-hero-stat {
   display: inline-flex;
   align-items: center;
@@ -492,20 +551,12 @@ watch(() => route.params.slug, () => { pagination.page = 1; loadBrand(); });
   font-size: 13px;
   color: rgba(255,255,255,0.85);
 }
-.brand-hero-stat strong {
-  color: #d4a574;
-  font-weight: 700;
-}
+.brand-hero-stat strong { color: #d4a574; font-weight: 700; }
 
 /* ── Container ── */
 .brand-container {
   padding-top: 8px;
   padding-bottom: 60px;
-}
-
-/* Mobile filter button (overrides global hidden state) */
-.brand-mobile-filter {
-  margin-top: 18px;
 }
 
 /* ── Products section ── */
@@ -554,7 +605,7 @@ watch(() => route.params.slug, () => { pagination.page = 1; loadBrand(); });
 }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
-/* ── Empty ── */
+/* ── Empty state ── */
 .brand-empty {
   display: flex;
   flex-direction: column;
@@ -568,113 +619,42 @@ watch(() => route.params.slug, () => { pagination.page = 1; loadBrand(); });
 }
 .brand-empty p { font-size: 15px; margin: 0; }
 
-/* ── Panel header ── */
-.panel-header {
-  display: flex;
+/* ── Panel reset pill (lives inside the global panel h3 flex row) ── */
+.panel-reset-btn {
+  margin-left: auto;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f0f0f0;
-}
-.panel-header h3 {
-  font-size: 17px;
-  font-weight: 700;
-  color: #1b4332;
-  margin: 0;
-  border: none;
-  padding: 0;
-}
-.panel-reset {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px; height: 30px;
+  padding: 3px 10px;
   border: none;
   background: #fef3c7;
-  border-radius: 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
   color: #92400e;
   cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
   transition: background 0.2s;
-}
-.panel-reset:hover { background: #fde68a; }
-
-/* ── Filter group label ── */
-.filter-group-label {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 10px;
-}
-.filter-group-label svg { color: #40916c; }
-
-/* ── Checkmark style ── */
-.category-item,
-.tag-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 0;
-  cursor: pointer;
-  font-size: 14px;
-  color: #374151;
-}
-.category-item input,
-.tag-item input {
-  width: 16px; height: 16px;
-  accent-color: #1b4332;
-  cursor: pointer;
   flex-shrink: 0;
 }
+.panel-reset-btn:hover { background: #fde68a; }
 
-/* ── Filter badge ── */
+/* ── Filter badge on the mobile trigger ── */
 .filter-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px; height: 20px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
   background: #1b4332;
   color: white;
-  border-radius: 50%;
+  border-radius: 10px;
   font-size: 11px;
   font-weight: 700;
 }
 
-/* ── Btn overrides ── */
-.filter-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-.btn {
-  flex: 1;
-  padding: 11px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-.btn.muted {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1.5px solid #e5e7eb;
-}
-.btn.primary {
-  background: linear-gradient(135deg, #1b4332, #2d6a4f);
-  color: white;
-}
-.btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(27,67,50,0.3); }
-
-/* ── Mobile ── */
+/* ── Mobile breakpoints ── */
 @media (max-width: 768px) {
   .brand-hero { padding: 32px 0 28px; }
   .brand-hero-card { gap: 16px; }
