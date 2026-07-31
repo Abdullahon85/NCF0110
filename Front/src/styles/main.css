@@ -1630,6 +1630,7 @@ p {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--space-6);
+  padding-bottom: 10px;
 }
 
 /* ===========================================
@@ -1992,6 +1993,7 @@ p {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: var(--space-8);
+  padding: 10px 0 10px;
 }
 
 /* News Detail Page */

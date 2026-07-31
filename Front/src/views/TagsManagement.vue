@@ -206,8 +206,8 @@
               </div>
             </div>
 
-            <!-- Available Tags to Select -->
-            <div class="available-values">
+            <!-- Available Tags to Select — shown only when a catalog is chosen -->
+            <div v-if="tagNameForm.category != null" class="available-values">
               <label>Доступные теги для привязки:</label>
               <div class="values-list">
                 <div
@@ -226,6 +226,9 @@
                   Все теги уже привязаны или нет доступных тегов
                 </div>
               </div>
+            </div>
+            <div v-else class="available-values-hidden">
+              <span>Выберите каталог, чтобы увидеть доступные теги</span>
             </div>
           </div>
 
@@ -385,8 +388,11 @@ const deletingItem = ref<any>(null);
 const deleteType = ref<"tag" | "tagName">("tag");
 const deleting = ref(false);
 
-// Computed: available tags (not yet selected)
+// Computed: available tags — hidden entirely when no catalog is selected.
+// When a catalog is selected, shows only the tags from that catalog that
+// are not yet linked to the group being edited.
 const availableTags = computed(() => {
+  if (tagNameForm.category == null) return [];
   const selectedIds = new Set(selectedTags.value.map((t) => t.id));
   return allTags.value.filter((t) => !selectedIds.has(t.id));
 });
@@ -467,9 +473,11 @@ async function loadItems() {
   }
 }
 
-async function loadAllTags() {
+async function loadAllTags(categoryId?: number | null) {
   try {
-    const res = await tagsAdminAPI.getAll();
+    const params: { category?: number } = {};
+    if (categoryId != null) params.category = categoryId;
+    const res = await tagsAdminAPI.getAll(params);
     allTags.value = res.data.results || res.data;
   } catch (e) {
     console.error(e);
@@ -519,9 +527,9 @@ async function editTagName(item: any) {
   tagNameForm.category = item.category;
   error.value = "";
 
-  // Load tags for this group
+  // Load tags for this group scoped to its catalog
   selectedTags.value = item.tags ? [...item.tags] : [];
-  await loadAllTags();
+  await loadAllTags(item.category);
 
   showTagNameModal.value = true;
 }
@@ -661,6 +669,7 @@ async function saveTagName() {
       tagNameForm.name = newTagName.name;
       tagNameForm.category = newTagName.category;
       selectedTags.value = [];
+      await loadAllTags(newTagName.category);
     }
   } catch (e: any) {
     error.value = e.response?.data?.detail || "Ошибка";
@@ -700,6 +709,24 @@ async function performDelete() {
 }
 
 watch(activeTab, loadItems);
+
+// When the catalog selection changes inside the tag-group modal,
+// reload the available-tags pool scoped to that catalog and drop any
+// selected tags that no longer belong to the new catalog.
+watch(
+  () => tagNameForm.category,
+  async (newCat) => {
+    if (!showTagNameModal.value) return;
+    await loadAllTags(newCat);
+    if (newCat == null) {
+      // No catalog selected — hide the pool but keep already-linked tags intact.
+      return;
+    }
+    // Prune selected tags that don't belong to the newly chosen catalog.
+    const validIds = new Set(allTags.value.map((t: any) => t.id));
+    selectedTags.value = selectedTags.value.filter((t) => validIds.has(t.id));
+  }
+);
 
 onMounted(() => {
   loadItems();
@@ -805,6 +832,18 @@ onMounted(() => {
   font-size: 13px;
   color: #64748b;
   margin-bottom: 8px;
+}
+
+.available-values-hidden {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
 }
 
 .values-list {
