@@ -361,16 +361,6 @@ interface Particle {
   alpha: number
 }
 
-interface WireShape {
-  cx: number; cy: number
-  size: number
-  angle: number
-  rotSpeed: number
-  sides: number
-  color: string
-  alpha: number
-  floatOffset: number
-}
 
 function initThree() {
   const canvas = canvasRef.value
@@ -398,15 +388,6 @@ function initThree() {
     alpha: Math.random() * 0.55 + 0.15,
   }))
 
-  // ── Wireframe Shapes ───────────────────────────────────
-  const shapes: WireShape[] = [
-    { cx: 0.82, cy: 0.18, size: 80, angle: 0, rotSpeed: 0.004, sides: 8, color: '#d4a574', alpha: 0.22, floatOffset: 0 },
-    { cx: 0.12, cy: 0.75, size: 60, angle: 1, rotSpeed: 0.006, sides: 6, color: '#2d6a4f', alpha: 0.28, floatOffset: 2 },
-    { cx: 0.70, cy: 0.65, size: 45, angle: 2, rotSpeed: 0.003, sides: 4, color: '#d4a574', alpha: 0.18, floatOffset: 4 },
-    { cx: 0.25, cy: 0.25, size: 35, angle: 0.5, rotSpeed: 0.008, sides: 3, color: '#3a8463', alpha: 0.2, floatOffset: 1 },
-    { cx: 0.55, cy: 0.85, size: 50, angle: 0.8, rotSpeed: 0.005, sides: 6, color: '#b8956a', alpha: 0.15, floatOffset: 3 },
-  ]
-
   // ── Connection lines ───────────────────────────────────
   const drawConnections = (ps: Particle[], ctx: CanvasRenderingContext2D) => {
     const maxDist = 110
@@ -428,46 +409,6 @@ function initThree() {
         }
       }
     }
-  }
-
-  // ── Draw polygon wireframe ─────────────────────────────
-  const drawShape = (s: WireShape, t: number, ctx: CanvasRenderingContext2D) => {
-    const W = canvas.width, H = canvas.height
-    const cx = s.cx * W + mouseX * 15
-    const cy = s.cy * H + mouseY * 10 + Math.sin(t * 0.6 + s.floatOffset) * 18
-    ctx.save()
-    ctx.translate(cx, cy)
-    ctx.rotate(s.angle)
-    ctx.globalAlpha = s.alpha
-    ctx.strokeStyle = s.color
-    ctx.lineWidth = 1.2
-    ctx.beginPath()
-    for (let i = 0; i <= s.sides; i++) {
-      const a = (i / s.sides) * Math.PI * 2 - Math.PI / 2
-      const x = Math.cos(a) * s.size
-      const y = Math.sin(a) * s.size
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-    }
-    ctx.closePath()
-    ctx.stroke()
-    // inner ring
-    ctx.beginPath()
-    for (let i = 0; i <= s.sides; i++) {
-      const a = (i / s.sides) * Math.PI * 2 - Math.PI / 2
-      const x = Math.cos(a) * s.size * 0.55
-      const y = Math.sin(a) * s.size * 0.55
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-    }
-    ctx.stroke()
-    // spokes
-    for (let i = 0; i < s.sides; i++) {
-      const a = (i / s.sides) * Math.PI * 2 - Math.PI / 2
-      ctx.beginPath()
-      ctx.moveTo(Math.cos(a) * s.size * 0.55, Math.sin(a) * s.size * 0.55)
-      ctx.lineTo(Math.cos(a) * s.size, Math.sin(a) * s.size)
-      ctx.stroke()
-    }
-    ctx.restore()
   }
 
   let t = 0
@@ -498,12 +439,6 @@ function initThree() {
     })
 
     drawConnections(particles, ctx)
-
-    // Draw shapes
-    shapes.forEach(s => {
-      s.angle += s.rotSpeed
-      drawShape(s, t, ctx)
-    })
   }
   tick()
 
