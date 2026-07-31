@@ -170,7 +170,7 @@ class ProductFeature(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(max_length=100, verbose_name='Тег')
-    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    slug = models.SlugField(max_length=120, blank=True)
     category = models.ForeignKey(
         'Category',
         on_delete=models.CASCADE,
@@ -193,7 +193,7 @@ class Tag(models.Model):
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
         ordering = ['name']
-        unique_together = ['tag_name', 'name']
+        unique_together = [['name', 'category']]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -205,7 +205,7 @@ class Tag(models.Model):
 
 class TagName(models.Model):
     """Модель для имен тегов"""
-    name = models.CharField(max_length=100, unique=True, verbose_name='Имя тега')
+    name = models.CharField(max_length=100, verbose_name='Имя тега')
     category = models.ForeignKey(
         'Category',
         on_delete=models.CASCADE,
@@ -220,6 +220,7 @@ class TagName(models.Model):
         verbose_name = 'Имя тега'
         verbose_name_plural = 'Имена тегов'
         ordering = ['name']
+        unique_together = [['name', 'category']]
 
     def __str__(self):
         return self.name
