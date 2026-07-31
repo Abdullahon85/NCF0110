@@ -813,7 +813,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
   productsAPI,
@@ -1089,6 +1089,32 @@ onMounted(async () => {
     await Promise.all([loadReviews(), loadQuestions(), loadSimilarProducts()]);
   }
 });
+
+// When the slug changes (e.g. clicking a similar product card), reset all
+// page state, scroll to top, and re-fetch everything for the new product.
+watch(
+  () => route.params.slug,
+  async (newSlug, oldSlug) => {
+    if (!newSlug || newSlug === oldSlug) return;
+
+    // Reset content so stale data is never visible during load
+    product.value = null;
+    reviews.value = [];
+    questions.value = [];
+    similarProducts.value = [];
+    error.value = null;
+    loading.value = true;
+    activeTab.value = "description";
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    await Promise.all([loadProduct(), loadContactInfo()]);
+    if (product.value) {
+      await Promise.all([loadReviews(), loadQuestions(), loadSimilarProducts()]);
+    }
+  }
+);
+
 /* --- brand helpers --- */
 /* product.brand может быть объектом Brand, строкой или id */
 </script>
