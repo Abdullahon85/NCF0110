@@ -4,6 +4,7 @@ Pure functions: they take the environment mapping explicitly so they can be
 unit-tested without touching os.environ or Django settings.
 """
 import os
+import re
 from typing import Mapping
 
 from django.core.exceptions import ImproperlyConfigured
@@ -55,18 +56,35 @@ def resolve_secret_key(environ: Mapping[str, str], debug: bool) -> str:
     return key
 
 
-DEFAULT_ALLOWED_HOSTS = ["ncb-1.onrender.com"]
+DEV_HOSTS = ["localhost", "127.0.0.1"]
+DEV_CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]  # Vite dev server
 
 
 def build_allowed_hosts(environ: Mapping[str, str], debug: bool) -> list[str]:
-    """ALLOWED_HOSTS from env + the hostname Render assigns + Replit dev domain;
-    localhost only in debug. A wildcard is refused: it disables Host validation."""
-    hosts = env_list("ALLOWED_HOSTS", DEFAULT_ALLOWED_HOSTS, environ)
-    for name in ("RENDER_EXTERNAL_HOSTNAME", "REPLIT_DEV_DOMAIN"):
-        if environ.get(name, "").strip():
-            hosts.append(environ[name].strip())
+    """ALLOWED_HOSTS (comma-separated) from the environment; localhost added in debug.
+    Production must list its domains explicitly; '*' is refused (disables Host validation)."""
+    hosts = env_list("ALLOWED_HOSTS", [], environ)
     if debug:
-        hosts += ["localhost", "127.0.0.1"]
+        hosts += DEV_HOSTS
     if "*" in hosts:
         raise ImproperlyConfigured("ALLOWED_HOSTS must list real host names; '*' is not allowed.")
+    if not hosts:
+        raise ImproperlyConfigured("ALLOWED_HOSTS is required when DEBUG is off (e.g. ALLOWED_HOSTS=shop.uz,api.shop.uz).")
     return list(dict.fromkeys(hosts))
+
+
+_ORIGIN_RE = re.compile(r"https?://[^/\s*]+")
+
+
+def build_cors_origins(environ: Mapping[str, str], debug: bool) -> list[str]:
+    """Frontend origins allowed to call the API from the browser (CORS + CSRF trusted origins).
+    CORS_ALLOWED_ORIGINS is comma-separated, each 'scheme://host[:port]' without a path."""
+    origins = env_list("CORS_ALLOWED_ORIGINS", [], environ)
+    for origin in origins:
+        if not _ORIGIN_RE.fullmatch(origin):
+            raise ImproperlyConfigured(
+                f"CORS_ALLOWED_ORIGINS entry {origin!r} must look like https://shop.uz (no path, no '*')."
+            )
+    if debug:
+        origins += DEV_CORS_ORIGINS
+    return list(dict.fromkeys(origins))

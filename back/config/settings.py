@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-from config.env import build_allowed_hosts, env_bool, resolve_secret_key
+from config.env import build_allowed_hosts, build_cors_origins, env_bool, resolve_secret_key
 
 # SECURITY: DEBUG is off unless explicitly enabled (DEBUG=True in the environment).
 DEBUG = env_bool('DEBUG', False)
@@ -30,11 +30,10 @@ DEBUG = env_bool('DEBUG', False)
 # keys that were ever committed to the repository are always rejected.
 SECRET_KEY = resolve_secret_key(os.environ, DEBUG)
 
-# Comma-separated ALLOWED_HOSTS env + RENDER_EXTERNAL_HOSTNAME + REPLIT_DEV_DOMAIN
-# (+ localhost in debug). '*' is rejected.
+# Comma-separated ALLOWED_HOSTS env (+ localhost in debug). Required in production; '*' is rejected.
 ALLOWED_HOSTS = build_allowed_hosts(os.environ, DEBUG)
 
-# Uploaded media are served by Django itself (no separate media server on Render).
+# Uploaded media are served by Django itself unless a web server (nginx) serves /media/ (then set SERVE_MEDIA=False).
 SERVE_MEDIA = env_bool('SERVE_MEDIA', True)
 
 # The stock Django admin (/dashboard-ctrl-panel/) has no login rate limiting;
@@ -71,34 +70,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-# CORS настройки - только доверенные домены!
-# В production убедитесь что здесь только ваши настоящие домены
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5173",
-    "http://localhost:8080",
-    "https://nargi.netlify.app",
-    "https://ncff.netlify.app",
-    "https://ncf-puce.vercel.app",
-]
-
-# Add Replit dev domain dynamically
-import os as _os
-_replit_domain = _os.environ.get('REPLIT_DEV_DOMAIN', '')
-if _replit_domain:
-    CORS_ALLOWED_ORIGINS += [
-        f"https://{_replit_domain}",
-        f"http://{_replit_domain}",
-    ]
-
-# В production можно ограничить CORS только для production доменов
-if not DEBUG:
-    CORS_ALLOWED_ORIGINS = [
-        origin for origin in CORS_ALLOWED_ORIGINS 
-        if origin.startswith('https://')
-    ]
+# CORS: browser origins of the frontend allowed to call the API
+# (CORS_ALLOWED_ORIGINS env, comma-separated; Vite dev server added in debug).
+# Not needed when the frontend and the API are served from the same domain.
+CORS_ALLOWED_ORIGINS = build_cors_origins(os.environ, DEBUG)
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -220,24 +195,12 @@ CACHES = {
         'LOCATION': os.path.join(_CACHE_DIR, 'throttle'),
         'OPTIONS': {'MAX_ENTRIES': 100000},
     },
-}  # False для JavaScript доступа (API)
+}
+
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = not DEBUG  # HTTPS only in production
 CSRF_COOKIE_HTTPONLY = False  # JS needs to read CSRF token for API calls
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5173",
-    "https://nargi.netlify.app",
-    "https://ncff.netlify.app",
-]
-
-# В production фильтруем только HTTPS
-if not DEBUG:
-    CSRF_TRUSTED_ORIGINS = [
-        origin for origin in CSRF_TRUSTED_ORIGINS 
-        if origin.startswith('https://')
-    ]
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 CORS_ALLOW_ALL_ORIGINS = False  # НИКОГДА не ставьте True в production!
 CORS_ALLOW_CREDENTIALS = True
@@ -285,7 +248,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Security Settings для Production
 if not DEBUG:
     # HTTPS Enforcement
-    SECURE_SSL_REDIRECT = True  # Автоматический редирект на HTTPS
+    # Redirect HTTP -> HTTPS in Django. Set SECURE_SSL_REDIRECT=False if the web
+    # server/proxy already does it, or if it does not send X-Forwarded-Proto (loop).
+    SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
     SECURE_HSTS_SECONDS = 31536000  # 1 year - браузер будет использовать только HTTPS
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -297,7 +262,8 @@ if not DEBUG:
     # Frame Options
     X_FRAME_OPTIONS = 'DENY'  # Защита от clickjacking
     
-    # Proxy Settings (для Render/Heroku)
+    # Behind a reverse proxy (nginx etc.) that terminates HTTPS and sets
+    # X-Forwarded-Proto: https. The proxy must overwrite this header from clients.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
     # Cookie настройки для production

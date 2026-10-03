@@ -4,6 +4,7 @@ from django.test import SimpleTestCase
 from config.env import (
     LEAKED_SECRET_KEYS,
     build_allowed_hosts,
+    build_cors_origins,
     env_bool,
     env_list,
     resolve_secret_key,
@@ -65,20 +66,43 @@ class EnvHelpersTest(SimpleTestCase):
 
 
 class AllowedHostsTest(SimpleTestCase):
-    def test_default_production_hosts(self):
-        self.assertEqual(build_allowed_hosts({}, debug=False), ["ncb-1.onrender.com"])
+    def test_production_requires_explicit_hosts(self):
+        with self.assertRaises(ImproperlyConfigured):
+            build_allowed_hosts({}, debug=False)
 
-    def test_render_hostname_added(self):
-        self.assertIn("x.onrender.com", build_allowed_hosts({"RENDER_EXTERNAL_HOSTNAME": "x.onrender.com"}, False))
+    def test_production_hosts_from_env(self):
+        self.assertEqual(build_allowed_hosts({"ALLOWED_HOSTS": "shop.uz, api.shop.uz"}, False),
+                         ["shop.uz", "api.shop.uz"])
 
     def test_localhost_only_in_debug(self):
-        self.assertNotIn("localhost", build_allowed_hosts({}, False))
-        self.assertIn("localhost", build_allowed_hosts({}, True))
+        self.assertNotIn("localhost", build_allowed_hosts({"ALLOWED_HOSTS": "shop.uz"}, False))
+        self.assertEqual(build_allowed_hosts({}, True), ["localhost", "127.0.0.1"])
 
     def test_wildcard_rejected(self):
         with self.assertRaises(ImproperlyConfigured):
             build_allowed_hosts({"ALLOWED_HOSTS": "example.uz,*"}, False)
 
+    def test_no_hosting_specific_hosts(self):
+        hosts = build_allowed_hosts({"ALLOWED_HOSTS": "a.uz", "RENDER_EXTERNAL_HOSTNAME": "x.onrender.com",
+                                     "REPLIT_DEV_DOMAIN": "x.replit.dev"}, False)
+        self.assertEqual(hosts, ["a.uz"])
+
     def test_no_duplicates(self):
-        hosts = build_allowed_hosts({"ALLOWED_HOSTS": "a.uz", "RENDER_EXTERNAL_HOSTNAME": "a.uz"}, False)
-        self.assertEqual(hosts.count("a.uz"), 1)
+        self.assertEqual(build_allowed_hosts({"ALLOWED_HOSTS": "localhost"}, True).count("localhost"), 1)
+
+
+class CorsOriginsTest(SimpleTestCase):
+    def test_origins_from_env(self):
+        self.assertEqual(build_cors_origins({"CORS_ALLOWED_ORIGINS": "https://shop.uz, https://admin.shop.uz"}, False),
+                         ["https://shop.uz", "https://admin.shop.uz"])
+
+    def test_empty_in_production_by_default(self):
+        self.assertEqual(build_cors_origins({}, False), [])
+
+    def test_vite_dev_server_allowed_in_debug(self):
+        self.assertEqual(build_cors_origins({}, True), ["http://localhost:5173", "http://127.0.0.1:5173"])
+
+    def test_invalid_origins_rejected(self):
+        for value in ("*", "shop.uz", "https://shop.uz/", "ftp://shop.uz"):
+            with self.subTest(value=value), self.assertRaises(ImproperlyConfigured):
+                build_cors_origins({"CORS_ALLOWED_ORIGINS": value}, False)
