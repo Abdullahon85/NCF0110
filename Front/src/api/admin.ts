@@ -7,7 +7,7 @@ import type {
 } from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? "/api";
+  import.meta.env.VITE_API_URL || "/api"; // empty value in .env -> same-domain /api
 // ============ SECURITY CONSTANTS ============
 const TOKEN_KEY = "admin_token";
 const REFRESH_KEY = "admin_refresh";
@@ -68,6 +68,15 @@ const tokenStorage = {
     }
   },
 };
+
+// Session is over (revoked/expired): drop tokens and go to the login page.
+function endSession() {
+  tokenStorage.clearTokens();
+  const path = window.location.pathname;
+  if (path.startsWith("/admin") && path !== "/admin/login") {
+    window.location.assign("/admin/login");
+  }
+}
 
 // ============ TOKEN REFRESH (single flight) ============
 // Refresh tokens rotate: each refresh revokes the token it used. Parallel requests
@@ -171,11 +180,14 @@ adminApi.interceptors.response.use(
 
           return adminApi(originalRequest);
         } catch {
-          tokenStorage.clearTokens();
+          endSession();
         }
       } else {
-        tokenStorage.clearTokens();
+        endSession();
       }
+    } else if (error.response?.status === 401 && originalRequest?._retry) {
+      // Still 401 with a freshly refreshed token (e.g. password changed elsewhere).
+      endSession();
     }
 
     if (error.response?.status === 429) {

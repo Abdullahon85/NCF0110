@@ -59,16 +59,25 @@ Dev-сервер Vite проксирует `/api` и `/media` на `http://127.0
 | `DEBUG` | — | `True` только локально. По умолчанию `False`. |
 | `ALLOWED_HOSTS` | да | Домены API через запятую, например `api.shop.uz`. `*` запрещён. |
 | `CORS_ALLOWED_ORIGINS` | если фронт на другом домене | Например `https://shop.uz`, без пути. Если фронт и API на одном домене, оставить пустым. |
-| `DATABASE_URL` | рекомендуется | `postgres://user:password@host:5432/dbname` (опционально `?sslmode=require`). Пусто = SQLite. |
+| `DATABASE_URL` | рекомендуется | `postgres://user:password@host:5432/dbname` (опционально `?sslmode=require`). Пусто = SQLite. Спецсимволы в пароле кодируются: `@` → `%40`, `:` → `%3A`, `/` → `%2F`. |
 | `TRUSTED_PROXY_COUNT` | — | Сколько прокси перед Django дописывают `X-Forwarded-For`: nginx → gunicorn = `1`, без прокси = `0`. Нужна для лимитов по реальному IP, см. «Безопасность». |
 | `SECURE_SSL_REDIRECT` | — | `True` по умолчанию. `False`, если HTTPS-редирект делает nginx или балансировщик. |
-| `SERVE_MEDIA` | — | `True`: Django сам отдаёт `/media/`. `False`, если `/media/` раздаёт nginx (рекомендуется). |
+| `SERVE_MEDIA` | — | `True` (по умолчанию): Django сам отдаёт `/media/`. `False`, если `/media/` раздаёт nginx (рекомендуется). |
+| `MEDIA_URL` | если API на другом домене | Пусто = `/media/`. При API на отдельном домене: `https://api.shop.uz/media/`, тогда адреса картинок в ответах API будут полными. |
 | `CACHE_DIR` | — | Каталог файлового кэша для лимитов запросов. По умолчанию системный temp. |
 | `ENABLE_DJANGO_ADMIN` | — | Стандартная Django-админка `/dashboard-ctrl-panel/`. По умолчанию выключена в production. |
 
 ### Фронтенд
 
-[`Front/.env.example`](Front/.env.example): `VITE_API_URL` задаётся **на этапе сборки**. Пусто означает `/api` на том же домене (рекомендуется).
+[`Front/.env.example`](Front/.env.example): `VITE_API_URL` задаётся **на этапе сборки** (`npm run build`). Пусто или не задано означает `/api` на том же домене (рекомендуется).
+
+### Фронт и API на разных доменах
+
+Например, `shop.uz` для сайта и `api.shop.uz` для API. Нужны все три настройки:
+
+1. При сборке фронта: `VITE_API_URL=https://api.shop.uz/api`.
+2. На бэкенде: `CORS_ALLOWED_ORIGINS=https://shop.uz`.
+3. На бэкенде: `MEDIA_URL=https://api.shop.uz/media/`. Без этого картинки будут запрашиваться с домена сайта и не загрузятся.
 
 ---
 
@@ -94,7 +103,25 @@ python manage.py check --deploy          # допустимо только W008,
 gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3
 ```
 
-Для постоянной работы gunicorn запускается как systemd-сервис, переменные задаются через `Environment=` в unit-файле.
+Для постоянной работы gunicorn запускается как systemd-сервис, например `/etc/systemd/system/ncf.service`:
+
+```ini
+[Unit]
+Description=NCF Django API
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/srv/ncf/back
+EnvironmentFile=/srv/ncf/back/.env          # KEY=value построчно, по образцу back/.env.example
+ExecStart=/srv/ncf/back/.venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Затем: `systemctl daemon-reload && systemctl enable --now ncf`. У пользователя сервиса должны быть права на запись в `back/media/`.
 
 ### 2. Фронтенд
 
@@ -108,7 +135,8 @@ npm run build          # результат в Front/dist
 
 ```nginx
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;                            # nginx >= 1.25.1; на старых: listen 443 ssl http2;
     server_name shop.uz;
     # ssl_certificate ...; ssl_certificate_key ...;
 
@@ -133,6 +161,10 @@ server {
         alias /srv/ncf/back/staticfiles/;
     }
 
+    # Только если включена стандартная Django-админка (ENABLE_DJANGO_ADMIN=True):
+    # location /dashboard-ctrl-panel/ { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host;
+    #     proxy_set_header X-Forwarded-For $remote_addr; proxy_set_header X-Forwarded-Proto https; }
+
     location / {
         try_files $uri $uri/ /index.html;   # SPA: все маршруты Vue отдают index.html
     }
@@ -152,23 +184,43 @@ server {
 >
 > Проверка после деплоя: 6 неверных попыток входа подряд, каждая с новым заголовком `X-Forwarded-For`, должны дать на шестой ответ `429`.
 
-### 4. Резервные копии
+У пользователя nginx должны быть права на чтение `back/media/` и `Front/dist/`.
 
-- База данных: `pg_dump`, по расписанию.
-- `back/media/`: загруженные картинки товаров, брендов, категорий и баннеров. В git они не хранятся.
+> HSTS: в production сайт отдаёт `Strict-Transport-Security` на 1 год с `includeSubDomains` и `preload`. Браузеры после этого заходят на домен и все его поддомены только по HTTPS. Включайте production-режим, когда HTTPS настроен на всех поддоменах; иначе уменьшите `SECURE_HSTS_SECONDS` в `config/settings.py`.
 
+### 4. Обслуживание
+
+- **Резервные копии:** база данных (`pg_dump` по расписанию) и `back/media/` (картинки товаров, брендов, категорий и баннеров; в git их нет).
+- **Очистка таблиц токенов:** раз в сутки, например через cron:
+
+  ```bash
+  cd /srv/ncf/back && .venv/bin/python manage.py flushexpiredtokens
+  ```
+
+### 5. Обновление (повторный деплой)
+
+```bash
+cd /srv/ncf && git pull
+cd back && .venv/bin/pip install -r requirements.txt
+.venv/bin/python manage.py migrate && .venv/bin/python manage.py collectstatic --noinput
+sudo systemctl restart ncf
+cd ../Front && npm ci && npm run build
+```
+
+После первого деплоя этой версии все администраторы должны войти заново: старые токены недействительны.
 ---
 
 ## Тесты и проверки
 
 ```bash
 cd back
-DEBUG=True python manage.py test api config        # 131 тест
+DEBUG=True python manage.py test api config
 DEBUG=True python manage.py makemigrations --check --dry-run
 pip-audit -r requirements.txt                      # (pip install pip-audit)
 
 cd ../Front
 npm run build                                      # включает проверку типов vue-tsc
+npm audit --omit=dev                               # зависимости, попадающие в сайт
 ```
 
 Тесты проходят на SQLite и на PostgreSQL 16: для этого задайте `DATABASE_URL`. Кэш в тестах всегда в памяти (`config/test_runner.py`).
@@ -200,7 +252,7 @@ docs/superpowers/    аудит безопасности и планы испр�
 
 ## Безопасность (что уже сделано)
 
-Подробно: `docs/superpowers/specs/`.
+Подробно: `docs/superpowers/` (история аудита; шаги про Render/Netlify там устарели).
 
 - **Без собственного `SECRET_KEY`, при `DEBUG` по умолчанию и без `ALLOWED_HOSTS` production не запустится.** Ключи, когда-либо попадавшие в репозиторий, отклоняются всегда.
 - **JWT только для staff:** при входе и при каждом обновлении токена. Refresh-токены ротируются. «Выйти» отзывает refresh-токен. Смена пароля отзывает все сессии и все ранее выданные access-токены.
@@ -210,7 +262,7 @@ docs/superpowers/    аудит безопасности и планы испр�
 - **Загрузка картинок:** проверка по содержимому (JPEG, PNG, GIF, WebP; до 10 МБ и 60 Мп), случайные имена файлов, SVG и HTML запрещены. Загружать может только staff.
 - **CSV-экспорт заказов** экранирует формулы Excel.
 - **Ссылки баннеров:** только `http(s)`, `mailto`, `tel`, `tg`, `viber` или относительные.
-- **Зависимости** проверены `pip-audit`, известных уязвимостей нет.
+- **Зависимости:** `pip-audit` чистый; `npm audit --omit=dev` чистый. Остаётся уязвимость dev-сервера Vite/esbuild (`npm run dev`). На собранный сайт она не влияет, исправляется обновлением Vite до новой мажорной версии.
 
 ### Известные ограничения
 

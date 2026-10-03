@@ -9,6 +9,7 @@ from config.env import (
     build_allowed_hosts,
     build_cors_origins,
     cache_dir,
+    media_url,
     database_config,
     env_bool,
     env_list,
@@ -148,3 +149,16 @@ class CacheDirTest(SimpleTestCase):
 
     def test_explicit_cache_dir(self):
         self.assertEqual(cache_dir({"CACHE_DIR": "/var/cache/ncf"}), "/var/cache/ncf")
+
+
+class MediaUrlTest(SimpleTestCase):
+    def test_default_relative(self):
+        self.assertEqual(media_url({}), "/media/")
+
+    def test_absolute_for_separate_api_domain(self):
+        self.assertEqual(media_url({"MEDIA_URL": "https://api.shop.uz/media"}), "https://api.shop.uz/media/")
+
+    def test_invalid_rejected(self):
+        for value in ("media/", "ftp://x/media/"):
+            with self.subTest(value=value), self.assertRaises(ImproperlyConfigured):
+                media_url({"MEDIA_URL": value})

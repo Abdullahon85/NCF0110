@@ -20,7 +20,7 @@ import type {
 } from "@/types";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? "/api";
+  import.meta.env.VITE_API_URL || "/api"; // empty value in .env -> same-domain /api
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -258,9 +258,14 @@ export const bannersAPI = {
  * @param path - image path from API (relative or absolute URL)
  * @returns full image URL
  */
+// API on its own domain (absolute VITE_API_URL): the backend returns absolute
+// image URLs (MEDIA_URL=https://api.../media/), keep them as they are.
+const API_IS_CROSS_DOMAIN = /^https?:\/\//.test(API_BASE_URL);
+
 export const getImageUrl = (path: string | null): string => {
   if (!path) return "";
-  // Strip the backend origin so Vite proxy can handle /media/* correctly
+  if (API_IS_CROSS_DOMAIN && /^https?:\/\//.test(path)) return path;
+  // Same domain: strip the backend origin so /media/* goes through the proxy (dev) or nginx (prod)
   if (path.startsWith("http://") || path.startsWith("https://")) {
     try {
       const url = new URL(path);

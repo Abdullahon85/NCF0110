@@ -201,3 +201,11 @@ class FinalReviewFixesTest(HandoverBase):
         me = APIClient()
         me.credentials(HTTP_AUTHORIZATION=f"Bearer {r.data['access']}")
         self.assertEqual(me.get("/api/admin/auth/me/").status_code, 200)
+
+
+class AbsoluteMediaUrlTest(HandoverBase):
+    def test_api_returns_absolute_image_urls_when_media_url_is_absolute(self):
+        Brand.objects.create(name="B", slug="b", logo="brands/b.png")
+        with override_settings(MEDIA_URL="https://api.shop.uz/media/"):
+            r = self.client.get("/api/brands/b/")
+        self.assertEqual(r.data["image"], "https://api.shop.uz/media/brands/b.png")

@@ -132,3 +132,13 @@ def cache_dir(environ: Mapping[str, str]) -> str:
     (e.g. copied from .env.example) falls back to the system temp dir."""
     import tempfile
     return environ.get("CACHE_DIR", "").strip() or os.path.join(tempfile.gettempdir(), "ncf_django_cache")
+
+
+def media_url(environ: Mapping[str, str]) -> str:
+    """MEDIA_URL: '/media/' when the frontend and API share a domain (default);
+    an absolute URL (https://api.example.uz/media/) when the API is on its own
+    domain, so image URLs in API responses work from the frontend's domain too."""
+    value = environ.get("MEDIA_URL", "").strip() or "/media/"
+    if not (value.startswith("/") or _ORIGIN_RE.match(value)):
+        raise ImproperlyConfigured("MEDIA_URL must be '/media/' or an absolute http(s) URL ending with /media/.")
+    return value if value.endswith("/") else value + "/"

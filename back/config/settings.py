@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-from config.env import build_allowed_hosts, build_cors_origins, cache_dir, database_config, env_bool, resolve_secret_key
+from config.env import build_allowed_hosts, build_cors_origins, cache_dir, database_config, media_url, env_bool, resolve_secret_key
 
 # SECURITY: DEBUG is off unless explicitly enabled (DEBUG=True in the environment).
 DEBUG = env_bool('DEBUG', False)
@@ -237,7 +237,8 @@ USE_I18N = True
 USE_TZ = True
 
 # Media files
-MEDIA_URL = '/media/'
+# '/media/' (same domain) or absolute https://api.example.uz/media/ when the API has its own domain.
+MEDIA_URL = media_url(os.environ)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Static files (CSS, JavaScript, Images)
