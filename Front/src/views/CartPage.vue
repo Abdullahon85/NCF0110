@@ -299,6 +299,7 @@
 </template>
 
 <script setup lang="ts">
+import { describeSubmitError } from "@/utils/apiError";
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useCartStore } from "@/stores/useCartStore";
@@ -369,9 +370,10 @@ const submitOrder = async () => {
     orderSuccess.value = true;
     showForm.value = false;
   } catch (e: any) {
-    formError.value =
-      e?.response?.data?.detail ||
-      "Произошла ошибка при отправке. Попробуйте ещё раз или позвоните нам.";
+    formError.value = describeSubmitError(
+      e,
+      "Произошла ошибка при отправке. Попробуйте ещё раз или позвоните нам.",
+    );
   } finally {
     submitting.value = false;
   }

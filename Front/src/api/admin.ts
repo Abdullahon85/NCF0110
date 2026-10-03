@@ -69,6 +69,28 @@ const tokenStorage = {
   },
 };
 
+// ============ TOKEN REFRESH (single flight) ============
+// Refresh tokens rotate: each refresh revokes the token it used. Parallel requests
+// with an expired access token must share ONE refresh call, otherwise all but the
+// first fail with 401 and the admin is logged out.
+let refreshInFlight: Promise<string> | null = null;
+
+function refreshAccessToken(): Promise<string> {
+  if (!refreshInFlight) {
+    const refresh = tokenStorage.getRefreshToken();
+    refreshInFlight = axios
+      .post(`${API_BASE_URL}/admin/auth/refresh/`, { refresh })
+      .then(({ data }) => {
+        tokenStorage.setTokens(data.access, data.refresh);
+        return data.access as string;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+}
+
 // ============ AXIOS INSTANCE ============
 const adminApi = axios.create({
   baseURL: API_BASE_URL,
@@ -102,18 +124,10 @@ adminApi.interceptors.request.use(
     const token = tokenStorage.getToken();
     if (token && config.headers) {
       if (tokenStorage.isTokenExpired(token)) {
-        const refreshToken = tokenStorage.getRefreshToken();
-        if (refreshToken) {
+        if (tokenStorage.getRefreshToken()) {
           try {
-            const { data } = await axios.post(
-              `${API_BASE_URL}/admin/auth/refresh/`,
-              {
-                refresh: refreshToken,
-              },
-            );
-            // Refresh tokens rotate: the old one is revoked, keep the new one.
-          tokenStorage.setTokens(data.access, data.refresh);
-            config.headers.Authorization = `Bearer ${data.access}`;
+            const access = await refreshAccessToken();
+            config.headers.Authorization = `Bearer ${access}`;
           } catch {
             tokenStorage.clearTokens();
             return Promise.reject(new Error("Session expired"));
@@ -147,20 +161,12 @@ adminApi.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = tokenStorage.getRefreshToken();
-      if (refreshToken) {
+      if (tokenStorage.getRefreshToken()) {
         try {
-          const { data } = await axios.post(
-            `${API_BASE_URL}/admin/auth/refresh/`,
-            {
-              refresh: refreshToken,
-            },
-          );
-          // Refresh tokens rotate: the old one is revoked, keep the new one.
-          tokenStorage.setTokens(data.access, data.refresh);
+          const access = await refreshAccessToken();
 
           if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${data.access}`;
+            originalRequest.headers.Authorization = `Bearer ${access}`;
           }
 
           return adminApi(originalRequest);
@@ -263,18 +269,11 @@ export const authAPI = {
   },
 
   refreshToken: async () => {
-    const refreshToken = tokenStorage.getRefreshToken();
-    if (!refreshToken) {
+    if (!tokenStorage.getRefreshToken()) {
       throw new Error("No refresh token");
     }
-
-    const { data } = await axios.post(`${API_BASE_URL}/admin/auth/refresh/`, {
-      refresh: refreshToken,
-    });
-
-    // Refresh tokens rotate: the old one is revoked, keep the new one.
-    tokenStorage.setTokens(data.access, data.refresh);
-    return data;
+    const access = await refreshAccessToken();
+    return { access };
   },
 
   checkSession: () => {

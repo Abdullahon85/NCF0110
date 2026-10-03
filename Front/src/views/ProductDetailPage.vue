@@ -518,7 +518,7 @@
               </div>
               <button
                 class="rw-add-btn"
-                @click="showReviewForm = !showReviewForm"
+                @click="showReviewForm = !showReviewForm; reviewNotice = ''; reviewError = ''"
               >
                 <svg
                   width="16"
@@ -538,6 +538,7 @@
 
             <!-- Review form -->
             <p v-if="reviewNotice" class="rw-notice">{{ reviewNotice }}</p>
+            <p v-if="reviewError" class="rw-notice rw-notice--error">{{ reviewError }}</p>
             <div v-if="showReviewForm" class="rw-form">
               <h4 class="rw-form-title">Ваш отзыв</h4>
               <div class="rw-form-field">
@@ -652,7 +653,7 @@
               <span></span>
               <button
                 class="rw-add-btn"
-                @click="showQuestionForm = !showQuestionForm"
+                @click="showQuestionForm = !showQuestionForm; questionNotice = ''; questionError = ''"
               >
                 <svg
                   width="16"
@@ -672,6 +673,7 @@
 
             <!-- Question form -->
             <p v-if="questionNotice" class="rw-notice">{{ questionNotice }}</p>
+            <p v-if="questionError" class="rw-notice rw-notice--error">{{ questionError }}</p>
             <div v-if="showQuestionForm" class="rw-form">
               <h4 class="rw-form-title">Ваш вопрос</h4>
               <div class="rw-form-field">
@@ -817,6 +819,7 @@
 </template>
 
 <script setup lang="ts">
+import { describeSubmitError } from "@/utils/apiError";
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
@@ -860,6 +863,8 @@ const questionForm = ref({ author_name: "", text: "" });
 // New reviews/questions are hidden until a moderator publishes them.
 const reviewNotice = ref("");
 const questionNotice = ref("");
+const reviewError = ref("");
+const questionError = ref("");
 
 // Cart quantity for current product
 const cartQty = computed(() => {
@@ -925,6 +930,7 @@ const submitReview = async () => {
   )
     return;
   try {
+    reviewError.value = "";
     const res = await reviewsAPI.create(product.value.slug, reviewForm.value);
     if (res.data.is_published) {
       reviews.value.unshift(res.data);
@@ -935,6 +941,7 @@ const submitReview = async () => {
     showReviewForm.value = false;
   } catch (err) {
     console.error("Failed to submit review:", err);
+    reviewError.value = describeSubmitError(err, "Не удалось отправить отзыв. Попробуйте ещё раз.");
   }
 };
 
@@ -946,6 +953,7 @@ const submitQuestion = async () => {
   )
     return;
   try {
+    questionError.value = "";
     const res = await questionsAPI.create(
       product.value.slug,
       questionForm.value,
@@ -959,6 +967,7 @@ const submitQuestion = async () => {
     showQuestionForm.value = false;
   } catch (err) {
     console.error("Failed to submit question:", err);
+    questionError.value = describeSubmitError(err, "Не удалось отправить вопрос. Попробуйте ещё раз.");
   }
 };
 
@@ -2162,5 +2171,8 @@ watch(
   background: rgba(34, 197, 94, 0.12);
   color: inherit;
   font-size: 14px;
+}
+.rw-notice--error {
+  background: rgba(239, 68, 68, 0.12);
 }
 </style>
