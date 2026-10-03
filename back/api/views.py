@@ -1359,7 +1359,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related('items').order_by('-created_at')
 
     def get_serializer_class(self):
-        if self.request.user and self.request.user.is_authenticated:
+        if self.request.user and self.request.user.is_staff:
             return OrderAdminSerializer
         return OrderSerializer
 

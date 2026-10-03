@@ -1,4 +1,5 @@
 # api/serializers.py
+from django.db import transaction
 from rest_framework import serializers
 from .models import (
     Category, Product, Image, Feature, ProductFeature, FeatureValue,
@@ -571,10 +572,20 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         fields = ['email', 'first_name', 'last_name']
 
 
+MAX_ORDER_ITEMS = 50
+MAX_ITEM_QUANTITY = 999
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
+    """Client sends product id + quantity. Name, SKU and price are always taken
+    from the catalog on the server; values sent by the client are ignored."""
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    quantity = serializers.IntegerField(min_value=1, max_value=MAX_ITEM_QUANTITY)
+
     class Meta:
         model = OrderItem
         fields = ['product', 'product_name', 'product_sku', 'price', 'quantity']
+        read_only_fields = ['product_name', 'product_sku', 'price']
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -588,11 +599,27 @@ class OrderSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'status', 'created_at']
 
+    def validate_items(self, value):
+        if not value:
+            raise serializers.ValidationError('Заказ должен содержать хотя бы один товар.')
+        if len(value) > MAX_ORDER_ITEMS:
+            raise serializers.ValidationError(f'Не более {MAX_ORDER_ITEMS} позиций в заказе.')
+        return value
+
     def create(self, validated_data):
         items_data = validated_data.pop('items')
-        order = Order.objects.create(**validated_data)
-        for item_data in items_data:
-            OrderItem.objects.create(order=order, **item_data)
+        with transaction.atomic():
+            order = Order.objects.create(**validated_data)
+            for item_data in items_data:
+                product = item_data['product']
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    product_name=product.name,
+                    product_sku=product.manufacturer_sku or '',
+                    price=product.price,
+                    quantity=item_data['quantity'],
+                )
         return order
 
 
