@@ -337,27 +337,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             'max_price': float(agg['max_price']) if agg['max_price'] else None,
         })
 
-    @action(detail=True, methods=['post'], url_path='upload-image')
-    def upload_image(self, request, slug=None):
-        """Upload multiple images for a product"""
-        from .models import Image
-        
-        product = self.get_object()
-        uploaded_images = []
-        
-        files = request.FILES.getlist('images')
-        if not files:
-            return Response({'error': 'No images provided'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        for file in files:
-            is_valid, error_msg = validate_uploaded_image(file)
-            if not is_valid:
-                return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
-            image = Image.objects.create(product=product, image=file)
-            uploaded_images.append({'id': image.id, 'image': image.image.url})
-        
-        return Response({'images': uploaded_images}, status=status.HTTP_201_CREATED)
-
 
 class BrandViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Brand.objects.all()
@@ -725,23 +704,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-# === Security: File upload validation ===
-import mimetypes
-
-ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'}
-MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
-
-def validate_uploaded_image(file):
-    """Validate uploaded file is a safe image within size limits."""
-    if file.size > MAX_UPLOAD_SIZE:
-        return False, f'File too large. Maximum size is {MAX_UPLOAD_SIZE // (1024*1024)}MB.'
-    content_type = getattr(file, 'content_type', '')
-    if content_type not in ALLOWED_IMAGE_TYPES:
-        ext = file.name.rsplit('.', 1)[-1].lower() if '.' in file.name else ''
-        guessed_type, _ = mimetypes.guess_type(f'file.{ext}')
-        if guessed_type not in ALLOWED_IMAGE_TYPES:
-            return False, 'Invalid file type. Only JPEG, PNG, GIF, WebP, SVG images are allowed.'
-    return True, None
+# File upload validation lives in api/uploads.py (content-based, via Pillow).
+from .uploads import validate_uploaded_image
 
 
 class ProductAdminViewSet(viewsets.ModelViewSet):

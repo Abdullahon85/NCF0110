@@ -550,6 +550,13 @@ class ImageAdminSerializer(serializers.ModelSerializer):
         model = Image
         fields = ['id', 'product', 'image', 'is_main', 'order']
 
+    def validate_image(self, value):
+        from .uploads import validate_uploaded_image
+        ok, error = validate_uploaded_image(value)
+        if not ok:
+            raise serializers.ValidationError(error)
+        return value
+
 
 # ============ AUTH SERIALIZERS ============
 from django.contrib.auth.models import User

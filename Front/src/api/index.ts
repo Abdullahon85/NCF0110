@@ -156,11 +156,6 @@ export const productsAPI = {
     return api.delete(`/products/${slug}/`);
   },
 
-  uploadImages: (slug: string, formData: FormData) => {
-    return api.post(`/products/${slug}/upload-image/`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
 };
 
 export const newsAPI = {
