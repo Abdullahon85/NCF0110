@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-from config.env import env_bool, env_list, resolve_secret_key
+from config.env import build_allowed_hosts, env_bool, resolve_secret_key
 
 # SECURITY: DEBUG is off unless explicitly enabled (DEBUG=True in the environment).
 DEBUG = env_bool('DEBUG', False)
@@ -30,12 +30,9 @@ DEBUG = env_bool('DEBUG', False)
 # keys that were ever committed to the repository are always rejected.
 SECRET_KEY = resolve_secret_key(os.environ, DEBUG)
 
-# Comma-separated list in the ALLOWED_HOSTS environment variable.
-ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', ['ncb-1.onrender.com'])
-if DEBUG:
-    ALLOWED_HOSTS += ['localhost', '127.0.0.1']
-if os.environ.get('REPLIT_DEV_DOMAIN'):
-    ALLOWED_HOSTS.append(os.environ['REPLIT_DEV_DOMAIN'])
+# Comma-separated ALLOWED_HOSTS env + RENDER_EXTERNAL_HOSTNAME + REPLIT_DEV_DOMAIN
+# (+ localhost in debug). '*' is rejected.
+ALLOWED_HOSTS = build_allowed_hosts(os.environ, DEBUG)
 
 # Uploaded media are served by Django itself (no separate media server on Render).
 SERVE_MEDIA = env_bool('SERVE_MEDIA', True)

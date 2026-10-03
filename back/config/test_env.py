@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 
 from config.env import (
     LEAKED_SECRET_KEYS,
+    build_allowed_hosts,
     env_bool,
     env_list,
     resolve_secret_key,
@@ -61,3 +62,23 @@ class EnvHelpersTest(SimpleTestCase):
     def test_valid_key_returned(self):
         key = "k" * 50
         self.assertEqual(resolve_secret_key({"SECRET_KEY": key}, debug=False), key)
+
+
+class AllowedHostsTest(SimpleTestCase):
+    def test_default_production_hosts(self):
+        self.assertEqual(build_allowed_hosts({}, debug=False), ["ncb-1.onrender.com"])
+
+    def test_render_hostname_added(self):
+        self.assertIn("x.onrender.com", build_allowed_hosts({"RENDER_EXTERNAL_HOSTNAME": "x.onrender.com"}, False))
+
+    def test_localhost_only_in_debug(self):
+        self.assertNotIn("localhost", build_allowed_hosts({}, False))
+        self.assertIn("localhost", build_allowed_hosts({}, True))
+
+    def test_wildcard_rejected(self):
+        with self.assertRaises(ImproperlyConfigured):
+            build_allowed_hosts({"ALLOWED_HOSTS": "example.uz,*"}, False)
+
+    def test_no_duplicates(self):
+        hosts = build_allowed_hosts({"ALLOWED_HOSTS": "a.uz", "RENDER_EXTERNAL_HOSTNAME": "a.uz"}, False)
+        self.assertEqual(hosts.count("a.uz"), 1)

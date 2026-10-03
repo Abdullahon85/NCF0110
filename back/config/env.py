@@ -53,3 +53,20 @@ def resolve_secret_key(environ: Mapping[str, str], debug: bool) -> str:
             f"SECRET_KEY must be at least {MIN_SECRET_KEY_LENGTH} characters and not 'django-insecure' in production."
         )
     return key
+
+
+DEFAULT_ALLOWED_HOSTS = ["ncb-1.onrender.com"]
+
+
+def build_allowed_hosts(environ: Mapping[str, str], debug: bool) -> list[str]:
+    """ALLOWED_HOSTS from env + the hostname Render assigns + Replit dev domain;
+    localhost only in debug. A wildcard is refused: it disables Host validation."""
+    hosts = env_list("ALLOWED_HOSTS", DEFAULT_ALLOWED_HOSTS, environ)
+    for name in ("RENDER_EXTERNAL_HOSTNAME", "REPLIT_DEV_DOMAIN"):
+        if environ.get(name, "").strip():
+            hosts.append(environ[name].strip())
+    if debug:
+        hosts += ["localhost", "127.0.0.1"]
+    if "*" in hosts:
+        raise ImproperlyConfigured("ALLOWED_HOSTS must list real host names; '*' is not allowed.")
+    return list(dict.fromkeys(hosts))
