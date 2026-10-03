@@ -537,6 +537,7 @@
             </div>
 
             <!-- Review form -->
+            <p v-if="reviewNotice" class="rw-notice">{{ reviewNotice }}</p>
             <div v-if="showReviewForm" class="rw-form">
               <h4 class="rw-form-title">Ваш отзыв</h4>
               <div class="rw-form-field">
@@ -578,6 +579,7 @@
                 <label>Текст отзыва</label>
                 <textarea
                   v-model="reviewForm.text"
+                  maxlength="2000"
                   rows="4"
                   placeholder="Напишите ваш отзыв..."
                 ></textarea>
@@ -669,6 +671,7 @@
             </div>
 
             <!-- Question form -->
+            <p v-if="questionNotice" class="rw-notice">{{ questionNotice }}</p>
             <div v-if="showQuestionForm" class="rw-form">
               <h4 class="rw-form-title">Ваш вопрос</h4>
               <div class="rw-form-field">
@@ -684,6 +687,7 @@
                 <label>Текст вопроса</label>
                 <textarea
                   v-model="questionForm.text"
+                  maxlength="1000"
                   rows="4"
                   placeholder="Напишите ваш вопрос..."
                 ></textarea>
@@ -853,6 +857,9 @@ const showReviewForm = ref(false);
 const showQuestionForm = ref(false);
 const reviewForm = ref({ author_name: "", rating: 0, text: "" });
 const questionForm = ref({ author_name: "", text: "" });
+// New reviews/questions are hidden until a moderator publishes them.
+const reviewNotice = ref("");
+const questionNotice = ref("");
 
 // Cart quantity for current product
 const cartQty = computed(() => {
@@ -919,7 +926,11 @@ const submitReview = async () => {
     return;
   try {
     const res = await reviewsAPI.create(product.value.slug, reviewForm.value);
-    reviews.value.unshift(res.data);
+    if (res.data.is_published) {
+      reviews.value.unshift(res.data);
+    } else {
+      reviewNotice.value = "Спасибо! Отзыв появится после проверки модератором.";
+    }
     reviewForm.value = { author_name: "", rating: 0, text: "" };
     showReviewForm.value = false;
   } catch (err) {
@@ -939,7 +950,11 @@ const submitQuestion = async () => {
       product.value.slug,
       questionForm.value,
     );
-    questions.value.unshift(res.data);
+    if (res.data.is_published) {
+      questions.value.unshift(res.data);
+    } else {
+      questionNotice.value = "Спасибо! Вопрос появится после проверки модератором.";
+    }
     questionForm.value = { author_name: "", text: "" };
     showQuestionForm.value = false;
   } catch (err) {
@@ -2139,4 +2154,13 @@ watch(
   }
 }
 
+
+.rw-notice {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.12);
+  color: inherit;
+  font-size: 14px;
+}
 </style>

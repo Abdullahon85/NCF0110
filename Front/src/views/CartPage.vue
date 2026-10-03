@@ -265,6 +265,7 @@
                     <span class="optional">(необязательно)</span></label
                   >
                   <textarea
+                    maxlength="1000"
                     v-model="form.comment"
                     rows="3"
                     placeholder="Уточнения по заказу..."

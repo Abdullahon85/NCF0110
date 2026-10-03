@@ -25,6 +25,7 @@
     <div class="form-group">
       <label for="message">Сообщение *</label>
       <textarea
+        maxlength="3000"
         id="message"
         v-model="formData.message"
         rows="5"

@@ -9,6 +9,13 @@ from .models import (
 )
 
 
+# Limits for text sent by anonymous visitors (spam protection, no DB migration).
+REVIEW_TEXT_MAX_LENGTH = 2000
+QUESTION_TEXT_MAX_LENGTH = 1000
+CONTACT_MESSAGE_MAX_LENGTH = 3000
+ORDER_COMMENT_MAX_LENGTH = 1000
+
+
 class BannerSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
 
@@ -273,6 +280,7 @@ class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
         fields = ['name', 'email', 'message']
+        extra_kwargs = {'message': {'max_length': CONTACT_MESSAGE_MAX_LENGTH}}
 
 
 class ProductReviewSerializer(serializers.ModelSerializer):
@@ -281,6 +289,7 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'author_name', 'rating', 'text',
                   'created_at', 'is_published', 'admin_reply', 'admin_reply_date']
         read_only_fields = ['id', 'created_at', 'is_published', 'admin_reply', 'admin_reply_date', 'product']
+        extra_kwargs = {'text': {'max_length': REVIEW_TEXT_MAX_LENGTH}}
 
 
 class ProductQuestionSerializer(serializers.ModelSerializer):
@@ -289,6 +298,7 @@ class ProductQuestionSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'author_name', 'text',
                   'created_at', 'is_published', 'admin_reply', 'admin_reply_date']
         read_only_fields = ['id', 'created_at', 'is_published', 'admin_reply', 'admin_reply_date', 'product']
+        extra_kwargs = {'text': {'max_length': QUESTION_TEXT_MAX_LENGTH}}
 
 
 # ============ ADMIN SERIALIZERS ============
@@ -598,6 +608,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'customer_telegram', 'comment', 'status', 'created_at', 'items'
         ]
         read_only_fields = ['id', 'status', 'created_at']
+        extra_kwargs = {'comment': {'max_length': ORDER_COMMENT_MAX_LENGTH}}
 
     def validate_items(self, value):
         if not value:

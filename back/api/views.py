@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, action, permission_classes
 from django.db.models import Q, Min, Max, Count
@@ -1477,9 +1478,9 @@ class ProductReviewViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
-        product_slug = self.kwargs.get('product_slug')
-        product = Product.objects.get(slug=product_slug)
-        serializer.save(product=product)
+        # New public submissions wait for moderation in the admin panel.
+        product = get_object_or_404(Product, slug=self.kwargs.get('product_slug'))
+        serializer.save(product=product, is_published=False)
 
 
 class ProductQuestionViewSet(viewsets.ModelViewSet):
@@ -1500,9 +1501,9 @@ class ProductQuestionViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
-        product_slug = self.kwargs.get('product_slug')
-        product = Product.objects.get(slug=product_slug)
-        serializer.save(product=product)
+        # New public submissions wait for moderation in the admin panel.
+        product = get_object_or_404(Product, slug=self.kwargs.get('product_slug'))
+        serializer.save(product=product, is_published=False)
 
 
 @api_view(['GET'])

@@ -63,3 +63,61 @@ class PublicWriteThrottleTest(TestCase):
             r = self.api.patch(f"/api/orders/{order.id}/", {"status": "processing" if i % 2 else "new"},
                                format="json", REMOTE_ADDR="10.0.0.1", HTTP_X_FORWARDED_FOR="203.0.113.7")
             self.assertEqual(r.status_code, 200, f"request {i + 1}")
+
+
+class ModerationAndLimitsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth.models import User
+        cat = Category.objects.create(name="Cameras", slug="cameras")
+        cls.product = Product.objects.create(name="Cam", slug="cam", category=cat, description="d", price=10)
+        cls.staff = User.objects.create_user("staff", password="pw-staff-123", is_staff=True)
+
+    def setUp(self):
+        clear_all_caches()
+        self.api = APIClient()
+
+    def _review(self, text, rating=5):
+        return self.api.post("/api/products/cam/reviews/", {"author_name": "A", "rating": rating, "text": text}, format="json")
+
+    def _question(self, text):
+        return self.api.post("/api/products/cam/questions/", {"author_name": "A", "text": text}, format="json")
+
+    def _contact(self, message):
+        return self.api.post("/api/contact/message/", {"name": "A", "email": "a@a.uz", "message": message}, format="json")
+
+    def _order(self, comment):
+        item = {"product": self.product.id, "product_name": "Cam", "product_sku": "", "price": "10", "quantity": 1}
+        return self.api.post("/api/orders/", {
+            "customer_name": "A", "customer_phone": "+998901234567", "customer_email": "",
+            "customer_telegram": "", "comment": comment, "items": [item],
+        }, format="json")
+
+    def test_new_review_hidden_until_moderated(self):
+        r = self._review(text="ok")
+        self.assertEqual((r.status_code, r.data["is_published"]), (201, False))
+        self.assertEqual(self.api.get("/api/products/cam/reviews/").data["count"], 0)
+
+    def test_admin_publish_makes_review_visible(self):
+        rid = self._review(text="ok").data["id"]
+        self.api.force_authenticate(self.staff)
+        self.assertEqual(self.api.patch(f"/api/admin/reviews/{rid}/", {"is_published": True}, format="json").status_code, 200)
+        self.api.force_authenticate(None)
+        self.assertEqual(self.api.get("/api/products/cam/reviews/").data["count"], 1)
+
+    def test_new_question_hidden_until_moderated(self):
+        r = self._question(text="ok?")
+        self.assertEqual((r.status_code, r.data["is_published"]), (201, False))
+        self.assertEqual(self.api.get("/api/products/cam/questions/").data["count"], 0)
+
+    def test_text_length_limits(self):
+        self.assertEqual(self._review(text="x" * 2000).status_code, 201)
+        self.assertEqual(self._review(text="x" * 2001).status_code, 400)
+        self.assertEqual(self._question(text="x" * 1001).status_code, 400)
+        self.assertEqual(self._contact(message="x" * 3001).status_code, 400)
+        self.assertEqual(self._order(comment="x" * 1001).status_code, 400)
+        self.assertEqual(self._order(comment="x" * 1000).status_code, 201)
+
+    def test_review_for_unknown_product_is_404(self):
+        r = self.api.post("/api/products/nope/reviews/", {"author_name": "A", "rating": 5, "text": "t"}, format="json")
+        self.assertEqual(r.status_code, 404)
