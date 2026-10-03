@@ -7,10 +7,12 @@ from django.views.static import serve
 
 
 urlpatterns = [
-    path('dashboard-ctrl-panel/', admin.site.urls),
     path('api/', include('api.urls')),
     path('meta.json', TemplateView.as_view(template_name='meta.json', content_type='application/json')),
 ]
+
+if settings.ENABLE_DJANGO_ADMIN:
+    urlpatterns.insert(0, path('dashboard-ctrl-panel/', admin.site.urls))
 
 # django.conf.urls.static.static() returns [] when DEBUG is off, so media
 # would disappear in production; serve it explicitly behind SERVE_MEDIA.

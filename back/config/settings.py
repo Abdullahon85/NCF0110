@@ -40,6 +40,10 @@ if os.environ.get('REPLIT_DEV_DOMAIN'):
 # Uploaded media are served by Django itself (no separate media server on Render).
 SERVE_MEDIA = env_bool('SERVE_MEDIA', True)
 
+# The stock Django admin (/dashboard-ctrl-panel/) has no login rate limiting;
+# the Vue admin panel covers day-to-day work. Off in production unless enabled.
+ENABLE_DJANGO_ADMIN = env_bool('ENABLE_DJANGO_ADMIN', DEBUG)
+
 
 # Application definition
 

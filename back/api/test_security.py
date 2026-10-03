@@ -70,3 +70,20 @@ class LoginThrottleTest(TestCase):
         for _ in range(5):
             self._login(xff=None)
         self.assertEqual(self._login(xff=None).status_code, 429)
+
+
+class DjangoAdminToggleTest(TestCase):
+    """The stock Django admin has no login rate limit; it is off in production by default."""
+
+    def tearDown(self):
+        reload_urls()
+
+    def test_admin_hidden_when_disabled(self):
+        with override_settings(ENABLE_DJANGO_ADMIN=False):
+            reload_urls()
+            self.assertEqual(self.client.get("/dashboard-ctrl-panel/login/").status_code, 404)
+
+    def test_admin_available_when_enabled(self):
+        with override_settings(ENABLE_DJANGO_ADMIN=True):
+            reload_urls()
+            self.assertEqual(self.client.get("/dashboard-ctrl-panel/login/").status_code, 200)
