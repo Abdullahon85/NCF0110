@@ -2,7 +2,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
 
 from config.env import (
-    DEV_SECRET_KEY,
     LEAKED_SECRET_KEYS,
     env_bool,
     env_list,
@@ -33,8 +32,17 @@ class EnvHelpersTest(SimpleTestCase):
         with self.assertRaises(ImproperlyConfigured):
             resolve_secret_key({}, debug=False)
 
-    def test_secret_key_dev_fallback_only_in_debug(self):
-        self.assertEqual(resolve_secret_key({}, debug=True), DEV_SECRET_KEY)
+    def test_dev_fallback_key_is_random_not_committed(self):
+        # A fallback committed to the repo would be forgeable like the leaked key.
+        first = resolve_secret_key({}, debug=True)
+        second = resolve_secret_key({}, debug=True)
+        self.assertNotEqual(first, second)
+        self.assertGreaterEqual(len(first), 50)
+
+    def test_dev_fallback_refused_on_render(self):
+        # Render sets RENDER=true; a Render deploy must never run without its own key.
+        with self.assertRaises(ImproperlyConfigured):
+            resolve_secret_key({"RENDER": "true"}, debug=True)
 
     def test_leaked_key_rejected_even_in_debug(self):
         leaked = next(iter(LEAKED_SECRET_KEYS))

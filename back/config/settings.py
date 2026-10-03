@@ -199,19 +199,29 @@ REST_FRAMEWORK = {
         'login': '5/hour',  # Защита от брутфорса
     },
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
-    # SECURITY: number of trusted reverse proxies that append to X-Forwarded-For.
-    # Throttles take the client IP added by the nearest proxy, so a client-supplied
-    # X-Forwarded-For value cannot be used to dodge login rate limits.
-    'NUM_PROXIES': int(os.environ.get('TRUSTED_PROXY_COUNT', '1')),
 }
+
+# SECURITY: number of trusted reverse proxies that append to X-Forwarded-For.
+# Used only by LoginRateThrottle (api/throttles.py) so a client-supplied
+# X-Forwarded-For cannot dodge the login limit; scoped to login so a wrong value
+# cannot merge every catalog visitor into one anonymous rate-limit bucket.
+TRUSTED_PROXY_COUNT = int(os.environ.get('TRUSTED_PROXY_COUNT', '1'))
 
 # Shared by all gunicorn workers on the instance, so throttle counters are not
 # per-process (LocMemCache) and survive worker restarts. No migrations needed.
+_CACHE_DIR = os.environ.get('CACHE_DIR', os.path.join(tempfile.gettempdir(), 'ncf_django_cache'))
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.environ.get('CACHE_DIR', os.path.join(tempfile.gettempdir(), 'ncf_django_cache')),
-    }
+        'LOCATION': os.path.join(_CACHE_DIR, 'default'),
+    },
+    # Login rate-limit counters live apart from cache_page entries so that page
+    # caching (one entry per URL + query string) can never cull them.
+    'throttle': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(_CACHE_DIR, 'throttle'),
+        'OPTIONS': {'MAX_ENTRIES': 100000},
+    },
 }  # False для JavaScript доступа (API)
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = not DEBUG  # HTTPS only in production

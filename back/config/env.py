@@ -7,13 +7,12 @@ import os
 from typing import Mapping
 
 from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
 
 # Keys that were ever committed to the repository. Never accept them.
 LEAKED_SECRET_KEYS = frozenset({
     "django-insecure-zo(g8-19uk$1amqpb5obk!@=)fdt-=mv7n3voxe-#zhz#k!0x(",
 })
-
-DEV_SECRET_KEY = "django-insecure-local-dev-only-not-for-production"
 
 MIN_SECRET_KEY_LENGTH = 50
 
@@ -43,9 +42,12 @@ def resolve_secret_key(environ: Mapping[str, str], debug: bool) -> str:
     if key in LEAKED_SECRET_KEYS:
         raise ImproperlyConfigured("SECRET_KEY is a leaked key from the repository; generate a new one.")
     if not key:
-        if debug:
-            return DEV_SECRET_KEY
-        raise ImproperlyConfigured("SECRET_KEY environment variable is required when DEBUG is off.")
+        # Render sets RENDER=true: never run a deployed instance on a throwaway key.
+        if debug and "RENDER" not in environ:
+            # Random per process: nothing committed to the repo can sign tokens.
+            # Local dev logins reset when the dev server restarts.
+            return get_random_secret_key()
+        raise ImproperlyConfigured("SECRET_KEY environment variable is required (DEBUG is off or running on Render).")
     if not debug and (key.startswith("django-insecure") or len(key) < MIN_SECRET_KEY_LENGTH):
         raise ImproperlyConfigured(
             f"SECRET_KEY must be at least {MIN_SECRET_KEY_LENGTH} characters and not 'django-insecure' in production."

@@ -42,9 +42,10 @@ class LoginThrottleTest(TestCase):
     """LoginRateThrottle (5/hour) must count the real client IP, not a spoofable header."""
 
     def setUp(self):
-        from django.core.cache import cache
+        from django.core.cache import caches
         from rest_framework.test import APIClient
-        cache.clear()
+        for c in caches.all(initialized_only=False):
+            c.clear()
         self.api = APIClient()
 
     def _login(self, xff):
@@ -65,6 +66,15 @@ class LoginThrottleTest(TestCase):
         for _ in range(5):
             self._login(xff="203.0.113.7")
         self.assertEqual(self._login(xff="203.0.113.8").status_code, 401)
+
+    def test_page_cache_churn_does_not_reset_login_limit(self):
+        # cache_page entries (one per URL+query) must not evict login counters.
+        from django.core.cache import cache
+        for _ in range(5):
+            self._login(xff="203.0.113.7")
+        for i in range(1500):
+            cache.set(f"churn-{i}", "x")
+        self.assertEqual(self._login(xff="203.0.113.7").status_code, 429)
 
     def test_no_proxy_header_uses_remote_addr(self):
         for _ in range(5):
@@ -87,3 +97,31 @@ class DjangoAdminToggleTest(TestCase):
         with override_settings(ENABLE_DJANGO_ADMIN=True):
             reload_urls()
             self.assertEqual(self.client.get("/dashboard-ctrl-panel/login/").status_code, 200)
+
+
+class ThrottleScopeTest(TestCase):
+    """TRUSTED_PROXY_COUNT applies to the login throttle only: if it is set wrong,
+    the public catalog must not collapse all visitors into one rate-limit bucket."""
+
+    def _request(self, xff):
+        from django.test import RequestFactory
+        from rest_framework.request import Request
+        return Request(RequestFactory().get("/api/products/", REMOTE_ADDR="10.0.0.1", HTTP_X_FORWARDED_FOR=xff))
+
+    def test_anon_throttle_keeps_clients_apart_behind_same_proxy(self):
+        from rest_framework.throttling import AnonRateThrottle
+        throttle = AnonRateThrottle()
+        self.assertNotEqual(
+            throttle.get_ident(self._request("1.1.1.1, 10.9.9.9")),
+            throttle.get_ident(self._request("2.2.2.2, 10.9.9.9")),
+        )
+
+    @override_settings(TRUSTED_PROXY_COUNT=1)
+    def test_login_throttle_uses_ip_added_by_nearest_proxy(self):
+        from api.throttles import LoginRateThrottle
+        self.assertEqual(LoginRateThrottle().get_ident(self._request("6.6.6.6, 203.0.113.7")), "203.0.113.7")
+
+    @override_settings(TRUSTED_PROXY_COUNT=0)
+    def test_login_throttle_without_proxy_uses_remote_addr(self):
+        from api.throttles import LoginRateThrottle
+        self.assertEqual(LoginRateThrottle().get_ident(self._request("6.6.6.6")), "10.0.0.1")
