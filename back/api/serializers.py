@@ -1,6 +1,8 @@
 # api/serializers.py
 from django.db import transaction
 from rest_framework import serializers
+
+from .validators import validate_safe_link
 from .models import (
     Category, Product, Image, Feature, ProductFeature, FeatureValue,
     NewsItem, AboutContent, ContactInfo, ContactMessage, Brand,
@@ -30,6 +32,10 @@ class BannerSerializer(serializers.ModelSerializer):
             except Exception:
                 return str(obj.image)
         return None
+
+    def validate_link(self, value):
+        # Rendered as <a :href> on the site: block javascript:/data: URLs.
+        return validate_safe_link(value)
 
 
 class TagSerializer(serializers.ModelSerializer):
