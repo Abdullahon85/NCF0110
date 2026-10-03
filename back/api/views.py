@@ -1391,6 +1391,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 import csv
 from django.http import HttpResponse
+from .csv_safety import safe_csv_cell
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
@@ -1437,7 +1438,8 @@ def export_orders_csv(request):
             for i in order.items.all()
         )
         total = sum((i.price or 0) * i.quantity for i in order.items.all())
-        writer.writerow([
+        # Every cell goes through safe_csv_cell: customer input must not run as a formula.
+        writer.writerow([safe_csv_cell(cell) for cell in [
             order.id,
             order.created_at.strftime('%d.%m.%Y %H:%M'),
             order.customer_name,
@@ -1448,7 +1450,7 @@ def export_orders_csv(request):
             order.comment or '—',
             items_str or '—',
             f"{total:,.0f}" if total else '—',
-        ])
+        ]])
 
     return response
 
