@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import TemplateView
 from django.conf import settings
 from django.urls import re_path
 from django.views.static import serve
@@ -8,7 +7,6 @@ from django.views.static import serve
 
 urlpatterns = [
     path('api/', include('api.urls')),
-    path('meta.json', TemplateView.as_view(template_name='meta.json', content_type='application/json')),
 ]
 
 if settings.ENABLE_DJANGO_ADMIN:

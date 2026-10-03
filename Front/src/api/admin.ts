@@ -8,7 +8,6 @@ import type {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ?? "/api";
-//   "http://localhost:8000/api" "https://ncb-1.onrender.com/api" "https://ncb-r1l6.onrender.com/api"  "https://nargizacompanyb.onrender.com/api" "https://a673a7823281.ngrok-free.app/api"
 // ============ SECURITY CONSTANTS ============
 const TOKEN_KEY = "admin_token";
 const REFRESH_KEY = "admin_refresh";
