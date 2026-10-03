@@ -35,6 +35,23 @@ from .serializers import (
     ProductReviewAdminSerializer, ProductQuestionAdminSerializer
 )
 
+# DoS guards for public query parameters.
+MAX_FEATURE_FILTERS = 10      # each feature_<id> param adds a JOIN
+MAX_BY_FEATURE_RESULTS = 100  # /products/by-feature/ returns a plain list
+MAX_LIST_LIMIT = 100          # ?limit= on categories/news
+
+
+def parse_limit(raw):
+    """?limit= value: not a number or < 1 -> None (no slicing), else capped at MAX_LIST_LIMIT."""
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return None
+    if value < 1:
+        return None
+    return min(value, MAX_LIST_LIMIT)
+
+
 # ============ JWT AUTH VIEWS ============
 class AdminTokenObtainPairView(TokenObtainPairView):
     """
@@ -201,7 +218,11 @@ def products_by_feature_value(request):
         return Response({"error": "value parameter is required"}, status=400)
 
     product_ids = ProductFeature.objects.filter(value__value__icontains=value).values_list('product_id', flat=True)
-    queryset = Product.objects.filter(id__in=product_ids).distinct()
+    queryset = (
+        Product.objects.filter(id__in=product_ids).distinct()
+        .select_related('category', 'brand').prefetch_related('images', 'tag_groups__tags')
+        .order_by('-created_at')[:MAX_BY_FEATURE_RESULTS]
+    )
 
     serializer = ProductListSerializer(queryset, many=True, context={'request': request})
     return Response(serializer.data)
@@ -262,14 +283,20 @@ def apply_product_filters(request, queryset):
             Q(internal_sku__icontains=search)
         )
 
-    # --- фильтр по характеристикам ---
+    # --- фильтр по характеристикам (каждый параметр = JOIN, поэтому не больше MAX_FEATURE_FILTERS) ---
+    applied_features = 0
     for k, v in params.items():
-        if k.startswith('feature_') and v:
-            try:
-                fid = int(k.split('_', 1)[1])
-                queryset = queryset.filter(features__feature_id=fid, features__value_id=v)
-            except (ValueError, IndexError):
-                continue
+        if applied_features >= MAX_FEATURE_FILTERS:
+            break
+        if not (k.startswith('feature_') and v):
+            continue
+        try:
+            fid = int(k.split('_', 1)[1])
+            vid = int(v)
+        except (ValueError, IndexError):
+            continue
+        queryset = queryset.filter(features__feature_id=fid, features__value_id=vid)
+        applied_features += 1
 
     # --- фильтр по категории с рекурсией ---
     category_slug = params.get('category')
@@ -291,11 +318,6 @@ def apply_product_filters(request, queryset):
                 queryset = queryset.filter(category_id__in=all_category_ids)
             else:
                 queryset = queryset.none()
-    # --- фильтр по группам тегов ---
-    for key, val in params.items():
-        if key.startswith('taggroup_') and val:
-            queryset = queryset.filter(tags__group__slug=key.split('_', 1)[1], tags__slug=val)
-
     # --- сортировка ---
     ordering = params.get('ordering', '-created_at')
     allowed = {'name', '-name', 'price', '-price', 'created_at', '-created_at'}
@@ -467,12 +489,9 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = super().get_queryset().annotate(
             direct_products_count=Count('products', distinct=True)
         )
-        limit = self.request.query_params.get('limit')
+        limit = parse_limit(self.request.query_params.get('limit'))
         if limit:
-            try:
-                queryset = queryset[:int(limit)]
-            except (ValueError, TypeError):
-                pass
+            queryset = queryset[:limit]
         return queryset
 
     @action(detail=True, methods=['get'])
@@ -663,12 +682,9 @@ class NewsViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        limit = self.request.query_params.get('limit')
+        limit = parse_limit(self.request.query_params.get('limit'))
         if limit:
-            try:
-                queryset = queryset[:int(limit)]
-            except (ValueError, TypeError):
-                pass
+            queryset = queryset[:limit]
         return queryset
 
 

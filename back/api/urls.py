@@ -72,12 +72,13 @@ router.register(r'admin/reviews', ReviewAdminViewSet, basename='admin-reviews')
 router.register(r'admin/questions', QuestionAdminViewSet, basename='admin-questions')
 
 urlpatterns = [
+    # Must precede the router: 'products/<slug>/' would otherwise swallow 'by-feature'.
+    path('products/by-feature/', views.products_by_feature_value, name='products-by-feature'),
     path('', include(router.urls)),
     # Публичные endpoints
     path('about/', AboutContentView.as_view(), name='about-content'),
     path('contact/', ContactInfoView.as_view(), name='contact-info'),
     path('contact/message/', ContactMessageView.as_view(), name='contact-message'),
-    path('products/by-feature/', views.products_by_feature_value, name='products-by-feature'),
     path('products/<slug:product_slug>/reviews/', ProductReviewViewSet.as_view({'get': 'list', 'post': 'create'}), name='product-reviews'),
     path('products/<slug:product_slug>/questions/', ProductQuestionViewSet.as_view({'get': 'list', 'post': 'create'}), name='product-questions'),
     path('products/<slug:slug>/similar/', similar_products, name='similar-products'),
