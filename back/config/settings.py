@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import tempfile
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -194,6 +195,19 @@ REST_FRAMEWORK = {
         'login': '5/hour',  # Защита от брутфорса
     },
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    # SECURITY: number of trusted reverse proxies that append to X-Forwarded-For.
+    # Throttles take the client IP added by the nearest proxy, so a client-supplied
+    # X-Forwarded-For value cannot be used to dodge login rate limits.
+    'NUM_PROXIES': int(os.environ.get('TRUSTED_PROXY_COUNT', '1')),
+}
+
+# Shared by all gunicorn workers on the instance, so throttle counters are not
+# per-process (LocMemCache) and survive worker restarts. No migrations needed.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.environ.get('CACHE_DIR', os.path.join(tempfile.gettempdir(), 'ncf_django_cache')),
+    }
 }  # False для JavaScript доступа (API)
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = not DEBUG  # HTTPS only in production

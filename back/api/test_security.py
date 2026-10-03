@@ -36,3 +36,37 @@ class HostAndMediaTest(TestCase):
             reload_urls()
             with self.assertRaises(Resolver404):
                 resolve("/media/products/x.jpg")
+
+
+class LoginThrottleTest(TestCase):
+    """LoginRateThrottle (5/hour) must count the real client IP, not a spoofable header."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        from rest_framework.test import APIClient
+        cache.clear()
+        self.api = APIClient()
+
+    def _login(self, xff):
+        from django.urls import reverse
+        extra = {"REMOTE_ADDR": "10.0.0.1"}
+        if xff is not None:
+            extra["HTTP_X_FORWARDED_FOR"] = xff
+        return self.api.post(
+            reverse("admin-login"), {"username": "nobody", "password": "wrong"}, format="json", **extra
+        )
+
+    def test_spoofed_xff_does_not_bypass_limit(self):
+        for i in range(5):
+            self.assertEqual(self._login(xff=f"1.2.3.{i}, 203.0.113.7").status_code, 401)
+        self.assertEqual(self._login(xff="9.9.9.9, 203.0.113.7").status_code, 429)
+
+    def test_other_real_client_not_blocked(self):
+        for _ in range(5):
+            self._login(xff="203.0.113.7")
+        self.assertEqual(self._login(xff="203.0.113.8").status_code, 401)
+
+    def test_no_proxy_header_uses_remote_addr(self):
+        for _ in range(5):
+            self._login(xff=None)
+        self.assertEqual(self._login(xff=None).status_code, 429)
