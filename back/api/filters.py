@@ -16,15 +16,21 @@ class ProductFilter(django_filters.FilterSet):
         model = Product
         fields = ['price_min', 'price_max', 'category']
 
-def _parse_price(raw):
-    """Query-string price -> Decimal, or None when missing/invalid (ignored, not a 500)."""
+MAX_PRICE_FILTER = Decimal(10) ** 23  # Product.price is DECIMAL(25, 2)
+
+
+def parse_price(raw):
+    """Query-string price -> Decimal, or None when missing/invalid/out of range
+    (nan, inf, 1e999999 ...): such filters are ignored instead of causing a 500."""
     if raw in (None, ''):
         return None
     try:
         value = Decimal(raw)
-    except (InvalidOperation, ValueError):
+    except (InvalidOperation, ValueError, TypeError):
         return None
-    return value if value.is_finite() else None
+    if not value.is_finite() or abs(value) >= MAX_PRICE_FILTER:
+        return None
+    return value
 
 
 class BrandFilter(filters.BaseFilterBackend):
@@ -58,8 +64,8 @@ class BrandFilter(filters.BaseFilterBackend):
         price_min = request.query_params.get('price_min')
         price_max = request.query_params.get('price_max')
 
-        price_min = _parse_price(price_min)
-        price_max = _parse_price(price_max)
+        price_min = parse_price(price_min)
+        price_max = parse_price(price_max)
         if price_min is not None:
             queryset = queryset.filter(products__price__gte=price_min).distinct()
         if price_max is not None:

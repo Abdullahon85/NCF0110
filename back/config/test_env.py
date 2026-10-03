@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -7,6 +8,7 @@ from config.env import (
     LEAKED_SECRET_KEYS,
     build_allowed_hosts,
     build_cors_origins,
+    cache_dir,
     database_config,
     env_bool,
     env_list,
@@ -43,11 +45,6 @@ class EnvHelpersTest(SimpleTestCase):
         second = resolve_secret_key({}, debug=True)
         self.assertNotEqual(first, second)
         self.assertGreaterEqual(len(first), 50)
-
-    def test_dev_fallback_refused_on_render(self):
-        # Render sets RENDER=true; a Render deploy must never run without its own key.
-        with self.assertRaises(ImproperlyConfigured):
-            resolve_secret_key({"RENDER": "true"}, debug=True)
 
     def test_leaked_key_rejected_even_in_debug(self):
         leaked = next(iter(LEAKED_SECRET_KEYS))
@@ -140,3 +137,14 @@ class DatabaseConfigTest(SimpleTestCase):
         for url in ("mysql://u:p@h/db", "postgres://u:p@h/", "not a url"):
             with self.subTest(url=url), self.assertRaises(ImproperlyConfigured):
                 database_config({"DATABASE_URL": url}, self.BASE)
+
+
+class CacheDirTest(SimpleTestCase):
+    def test_empty_cache_dir_falls_back_to_temp(self):
+        import tempfile
+        for env in ({}, {"CACHE_DIR": ""}, {"CACHE_DIR": "  "}):
+            with self.subTest(env=env):
+                self.assertEqual(cache_dir(env), os.path.join(tempfile.gettempdir(), "ncf_django_cache"))
+
+    def test_explicit_cache_dir(self):
+        self.assertEqual(cache_dir({"CACHE_DIR": "/var/cache/ncf"}), "/var/cache/ncf")

@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-import tempfile
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-from config.env import build_allowed_hosts, build_cors_origins, database_config, env_bool, resolve_secret_key
+from config.env import build_allowed_hosts, build_cors_origins, cache_dir, database_config, env_bool, resolve_secret_key
 
 # SECURITY: DEBUG is off unless explicitly enabled (DEBUG=True in the environment).
 DEBUG = env_bool('DEBUG', False)
@@ -183,7 +182,7 @@ TRUSTED_PROXY_COUNT = int(os.environ.get('TRUSTED_PROXY_COUNT', '1'))
 
 # Shared by all gunicorn workers on the instance, so throttle counters are not
 # per-process (LocMemCache) and survive worker restarts. No migrations needed.
-_CACHE_DIR = os.environ.get('CACHE_DIR', os.path.join(tempfile.gettempdir(), 'ncf_django_cache'))
+_CACHE_DIR = cache_dir(os.environ)
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
@@ -223,6 +222,8 @@ SIMPLE_JWT = {
     # Access tokens carry a password-hash claim: any password change (API, Django admin,
     # manage.py changepassword) invalidates every access token issued before it.
     'CHECK_REVOKE_TOKEN': True,
+    # Refresh also checks the password-hash claim (SimpleJWT only checks it on access tokens).
+    'TOKEN_REFRESH_SERIALIZER': 'api.auth.PasswordAwareTokenRefreshSerializer',
 }
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -243,7 +244,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Django 5.1+ ignores STATICFILES_STORAGE; STORAGES is the current setting.
+# Compressed (gzip/brotli) without manifest: no 500s if collectstatic was not re-run.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -261,7 +267,6 @@ if not DEBUG:
     
     # Cookie Security
     SECURE_CONTENT_TYPE_NOSNIFF = True  # Защита от MIME-sniffing
-    SECURE_BROWSER_XSS_FILTER = True  # Защита от XSS
     
     # Frame Options
     X_FRAME_OPTIONS = 'DENY'  # Защита от clickjacking

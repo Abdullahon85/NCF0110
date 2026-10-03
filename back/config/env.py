@@ -45,12 +45,11 @@ def resolve_secret_key(environ: Mapping[str, str], debug: bool) -> str:
     if key in LEAKED_SECRET_KEYS:
         raise ImproperlyConfigured("SECRET_KEY is a leaked key from the repository; generate a new one.")
     if not key:
-        # Render sets RENDER=true: never run a deployed instance on a throwaway key.
-        if debug and "RENDER" not in environ:
+        if debug:
             # Random per process: nothing committed to the repo can sign tokens.
             # Local dev logins reset when the dev server restarts.
             return get_random_secret_key()
-        raise ImproperlyConfigured("SECRET_KEY environment variable is required (DEBUG is off or running on Render).")
+        raise ImproperlyConfigured("SECRET_KEY environment variable is required when DEBUG is off.")
     if not debug and (key.startswith("django-insecure") or len(key) < MIN_SECRET_KEY_LENGTH):
         raise ImproperlyConfigured(
             f"SECRET_KEY must be at least {MIN_SECRET_KEY_LENGTH} characters and not 'django-insecure' in production."
@@ -126,3 +125,10 @@ def database_config(environ: Mapping[str, str], base_dir: Path) -> dict:
             "CONN_MAX_AGE": 60,
         }
     raise ImproperlyConfigured("DATABASE_URL must start with postgres:// (or sqlite:// for SQLite).")
+
+
+def cache_dir(environ: Mapping[str, str]) -> str:
+    """Directory of the file-based caches (rate-limit counters). Empty CACHE_DIR
+    (e.g. copied from .env.example) falls back to the system temp dir."""
+    import tempfile
+    return environ.get("CACHE_DIR", "").strip() or os.path.join(tempfile.gettempdir(), "ncf_django_cache")

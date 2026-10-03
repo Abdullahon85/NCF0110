@@ -177,3 +177,27 @@ class TestSettingsIsolationTest(SimpleTestCase):
     def test_tests_use_in_memory_caches(self):
         for alias in ("default", "throttle"):
             self.assertEqual(settings.CACHES[alias]["BACKEND"], "django.core.cache.backends.locmem.LocMemCache")
+
+
+class FinalReviewFixesTest(HandoverBase):
+    def test_price_filters_with_nan_inf_or_huge_values(self):
+        cat = self.category.slug
+        for value in ("nan", "inf", "-inf", "1e999999", "1e30"):
+            for url in ("/api/products/", f"/api/categories/{cat}/brands/", f"/api/categories/{cat}/tags/", "/api/brands/"):
+                with self.subTest(url=url, value=value):
+                    self.assertEqual(self.client.get(url, {"price_min": value, "price_max": value}).status_code, 200)
+
+    def test_refresh_refused_after_password_changed_outside_api(self):
+        t = self._login()
+        self.staff.set_password("Changed-via-manage-py-789")   # e.g. manage.py changepassword / Django admin
+        self.staff.save()
+        r = APIClient().post("/api/admin/auth/refresh/", {"refresh": t["refresh"]}, format="json")
+        self.assertEqual(r.status_code, 401)
+
+    def test_refresh_still_works_normally(self):
+        t = self._login()
+        r = APIClient().post("/api/admin/auth/refresh/", {"refresh": t["refresh"]}, format="json")
+        self.assertEqual(r.status_code, 200)
+        me = APIClient()
+        me.credentials(HTTP_AUTHORIZATION=f"Bearer {r.data['access']}")
+        self.assertEqual(me.get("/api/admin/auth/me/").status_code, 200)

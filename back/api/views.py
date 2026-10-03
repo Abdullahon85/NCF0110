@@ -20,7 +20,7 @@ from django.utils.decorators import method_decorator
 from .throttles import LoginRateThrottle, ORDER_THROTTLES, PUBLIC_WRITE_THROTTLES
 from .models import Brand, Product
 from .serializers import BrandSerializer, ProductListSerializer
-from .filters import BrandFilter
+from .filters import BrandFilter, parse_price
 
 from .pagination import StandardResultsSetPagination
 from .models import (
@@ -249,16 +249,10 @@ def apply_product_filters(request, queryset):
     # --- фильтр по цене ---
     price_min = params.get('price_min')
     price_max = params.get('price_max')
-    if price_min:
-        try:
-            queryset = queryset.filter(price__gte=float(price_min))
-        except ValueError:
-            pass
-    if price_max:
-        try:
-            queryset = queryset.filter(price__lte=float(price_max))
-        except ValueError:
-            pass
+    if parse_price(price_min) is not None:
+        queryset = queryset.filter(price__gte=parse_price(price_min))
+    if parse_price(price_max) is not None:
+        queryset = queryset.filter(price__lte=parse_price(price_max))
 
     # --- фильтр по бренду ---
     brand_param = params.get('brand')
@@ -531,16 +525,10 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
         tag_param = request.query_params.get('tag', '')
 
         filtered_products = all_products
-        if price_min:
-            try:
-                filtered_products = filtered_products.filter(price__gte=float(price_min))
-            except ValueError:
-                pass
-        if price_max:
-            try:
-                filtered_products = filtered_products.filter(price__lte=float(price_max))
-            except ValueError:
-                pass
+        if parse_price(price_min) is not None:
+            filtered_products = filtered_products.filter(price__gte=parse_price(price_min))
+        if parse_price(price_max) is not None:
+            filtered_products = filtered_products.filter(price__lte=parse_price(price_max))
         if tag_param:
             tag_slugs = [s.strip() for s in tag_param.split(',') if s.strip()]
             if tag_slugs:
@@ -579,16 +567,10 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
         # Apply price filter if provided
         price_min = request.query_params.get('price_min')
         price_max = request.query_params.get('price_max')
-        if price_min:
-            try:
-                all_products = all_products.filter(price__gte=float(price_min))
-            except ValueError:
-                pass
-        if price_max:
-            try:
-                all_products = all_products.filter(price__lte=float(price_max))
-            except ValueError:
-                pass
+        if parse_price(price_min) is not None:
+            all_products = all_products.filter(price__gte=parse_price(price_min))
+        if parse_price(price_max) is not None:
+            all_products = all_products.filter(price__lte=parse_price(price_max))
 
         # Apply brand filter if provided
         brand_param = request.query_params.get('brand', '')
