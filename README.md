@@ -89,7 +89,7 @@ export SECRET_KEY='...' ALLOWED_HOSTS='shop.uz' DATABASE_URL='postgres://ncf:***
 python manage.py migrate
 python manage.py collectstatic --noinput
 python manage.py createsuperuser
-python manage.py check --deploy          # должно быть: no issues
+python manage.py check --deploy          # допустимо только W008, если HTTPS-редирект делает nginx
 
 gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3
 ```
@@ -145,7 +145,12 @@ server {
 }
 ```
 
-Если nginx пишет `X-Forwarded-For $remote_addr` (как в примере), то `TRUSTED_PROXY_COUNT=1`. Если перед nginx стоит ещё балансировщик или CDN, значение нужно увеличить на число этих прокси.
+> ⚠️ **`TRUSTED_PROXY_COUNT` должен точно соответствовать схеме**, иначе лимиты запросов не работают:
+> - nginx перед gunicorn и пишет `X-Forwarded-For $remote_addr` (как в примере) → `1`;
+> - перед nginx есть ещё балансировщик или CDN → `1` + число этих прокси;
+> - gunicorn доступен из интернета напрямую, без прокси → **`0`**. Если оставить `1`, атакующий подставит любой `X-Forwarded-For` и обойдёт лимит перебора паролей.
+>
+> Проверка после деплоя: 6 неверных попыток входа подряд, каждая с новым заголовком `X-Forwarded-For`, должны дать на шестой ответ `429`.
 
 ### 4. Резервные копии
 
