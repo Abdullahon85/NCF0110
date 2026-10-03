@@ -199,9 +199,10 @@ REST_FRAMEWORK = {
 }
 
 # SECURITY: number of trusted reverse proxies that append to X-Forwarded-For.
-# Used only by LoginRateThrottle (api/throttles.py) so a client-supplied
-# X-Forwarded-For cannot dodge the login limit; scoped to login so a wrong value
-# cannot merge every catalog visitor into one anonymous rate-limit bucket.
+# Used by RealClientIPMixin (api/throttles.py): login, public-write and order
+# throttles, so a client-supplied X-Forwarded-For cannot dodge them. Catalog
+# reads (default anon/user throttles) do not use it. A wrong value merges all
+# visitors into one bucket for those limits: verify it after every infra change.
 TRUSTED_PROXY_COUNT = int(os.environ.get('TRUSTED_PROXY_COUNT', '1'))
 
 # Shared by all gunicorn workers on the instance, so throttle counters are not
@@ -253,6 +254,8 @@ SIMPLE_JWT = {
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    # Tokens only for active staff, checked on login AND on every refresh.
+    'USER_AUTHENTICATION_RULE': 'api.auth.staff_user_authentication_rule',
 }
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

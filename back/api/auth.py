@@ -1,20 +1,12 @@
-"""JWT helpers: staff-only login and refresh-token revocation."""
-from rest_framework import exceptions
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+"""JWT helpers: staff-only token issuance/refresh and refresh-token revocation."""
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 
-class StaffTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Issues tokens to staff only. Non-staff get the same 401 as a wrong
-    password, so the response does not reveal that the account exists."""
-
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        if not self.user.is_staff:
-            raise exceptions.AuthenticationFailed(
-                self.error_messages["no_active_account"], "no_active_account"
-            )
-        return data
+def staff_user_authentication_rule(user) -> bool:
+    """SIMPLE_JWT['USER_AUTHENTICATION_RULE']: SimpleJWT applies it on login and
+    on every refresh, before any token is created. Non-staff get the same 401 as
+    a wrong password, and a user who loses staff status cannot refresh anymore."""
+    return user is not None and user.is_active and user.is_staff
 
 
 def revoke_all_refresh_tokens(user) -> int:

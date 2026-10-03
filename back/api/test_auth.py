@@ -69,3 +69,8 @@ class AuthHardeningTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertIn("refresh", r.data)
         self.assertEqual(self._refresh(t["refresh"]).status_code, 401)
+
+    def test_refresh_refused_once_user_is_no_longer_staff(self):
+        t = self._login("admin").data
+        User.objects.filter(username="admin").update(is_staff=False)
+        self.assertEqual(self._refresh(t["refresh"]).status_code, 401)

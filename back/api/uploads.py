@@ -10,7 +10,8 @@ import warnings
 
 from PIL import Image as PILImage
 
-ALLOWED_IMAGE_FORMATS = {"JPEG": "jpg", "PNG": "png", "GIF": "gif", "WEBP": "webp"}
+# "MPO" = JPEG with embedded secondary images (common from phone cameras); browsers show the first frame.
+ALLOWED_IMAGE_FORMATS = {"JPEG": "jpg", "MPO": "jpg", "PNG": "png", "GIF": "gif", "WEBP": "webp"}
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB
 MAX_IMAGE_PIXELS = 60_000_000  # ~60 MP; guards against decompression bombs
 

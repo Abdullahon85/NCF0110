@@ -33,7 +33,7 @@ PUBLIC_WRITE_RATE = '30/hour'
 
 
 class PublicWriteThrottle(RealClientIPMixin, SimpleRateThrottle):
-    """One shared budget per real client IP for public POSTs: orders, reviews,
+    """One shared budget per real client IP for public POSTs: reviews,
     questions and contact messages. Reads and staff are never limited by it."""
     scope = 'public_write'
     rate = PUBLIC_WRITE_RATE
@@ -50,5 +50,16 @@ class PublicWriteThrottle(RealClientIPMixin, SimpleRateThrottle):
         return self.cache_format % {'scope': self.scope, 'ident': self.get_ident(request)}
 
 
-# Keeps the project-wide anon/user limits and adds the public-write budget.
+ORDER_RATE = '20/hour'
+
+
+class PublicOrderThrottle(PublicWriteThrottle):
+    """Checkout has its own budget so review/contact spam from a shared
+    (e.g. carrier NAT) IP cannot block customers from placing orders."""
+    scope = 'public_order'
+    rate = ORDER_RATE
+
+
+# Keep the project-wide anon/user limits and add the dedicated budget.
 PUBLIC_WRITE_THROTTLES = [AnonRateThrottle, UserRateThrottle, PublicWriteThrottle]
+ORDER_THROTTLES = [AnonRateThrottle, UserRateThrottle, PublicOrderThrottle]

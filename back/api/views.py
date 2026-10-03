@@ -12,10 +12,10 @@ from django.db.models import Q, Min, Max, Count
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from .auth import StaffTokenObtainPairSerializer, revoke_all_refresh_tokens
+from .auth import revoke_all_refresh_tokens
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from .throttles import LoginRateThrottle, PUBLIC_WRITE_THROTTLES
+from .throttles import LoginRateThrottle, ORDER_THROTTLES, PUBLIC_WRITE_THROTTLES
 from .models import Brand, Product
 from .serializers import BrandSerializer, ProductListSerializer
 from .filters import BrandFilter
@@ -59,7 +59,7 @@ class AdminTokenObtainPairView(TokenObtainPairView):
     """
     throttle_classes = [LoginRateThrottle]
     permission_classes = [AllowAny]
-    serializer_class = StaffTokenObtainPairSerializer
+    # Staff-only issuance is enforced by SIMPLE_JWT['USER_AUTHENTICATION_RULE'].
 
 
 class AdminTokenRefreshView(TokenRefreshView):
@@ -1359,7 +1359,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     GET/PATCH/DELETE требуют авторизации (только для админа).
     """
     queryset = Order.objects.prefetch_related('items').order_by('-created_at')
-    throttle_classes = PUBLIC_WRITE_THROTTLES
+    throttle_classes = ORDER_THROTTLES
 
     def get_serializer_class(self):
         if self.request.user and self.request.user.is_staff:

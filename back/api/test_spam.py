@@ -121,3 +121,35 @@ class ModerationAndLimitsTest(TestCase):
     def test_review_for_unknown_product_is_404(self):
         r = self.api.post("/api/products/nope/reviews/", {"author_name": "A", "rating": 5, "text": "t"}, format="json")
         self.assertEqual(r.status_code, 404)
+
+
+class OrderBudgetTest(TestCase):
+    """Checkout has its own budget: review/contact spam from a shared IP must not block orders."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cat = Category.objects.create(name="Cameras", slug="cameras")
+        cls.product = Product.objects.create(name="Cam", slug="cam", category=cat, description="d", price=10)
+
+    def setUp(self):
+        clear_all_caches()
+        self.api = APIClient()
+        self.net = {"REMOTE_ADDR": "10.0.0.1", "HTTP_X_FORWARDED_FOR": "203.0.113.7"}
+
+    def _order(self):
+        item = {"product": self.product.id, "quantity": 1}
+        return self.api.post("/api/orders/", {"customer_name": "A", "customer_phone": "+998901234567",
+                                              "items": [item]}, format="json", **self.net)
+
+    def test_review_spam_does_not_block_checkout(self):
+        for _ in range(30):
+            self.api.post("/api/contact/message/", {"name": "A", "email": "a@a.uz", "message": "hi"},
+                          format="json", **self.net)
+        self.assertEqual(self._order().status_code, 201)
+
+    def test_order_budget_is_limited(self):
+        from .throttles import ORDER_RATE
+        limit = int(ORDER_RATE.split("/")[0])
+        for i in range(limit):
+            self.assertEqual(self._order().status_code, 201, f"order {i + 1}")
+        self.assertEqual(self._order().status_code, 429)

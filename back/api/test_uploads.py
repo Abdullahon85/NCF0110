@@ -56,6 +56,15 @@ class ValidateUploadedImageTest(SimpleTestCase):
         self.assertTrue(validate_uploaded_image(f)[0])
 
 
+    def test_multi_picture_jpeg_from_phone_accepted(self):
+        # Phones often embed a secondary image (MPF); Pillow reports such JPEGs as "MPO".
+        buf = io.BytesIO()
+        PILImage.new("RGB", (64, 48)).save(buf, format="MPO", save_all=True,
+                                           append_images=[PILImage.new("RGB", (32, 24))])
+        f = SimpleUploadedFile("IMG_2.jpg", buf.getvalue(), content_type="image/jpeg")
+        self.assertEqual(validate_uploaded_image(f), (True, None))
+        self.assertTrue(f.name.endswith(".jpg"))
+
 class UploadEndpointsTest(TestCase):
     @classmethod
     def setUpTestData(cls):
