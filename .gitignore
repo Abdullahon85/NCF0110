@@ -1,0 +1,9 @@
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+back/db.sqlite3
+back/db.sqlite3.bak
+back/media/
+.env
+.superpowers/
