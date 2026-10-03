@@ -5,7 +5,9 @@ unit-tested without touching os.environ or Django settings.
 """
 import os
 import re
+from pathlib import Path
 from typing import Mapping
+from urllib.parse import parse_qsl, unquote, urlsplit
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
@@ -88,3 +90,39 @@ def build_cors_origins(environ: Mapping[str, str], debug: bool) -> list[str]:
     if debug:
         origins += DEV_CORS_ORIGINS
     return list(dict.fromkeys(origins))
+
+
+_PG_SCHEMES = {"postgres", "postgresql", "pgsql"}
+
+
+def database_config(environ: Mapping[str, str], base_dir: Path) -> dict:
+    """DATABASES['default'] from DATABASE_URL.
+
+    Empty -> SQLite at <base_dir>/db.sqlite3 (local development).
+    postgres://user:password@host:port/name?sslmode=require -> PostgreSQL.
+    sqlite:////absolute/path.db -> SQLite at that path.
+    """
+    url = environ.get("DATABASE_URL", "").strip()
+    if not url:
+        return {"ENGINE": "django.db.backends.sqlite3", "NAME": base_dir / "db.sqlite3"}
+    parts = urlsplit(url)
+    if parts.scheme == "sqlite":
+        path = parts.path[1:]  # sqlite:////abs/path -> /abs/path; sqlite:///rel.db -> rel.db
+        if not path:
+            raise ImproperlyConfigured("DATABASE_URL sqlite:// needs a file path, e.g. sqlite:////var/data/db.sqlite3")
+        return {"ENGINE": "django.db.backends.sqlite3", "NAME": Path(path)}
+    if parts.scheme in _PG_SCHEMES:
+        name = unquote(parts.path.lstrip("/"))
+        if not name:
+            raise ImproperlyConfigured("DATABASE_URL must include the database name, e.g. postgres://u:p@host:5432/ncf")
+        return {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": name,
+            "USER": unquote(parts.username or ""),
+            "PASSWORD": unquote(parts.password or ""),
+            "HOST": parts.hostname or "",
+            "PORT": str(parts.port or ""),
+            "OPTIONS": dict(parse_qsl(parts.query)),
+            "CONN_MAX_AGE": 60,
+        }
+    raise ImproperlyConfigured("DATABASE_URL must start with postgres:// (or sqlite:// for SQLite).")

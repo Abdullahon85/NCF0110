@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
 
@@ -5,6 +7,7 @@ from config.env import (
     LEAKED_SECRET_KEYS,
     build_allowed_hosts,
     build_cors_origins,
+    database_config,
     env_bool,
     env_list,
     resolve_secret_key,
@@ -106,3 +109,34 @@ class CorsOriginsTest(SimpleTestCase):
         for value in ("*", "shop.uz", "https://shop.uz/", "ftp://shop.uz"):
             with self.subTest(value=value), self.assertRaises(ImproperlyConfigured):
                 build_cors_origins({"CORS_ALLOWED_ORIGINS": value}, False)
+
+
+class DatabaseConfigTest(SimpleTestCase):
+    BASE = Path("/srv/app")
+
+    def test_sqlite_by_default(self):
+        cfg = database_config({}, self.BASE)
+        self.assertEqual((cfg["ENGINE"], cfg["NAME"]), ("django.db.backends.sqlite3", self.BASE / "db.sqlite3"))
+
+    def test_postgres_url(self):
+        cfg = database_config({"DATABASE_URL": "postgres://shop:p%40ss@db.local:5433/ncf"}, self.BASE)
+        self.assertEqual(
+            {k: cfg[k] for k in ("ENGINE", "NAME", "USER", "PASSWORD", "HOST", "PORT")},
+            {"ENGINE": "django.db.backends.postgresql", "NAME": "ncf", "USER": "shop",
+             "PASSWORD": "p@ss", "HOST": "db.local", "PORT": "5433"},
+        )
+        self.assertEqual(cfg["CONN_MAX_AGE"], 60)
+
+    def test_postgresql_scheme_and_options(self):
+        cfg = database_config({"DATABASE_URL": "postgresql://u@h/ncf?sslmode=require"}, self.BASE)
+        self.assertEqual((cfg["ENGINE"], cfg["PORT"], cfg["OPTIONS"]),
+                         ("django.db.backends.postgresql", "", {"sslmode": "require"}))
+
+    def test_sqlite_url(self):
+        cfg = database_config({"DATABASE_URL": "sqlite:////var/data/shop.db"}, self.BASE)
+        self.assertEqual((cfg["ENGINE"], str(cfg["NAME"])), ("django.db.backends.sqlite3", "/var/data/shop.db"))
+
+    def test_invalid_urls_rejected(self):
+        for url in ("mysql://u:p@h/db", "postgres://u:p@h/", "not a url"):
+            with self.subTest(url=url), self.assertRaises(ImproperlyConfigured):
+                database_config({"DATABASE_URL": url}, self.BASE)

@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-from config.env import build_allowed_hosts, build_cors_origins, env_bool, resolve_secret_key
+from config.env import build_allowed_hosts, build_cors_origins, database_config, env_bool, resolve_secret_key
 
 # SECURITY: DEBUG is off unless explicitly enabled (DEBUG=True in the environment).
 DEBUG = env_bool('DEBUG', False)
@@ -122,11 +122,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASE_URL env: empty -> SQLite (back/db.sqlite3); postgres://... for production.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': database_config(os.environ, BASE_DIR),
 }
 
 
