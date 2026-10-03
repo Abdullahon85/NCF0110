@@ -407,6 +407,14 @@ class BrandAdminSerializer(serializers.ModelSerializer):
             return obj.logo.url
         return None
 
+    def validate_logo(self, value):
+        if value:
+            from .uploads import validate_uploaded_image
+            ok, error = validate_uploaded_image(value)
+            if not ok:
+                raise serializers.ValidationError(error)
+        return value
+
 
 class TagAdminSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)

@@ -1,4 +1,5 @@
 """JWT helpers: staff-only token issuance/refresh and refresh-token revocation."""
+from django.utils import timezone
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 
@@ -10,9 +11,13 @@ def staff_user_authentication_rule(user) -> bool:
 
 
 def revoke_all_refresh_tokens(user) -> int:
-    """Blacklist every refresh token issued to the user; returns how many were newly revoked."""
-    revoked = 0
-    for token in OutstandingToken.objects.filter(user=user):
-        _, created = BlacklistedToken.objects.get_or_create(token=token)
-        revoked += int(created)
-    return revoked
+    """Blacklist the user's live refresh tokens (unexpired, not yet revoked) in two
+    queries; returns how many were newly revoked."""
+    live = OutstandingToken.objects.filter(
+        user=user, expires_at__gt=timezone.now(), blacklistedtoken__isnull=True
+    )
+    tokens = list(live)
+    BlacklistedToken.objects.bulk_create(
+        [BlacklistedToken(token=t) for t in tokens], ignore_conflicts=True
+    )
+    return len(tokens)

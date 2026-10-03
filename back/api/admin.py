@@ -6,6 +6,30 @@ from .models import (
     Order, OrderItem, ProductReview, ProductQuestion
 )
 from django import forms
+from django.core.files.uploadedfile import UploadedFile
+
+from .uploads import validate_uploaded_image
+from .validators import validate_safe_link
+
+
+class SafeUploadsAdminForm(forms.ModelForm):
+    """Same checks as the REST API for the stock Django admin: new image uploads
+    are validated by content (and renamed), banner links must use a safe scheme."""
+
+    def clean(self):
+        cleaned = super().clean()
+        for name, value in list(cleaned.items()):
+            if isinstance(value, UploadedFile):
+                ok, error = validate_uploaded_image(value)
+                if not ok:
+                    self.add_error(name, error)
+        if cleaned.get('link'):
+            try:
+                cleaned['link'] = validate_safe_link(cleaned['link'])
+            except Exception as exc:  # rest_framework ValidationError
+                detail = getattr(exc, 'detail', [str(exc)])
+                self.add_error('link', detail[0] if isinstance(detail, list) else str(detail))
+        return cleaned
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -55,6 +79,7 @@ class FeatureValueAdmin(admin.ModelAdmin):
 # Inline для изображений продукта
 class ImageInline(admin.TabularInline):
     model = Image
+    form = SafeUploadsAdminForm
     extra = 1
 
 class ProductTagGroupForm(forms.ModelForm):
@@ -115,12 +140,14 @@ class ProductFeatureInline(admin.TabularInline):
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
+    form = SafeUploadsAdminForm
     list_display = ('name','slug','created_at')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
+    form = SafeUploadsAdminForm
     list_display = ['name', 'parent', 'order', 'slug']
     list_filter = ['parent']
     search_fields = ['name']
@@ -202,6 +229,7 @@ class ProductQuestionAdmin(admin.ModelAdmin):
 
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
+    form = SafeUploadsAdminForm
     list_display = ['title', 'order', 'is_active', 'created_at']
     list_filter = ['is_active']
     list_editable = ['order', 'is_active']

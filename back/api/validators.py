@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 
 from rest_framework import serializers
 
-SAFE_LINK_SCHEMES = {"", "http", "https", "mailto", "tel"}
+SAFE_LINK_SCHEMES = {"", "http", "https", "mailto", "tel", "tg", "viber"}
 
 # Browsers ignore whitespace and control characters inside a URL scheme
 # ("java\tscript:" still runs), so they are removed before checking it.
@@ -15,9 +15,12 @@ def validate_safe_link(value: str | None) -> str | None:
     if not value:
         return value
     stripped = value.strip()
-    scheme = urlsplit(_IGNORED_IN_SCHEME.sub("", stripped)).scheme.lower()
+    message = ("Ссылка должна быть относительной (например /catalog) или начинаться с "
+               "http://, https://, mailto:, tel:, tg:// или viber://.")
+    try:
+        scheme = urlsplit(_IGNORED_IN_SCHEME.sub("", stripped)).scheme.lower()
+    except ValueError:  # e.g. malformed IPv6 host "https://[::1"
+        raise serializers.ValidationError(message)
     if scheme not in SAFE_LINK_SCHEMES:
-        raise serializers.ValidationError(
-            "Ссылка должна начинаться с http://, https:// или быть относительной (например /catalog)."
-        )
+        raise serializers.ValidationError(message)
     return stripped

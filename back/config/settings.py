@@ -118,6 +118,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# Tests run with in-memory caches (no shared files between runs or with a dev server).
+TEST_RUNNER = 'config.test_runner.IsolatedCacheTestRunner'
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -217,6 +220,9 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     # Tokens only for active staff, checked on login AND on every refresh.
     'USER_AUTHENTICATION_RULE': 'api.auth.staff_user_authentication_rule',
+    # Access tokens carry a password-hash claim: any password change (API, Django admin,
+    # manage.py changepassword) invalidates every access token issued before it.
+    'CHECK_REVOKE_TOKEN': True,
 }
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

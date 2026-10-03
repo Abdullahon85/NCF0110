@@ -4,10 +4,12 @@ from rest_framework import viewsets, generics, status, filters
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.core.exceptions import ObjectDoesNotExist, ValidationError as DjangoValidationError
+from django.db import DataError, IntegrityError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from rest_framework.decorators import api_view, action, permission_classes
+from rest_framework.decorators import action, api_view, authentication_classes, permission_classes
 from django.db.models import Q, Min, Max, Count
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -96,6 +98,7 @@ def admin_me(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])  # a stale/expired Authorization header must not block logout
 @permission_classes([AllowAny])
 def admin_logout(request):
     """
@@ -103,7 +106,7 @@ def admin_logout(request):
     works when the access token has already expired; holding the refresh
     token is the proof needed to revoke it.
     """
-    refresh = request.data.get('refresh')
+    refresh = request.data.get('refresh') if isinstance(request.data, dict) else None
     if not refresh:
         return Response({'detail': 'refresh token required'}, status=status.HTTP_400_BAD_REQUEST)
     try:
@@ -767,7 +770,22 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
         
         return queryset
     
+    # Inline create/update bypass serializer validation; turn bad input into 400, not 500.
+    _BAD_INPUT_ERRORS = (DjangoValidationError, ValueError, TypeError, IntegrityError, DataError, ObjectDoesNotExist)
+
     def create(self, request, *args, **kwargs):
+        try:
+            return self._create(request, *args, **kwargs)
+        except self._BAD_INPUT_ERRORS as exc:
+            return Response({'detail': f'Некорректные данные товара: {exc}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            return self._update(request, *args, **kwargs)
+        except self._BAD_INPUT_ERRORS as exc:
+            return Response({'detail': f'Некорректные данные товара: {exc}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def _create(self, request, *args, **kwargs):
         """Создание товара с inline данными"""
         from django.db import transaction
         data = request.data
@@ -814,7 +832,7 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-    def update(self, request, *args, **kwargs):
+    def _update(self, request, *args, **kwargs):
         """Обновление товара с inline данными"""
         from django.db import transaction
         kwargs.pop('partial', False)
@@ -897,11 +915,13 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
         if not files:
             return Response({'error': 'No images provided'}, status=400)
         
-        uploaded = []
+        # Validate the whole batch first: a bad file must not leave half of it saved.
         for f in files:
             is_valid, error_msg = validate_uploaded_image(f)
             if not is_valid:
                 return Response({'error': error_msg}, status=400)
+        uploaded = []
+        for f in files:
             img = Image.objects.create(product=product, image=f)
             uploaded.append({'id': img.id, 'image': img.image.url if img.image else None})
         

@@ -1,5 +1,8 @@
 # filters.py
 import django_filters
+from decimal import Decimal, InvalidOperation
+
+from django.db import models
 from django.db.models import Q
 from rest_framework import filters
 from .models import Product, Brand
@@ -12,6 +15,17 @@ class ProductFilter(django_filters.FilterSet):
     class Meta:
         model = Product
         fields = ['price_min', 'price_max', 'category']
+
+def _parse_price(raw):
+    """Query-string price -> Decimal, or None when missing/invalid (ignored, not a 500)."""
+    if raw in (None, ''):
+        return None
+    try:
+        value = Decimal(raw)
+    except (InvalidOperation, ValueError):
+        return None
+    return value if value.is_finite() else None
+
 
 class BrandFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
@@ -44,6 +58,8 @@ class BrandFilter(filters.BaseFilterBackend):
         price_min = request.query_params.get('price_min')
         price_max = request.query_params.get('price_max')
 
+        price_min = _parse_price(price_min)
+        price_max = _parse_price(price_max)
         if price_min is not None:
             queryset = queryset.filter(products__price__gte=price_min).distinct()
         if price_max is not None:
