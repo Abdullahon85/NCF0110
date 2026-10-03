@@ -268,7 +268,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { categoriesAPI, brandsAPI, bannersAPI, getImageUrl } from '@/api'
@@ -276,8 +275,6 @@ import BannerSlider from '@/components/BannerSlider.vue'
 import type { Category, Brand, Banner } from '@/types'
 
 gsap.registerPlugin(ScrollTrigger)
-
-const router = useRouter()
 
 // ─── Data ───────────────────────────────────────────────────────────────────
 const categories = ref<Category[]>([])
@@ -513,10 +510,12 @@ function initAnimations() {
   })
 
   // Categories header
-  gsap.from(catHeaderRef.value, {
-    y: 60, opacity: 0, duration: 0.9,
-    scrollTrigger: { trigger: catHeaderRef.value, start: 'top 85%', end: 'bottom 60%', toggleActions: 'play none none reverse' },
-  })
+  if (catHeaderRef.value) {
+    gsap.from(catHeaderRef.value, {
+      y: 60, opacity: 0, duration: 0.9,
+      scrollTrigger: { trigger: catHeaderRef.value, start: 'top 85%', end: 'bottom 60%', toggleActions: 'play none none reverse' },
+    })
+  }
 
   // Category cards stagger
   if (catGridRef.value) {
@@ -527,10 +526,12 @@ function initAnimations() {
   }
 
   // Features header
-  gsap.from(featHeaderRef.value, {
-    y: 60, opacity: 0, duration: 0.9,
-    scrollTrigger: { trigger: featHeaderRef.value, start: 'top 85%', toggleActions: 'play none none reverse' },
-  })
+  if (featHeaderRef.value) {
+    gsap.from(featHeaderRef.value, {
+      y: 60, opacity: 0, duration: 0.9,
+      scrollTrigger: { trigger: featHeaderRef.value, start: 'top 85%', toggleActions: 'play none none reverse' },
+    })
+  }
 
   // Bento cards
   if (bentoRef.value) {
@@ -541,20 +542,24 @@ function initAnimations() {
   }
 
   // Brands section
-  gsap.from(brandHeaderRef.value, {
-    y: 60, opacity: 0, duration: 0.9,
-    scrollTrigger: { trigger: brandHeaderRef.value, start: 'top 85%', toggleActions: 'play none none reverse' },
-  })
+  if (brandHeaderRef.value) {
+    gsap.from(brandHeaderRef.value, {
+      y: 60, opacity: 0, duration: 0.9,
+      scrollTrigger: { trigger: brandHeaderRef.value, start: 'top 85%', toggleActions: 'play none none reverse' },
+    })
+  }
   if (brandsGridRef.value) {
     gsap.from(brandsGridRef.value.children, {
       scale: 0.8, opacity: 0, stagger: 0.06, duration: 0.6, ease: 'back.out(1.7)',
       scrollTrigger: { trigger: brandsGridRef.value, start: 'top 80%', toggleActions: 'play none none reverse' },
     })
   }
-  gsap.from(brandCtaRef.value, {
-    y: 30, opacity: 0, duration: 0.7,
-    scrollTrigger: { trigger: brandCtaRef.value, start: 'top 90%', toggleActions: 'play none none reverse' },
-  })
+  if (brandCtaRef.value) {
+    gsap.from(brandCtaRef.value, {
+      y: 30, opacity: 0, duration: 0.7,
+      scrollTrigger: { trigger: brandCtaRef.value, start: 'top 90%', toggleActions: 'play none none reverse' },
+    })
+  }
 
   // CTA section
   gsap.from(ctaInnerRef.value?.children ? Array.from(ctaInnerRef.value.children) : [], {

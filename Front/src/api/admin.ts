@@ -667,6 +667,8 @@ export const ordersAdminAPI = {
   getAll: (params?: {
     status?: string;
     search?: string;
+    date_from?: string;
+    date_to?: string;
     page?: number;
     page_size?: number;
   }) => adminApi.get("/orders/", { params }),
