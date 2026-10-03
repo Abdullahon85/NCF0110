@@ -11,7 +11,7 @@ from django.db.models import Q, Min, Max, Count
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from .throttles import LoginRateThrottle
+from .throttles import LoginRateThrottle, PUBLIC_WRITE_THROTTLES
 from .models import Brand, Product
 from .serializers import BrandSerializer, ProductListSerializer
 from .filters import BrandFilter
@@ -701,6 +701,7 @@ class ContactInfoView(generics.RetrieveAPIView):
 
 class ContactMessageView(generics.CreateAPIView):
     queryset = ContactMessage.objects.all()
+    throttle_classes = PUBLIC_WRITE_THROTTLES
     serializer_class = ContactMessageSerializer
     permission_classes = [AllowAny]
 
@@ -1357,6 +1358,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     GET/PATCH/DELETE требуют авторизации (только для админа).
     """
     queryset = Order.objects.prefetch_related('items').order_by('-created_at')
+    throttle_classes = PUBLIC_WRITE_THROTTLES
 
     def get_serializer_class(self):
         if self.request.user and self.request.user.is_staff:
@@ -1459,6 +1461,7 @@ def export_orders_csv(request):
 
 class ProductReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ProductReviewSerializer
+    throttle_classes = PUBLIC_WRITE_THROTTLES
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
@@ -1481,6 +1484,7 @@ class ProductReviewViewSet(viewsets.ModelViewSet):
 
 class ProductQuestionViewSet(viewsets.ModelViewSet):
     serializer_class = ProductQuestionSerializer
+    throttle_classes = PUBLIC_WRITE_THROTTLES
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
