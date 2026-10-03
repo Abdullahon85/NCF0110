@@ -20,37 +20,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# В production ОБЯЗАТЕЛЬНО установите переменную окружения SECRET_KEY!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-zo(g8-19uk$1amqpb5obk!@=)fdt-=mv7n3voxe-#zhz#k!0x(')
+from config.env import env_bool, env_list, resolve_secret_key
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# В production установите DEBUG=False через переменные окружения
-# По умолчанию True для разработки
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# SECURITY: DEBUG is off unless explicitly enabled (DEBUG=True in the environment).
+DEBUG = env_bool('DEBUG', False)
 
-# Добавьте свой домен в production
-ALLOWED_HOSTS = [
-    'ncb-1.onrender.com',
-    '127.0.0.1',
-    'localhost',
-    '*',
-]
+# SECURITY: production refuses to start without its own SECRET_KEY;
+# keys that were ever committed to the repository are always rejected.
+SECRET_KEY = resolve_secret_key(os.environ, DEBUG)
 
-# ВАЖНО: Проверка что SECRET_KEY изменен в production
-# Эта проверка срабатывает только при DEBUG=False
-if not DEBUG and 'django-insecure' in SECRET_KEY:
-    import sys
-    print("="*60)
-    print("⚠️  КРИТИЧНАЯ ОШИБКА БЕЗОПАСНОСТИ!")
-    print("="*60)
-    print("SECRET_KEY использует небезопасное значение по умолчанию!")
-    print("Установите уникальный SECRET_KEY в переменных окружения.")
-    print()
-    print("Для генерации нового ключа выполните:")
-    print("python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\"")
-    print("="*60)
-    sys.exit(1)
+# Comma-separated list in the ALLOWED_HOSTS environment variable.
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', ['ncb-1.onrender.com'])
+if DEBUG:
+    ALLOWED_HOSTS += ['localhost', '127.0.0.1']
+if os.environ.get('REPLIT_DEV_DOMAIN'):
+    ALLOWED_HOSTS.append(os.environ['REPLIT_DEV_DOMAIN'])
+
+# Uploaded media are served by Django itself (no separate media server on Render).
+SERVE_MEDIA = env_bool('SERVE_MEDIA', True)
 
 
 # Application definition
