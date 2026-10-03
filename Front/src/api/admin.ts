@@ -112,7 +112,8 @@ adminApi.interceptors.request.use(
                 refresh: refreshToken,
               },
             );
-            tokenStorage.setTokens(data.access);
+            // Refresh tokens rotate: the old one is revoked, keep the new one.
+          tokenStorage.setTokens(data.access, data.refresh);
             config.headers.Authorization = `Bearer ${data.access}`;
           } catch {
             tokenStorage.clearTokens();
@@ -156,7 +157,8 @@ adminApi.interceptors.response.use(
               refresh: refreshToken,
             },
           );
-          tokenStorage.setTokens(data.access);
+          // Refresh tokens rotate: the old one is revoked, keep the new one.
+          tokenStorage.setTokens(data.access, data.refresh);
 
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${data.access}`;
@@ -217,7 +219,12 @@ export const authAPI = {
 
   logout: async () => {
     try {
-      await adminApi.post("/admin/auth/logout/");
+      // Plain axios (no interceptor): the request must not trigger a token
+      // refresh first, which would revoke the very token we send here.
+      const refresh = tokenStorage.getRefreshToken();
+      if (refresh) {
+        await axios.post(`${API_BASE_URL}/admin/auth/logout/`, { refresh });
+      }
     } finally {
       tokenStorage.clearTokens();
     }
@@ -230,10 +237,18 @@ export const authAPI = {
       return Promise.reject(new Error("Пароль должен быть минимум 8 символов"));
     }
 
-    return adminApi.post("/admin/auth/change-password/", {
-      old_password: oldPassword,
-      new_password: newPassword,
-    });
+    return adminApi
+      .post("/admin/auth/change-password/", {
+        old_password: oldPassword,
+        new_password: newPassword,
+      })
+      .then((response) => {
+        // Other sessions are revoked; this one continues with a fresh pair.
+        if (response.data?.access) {
+          tokenStorage.setTokens(response.data.access, response.data.refresh);
+        }
+        return response;
+      });
   },
 
   updateProfile: (data: {
@@ -258,7 +273,8 @@ export const authAPI = {
       refresh: refreshToken,
     });
 
-    tokenStorage.setTokens(data.access);
+    // Refresh tokens rotate: the old one is revoked, keep the new one.
+    tokenStorage.setTokens(data.access, data.refresh);
     return data;
   },
 

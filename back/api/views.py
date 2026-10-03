@@ -10,6 +10,9 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, action, permission_classes
 from django.db.models import Q, Min, Max, Count
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+from .auth import StaffTokenObtainPairSerializer, revoke_all_refresh_tokens
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from .throttles import LoginRateThrottle, PUBLIC_WRITE_THROTTLES
@@ -39,6 +42,7 @@ class AdminTokenObtainPairView(TokenObtainPairView):
     """
     throttle_classes = [LoginRateThrottle]
     permission_classes = [AllowAny]
+    serializer_class = StaffTokenObtainPairSerializer
 
 
 class AdminTokenRefreshView(TokenRefreshView):
@@ -75,11 +79,20 @@ def admin_me(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def admin_logout(request):
     """
-    Logout endpoint (client should clear tokens).
+    Logout: revokes the given refresh token. AllowAny so that logout still
+    works when the access token has already expired; holding the refresh
+    token is the proof needed to revoke it.
     """
+    refresh = request.data.get('refresh')
+    if not refresh:
+        return Response({'detail': 'refresh token required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        RefreshToken(refresh).blacklist()
+    except TokenError:
+        pass  # already invalid, expired or revoked: nothing left to revoke
     return Response({'detail': 'Logout successful'}, status=status.HTTP_200_OK)
 
 
@@ -1265,8 +1278,15 @@ def admin_change_password(request):
     
     user.set_password(serializer.validated_data['new_password'])
     user.save()
-    
-    return Response({'message': 'Пароль успешно изменен'})
+
+    # Sign out every other session; the current one continues with a fresh pair.
+    revoke_all_refresh_tokens(user)
+    new_refresh = RefreshToken.for_user(user)
+    return Response({
+        'message': 'Пароль успешно изменен',
+        'access': str(new_refresh.access_token),
+        'refresh': str(new_refresh),
+    })
 
 
 @api_view(['PUT', 'PATCH'])
