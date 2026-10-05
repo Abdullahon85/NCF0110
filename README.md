@@ -6,7 +6,8 @@
 |---|---|---|
 | Бэкенд (REST API) | Python 3.10+, Django 5.2, Django REST Framework, SimpleJWT | `back/` |
 | Фронтенд (сайт + админка) | Vue 3, TypeScript, Vite, Pinia, Node 20 | `Front/` |
-| База данных | PostgreSQL (production) или SQLite (локально) | — |
+| База данных | PostgreSQL (production) или SQLite (локально). MSSQL не поддерживается. | — |
+| Развёртывание | Docker Compose (`docker-compose.yml`) или вручную | корень |
 
 Проект не привязан к хостингу: все домены, ключи и адреса задаются переменными окружения.
 
@@ -55,7 +56,7 @@ Dev-сервер Vite проксирует `/api` и `/media` на `http://127.0
 
 | Переменная | Обязательна в production | Описание |
 |---|---|---|
-| `SECRET_KEY` | да | Минимум 50 символов. Генерация: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` |
+| `SECRET_KEY` | да | Минимум 50 символов. Генерация: `python -c "import secrets; print(secrets.token_urlsafe(50))"` (только буквы, цифры, `-` и `_`: в `.env` символы `$` и `#` портят значение). |
 | `DEBUG` | — | `True` только локально. По умолчанию `False`. |
 | `ALLOWED_HOSTS` | да | Домены API через запятую, например `api.shop.uz`. `*` запрещён. |
 | `CORS_ALLOWED_ORIGINS` | если фронт на другом домене | Например `https://shop.uz`, без пути. Если фронт и API на одном домене, оставить пустым. |
@@ -81,7 +82,34 @@ Dev-сервер Vite проксирует `/api` и `/media` на `http://127.0
 
 ---
 
-## Production-развёртывание (пример: Linux + nginx + gunicorn)
+## Docker (рекомендуемый способ)
+
+В репозитории есть готовые образы и `docker-compose.yml`:
+
+| Сервис | Образ | Что делает |
+|---|---|---|
+| `backend` | `back/Dockerfile` (Python 3.12, gunicorn) | REST API. При старте ждёт базу и применяет миграции. |
+| `frontend` | `Front/Dockerfile` (сборка Vite → nginx 1.27) | Отдаёт сайт и админ-панель, проксирует `/api` на `backend`, раздаёт загруженные картинки из тома `media`. |
+| `db` (опционально) | `postgres:16-alpine` | Только для тестового стенда: `--profile with-db`. В production используется PostgreSQL сервера. |
+
+**Внешние сервисы не нужны:** ни почты, ни Redis, ни S3, ни очередей, ни внешних API. Нужны только PostgreSQL и постоянный том для картинок. **MSSQL не поддерживается** (используйте PostgreSQL).
+
+```bash
+cp .env.docker.example .env        # заполнить SECRET_KEY, ALLOWED_HOSTS, DATABASE_URL
+docker compose up -d --build
+docker compose exec backend python manage.py createsuperuser
+docker compose logs -f backend     # проверить, что миграции прошли и gunicorn запущен
+```
+
+Сайт откроется на порту `HTTP_PORT` (по умолчанию 8080). HTTPS и домен настраиваются на обратном прокси сервера (nginx, traefik и т.п.), который проксирует домен на этот порт. HTTPS-редирект делает этот прокси, поэтому в шаблоне `SECURE_SSL_REDIRECT=False`.
+
+- **База на том же сервере, вне Docker:** `DATABASE_URL=postgres://ncf:ПАРОЛЬ@host.docker.internal:5432/ncf`. PostgreSQL должен принимать подключения из сети Docker: `listen_addresses` и правило в `pg_hba.conf` для подсети Docker, например `172.16.0.0/12`. База и пользователь создаются заранее: `CREATE USER ncf WITH PASSWORD '...'; CREATE DATABASE ncf OWNER ncf;`.
+- **`TRUSTED_PROXY_COUNT`:** `1`, если порт контейнера `frontend` открыт напрямую; `2`, если перед ним обратный прокси сервера, который дописывает `X-Forwarded-For`. Проверка после запуска: 6 неверных попыток входа подряд, каждая с новым заголовком `X-Forwarded-For`, на шестой должны дать `429`. Если `429` приходит всем пользователям сразу, значение слишком маленькое.
+- **Резервные копии:** база данных и том `media` (`docker run --rm -v <проект>_media:/m -v $PWD:/b alpine tar czf /b/media.tgz -C /m .`).
+- **Обновление:** `git pull && docker compose up -d --build`. Миграции применятся при старте `backend`.
+- **Очистка токенов:** раз в сутки `docker compose exec backend python manage.py flushexpiredtokens`.
+
+## Production без Docker (пример: Linux + nginx + gunicorn)
 
 Подойдёт любой хостинг. Ниже минимальный вариант на одном сервере, где фронт и API работают на одном домене.
 

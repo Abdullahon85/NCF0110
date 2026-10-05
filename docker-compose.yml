@@ -1,0 +1,47 @@
+# NCF: site + admin panel (frontend/nginx) and REST API (backend/gunicorn).
+#   cp .env.docker.example .env      # fill SECRET_KEY, ALLOWED_HOSTS, DATABASE_URL
+#   docker compose up -d --build
+#   docker compose exec backend python manage.py createsuperuser
+# Uses the server's existing PostgreSQL via DATABASE_URL. For a self-contained
+# test stack with its own PostgreSQL: docker compose --profile with-db up -d --build
+
+services:
+  backend:
+    build: ./back
+    env_file: .env
+    environment:
+      # Fixed by this compose layout (not meant to be changed in .env):
+      SERVE_MEDIA: "False"          # /media/ is served by the frontend nginx
+    volumes:
+      - media:/app/media
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach PostgreSQL running on the host
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Front
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    volumes:
+      - media:/usr/share/nginx/media:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    profiles: ["with-db"]
+    environment:
+      POSTGRES_DB: ncf
+      POSTGRES_USER: ncf
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  media:      # uploaded images - back this up together with the database
+  pgdata:
