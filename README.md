@@ -103,6 +103,21 @@ docker compose logs -f backend     # проверить, что миграции
 
 Сайт откроется на порту `HTTP_PORT` (по умолчанию 8080). HTTPS и домен настраиваются на обратном прокси сервера (nginx, traefik и т.п.), который проксирует домен на этот порт. HTTPS-редирект делает этот прокси, поэтому в шаблоне `SECURE_SSL_REDIRECT=False`.
 
+### Через реестр образов (сборка на одной машине, запуск на сервере)
+
+1. **На машине сборки** (нужен Docker; на Windows — Docker Desktop), из корня репозитория:
+   - Windows: `.\deploy\push-images.ps1 -Registry registry.example.uz:5000`
+   - Linux/macOS: `./deploy/push-images.sh registry.example.uz:5000`
+
+   Скрипт спросит логин и пароль реестра, соберёт `ncf-backend` и `ncf-frontend` и запушит их с тегами `<коммит>` и `latest`. Если push падает с ошибкой `http: server gave HTTP response to HTTPS client`, реестр работает по HTTP: добавьте его в `insecure-registries` (Docker Desktop → Settings → Docker Engine) и повторите.
+2. **На сервере** нужны только `docker-compose.yml` и `.env`. В `.env` указать `REGISTRY`, порты `HTTP_PORT` и `API_PORT` и остальные переменные, затем:
+   ```bash
+   docker login registry.example.uz:5000
+   docker compose pull backend frontend && docker compose up -d
+   docker compose exec backend python manage.py createsuperuser
+   ```
+   Домен проксируется на `HTTP_PORT`: туда идут сайт, админка, `/api` и `/media`. `API_PORT` — прямой доступ к API, для работы сайта он не нужен.
+
 - **База на том же сервере, вне Docker:** `DATABASE_URL=postgres://ncf:ПАРОЛЬ@host.docker.internal:5432/ncf`. PostgreSQL должен принимать подключения из сети Docker: `listen_addresses` и правило в `pg_hba.conf` для подсети Docker, например `172.16.0.0/12`. База и пользователь создаются заранее: `CREATE USER ncf WITH PASSWORD '...'; CREATE DATABASE ncf OWNER ncf;`.
 - **`TRUSTED_PROXY_COUNT`:** `1`, если порт контейнера `frontend` открыт напрямую; `2`, если перед ним обратный прокси сервера, который дописывает `X-Forwarded-For`. Проверка после запуска: 6 неверных попыток входа подряд, каждая с новым заголовком `X-Forwarded-For`, на шестой должны дать `429`. Если `429` приходит всем пользователям сразу, значение слишком маленькое.
 - **Резервные копии:** база данных и том `media` (`docker run --rm -v <проект>_media:/m -v $PWD:/b alpine tar czf /b/media.tgz -C /m .`).

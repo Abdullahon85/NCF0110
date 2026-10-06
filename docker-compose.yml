@@ -2,16 +2,22 @@
 #   cp .env.docker.example .env      # fill SECRET_KEY, ALLOWED_HOSTS, DATABASE_URL
 #   docker compose up -d --build
 #   docker compose exec backend python manage.py createsuperuser
+# Registry workflow (build machine -> registry -> server):
+#   build machine: docker login $REGISTRY && docker compose build && docker compose push
+#   server:        docker compose pull && docker compose up -d
 # Uses the server's existing PostgreSQL via DATABASE_URL. For a self-contained
 # test stack with its own PostgreSQL: docker compose --profile with-db up -d --build
 
 services:
   backend:
     build: ./back
+    image: ${REGISTRY:-ncf}/ncf-backend:${TAG:-latest}
     env_file: .env
     environment:
       # Fixed by this compose layout (not meant to be changed in .env):
       SERVE_MEDIA: "False"          # /media/ is served by the frontend nginx
+    ports:
+      - "${API_PORT:-8081}:8000"                # REST API directly (optional; /api also works via frontend)
     volumes:
       - media:/app/media
     extra_hosts:
@@ -19,12 +25,13 @@ services:
     restart: unless-stopped
 
   frontend:
+    image: ${REGISTRY:-ncf}/ncf-frontend:${TAG:-latest}
     build:
       context: ./Front
       args:
         VITE_API_URL: ${VITE_API_URL:-}
     ports:
-      - "${HTTP_PORT:-8080}:80"
+      - "${HTTP_PORT:-8080}:80"                 # site + admin panel + /api + /media
     volumes:
       - media:/usr/share/nginx/media:ro
     depends_on:
