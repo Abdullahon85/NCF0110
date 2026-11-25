@@ -206,6 +206,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
+import { textToHtml } from "@/utils/richText";
 import { useRoute } from "vue-router";
 import { api, brandsAPI, getImageUrl } from "@/api";
 import type { Brand, Product } from "@/types";
@@ -289,8 +290,7 @@ const activeFilterCount = computed(() =>
 );
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-const formatContent = (content: string) =>
-  content ? content.replace(/\n/g, "<br>") : "";
+const formatContent = textToHtml; // escapes HTML, keeps line breaks
 
 const pluralize = (count: number) => {
   const cases  = [2, 0, 1, 1, 1, 2];

@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 from django.db import models
 from django.db.models import Q
 from rest_framework import filters
-from .models import Product, Brand
+from .models import Product
 
 class ProductFilter(django_filters.FilterSet):
     price_min = django_filters.NumberFilter(field_name="price", lookup_expr='gte')

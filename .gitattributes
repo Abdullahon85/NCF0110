@@ -1,0 +1,5 @@
+# Shell scripts and Docker files must keep Unix line endings even on Windows checkouts,
+# otherwise the container fails with "/bin/sh^M: not found".
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+.dockerignore   text eol=lf

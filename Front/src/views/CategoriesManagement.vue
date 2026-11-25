@@ -183,7 +183,10 @@
             <strong>{{ deletingItem?.name }}</strong
             >?
           </p>
-          <p class="warning">⚠️ Это действие нельзя отменить!</p>
+          <p class="warning">
+            ⚠️ Это действие нельзя отменить! Удалить можно только каталог без
+            товаров и подкаталогов: сначала перенесите или удалите их.
+          </p>
         </div>
         <div class="modal-actions">
           <button @click="showDeleteModal = false" class="btn btn-secondary">
@@ -203,7 +206,9 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, computed, onMounted } from "vue";
+import { makeSlug } from "@/utils/slug";
 import { categoriesAdminAPI } from "@/api/admin";
 import { getImageUrl } from "@/api";
 
@@ -249,59 +254,28 @@ const deletingItem = ref<Category | null>(null);
 const deleting = ref(false);
 
 // Computed
+// A category cannot be moved under itself or under any of its own subcategories
+// (the server refuses it too): that would cut the branch off the site.
 const availableParents = computed(() => {
-  if (!editingItem.value) return allCategories.value;
-  return allCategories.value.filter((c) => c.id !== editingItem.value?.id);
+  const editing = editingItem.value;
+  if (!editing) return allCategories.value;
+  const excluded = new Set<number>([editing.id]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const c of allCategories.value) {
+      if (c.parent != null && excluded.has(c.parent) && !excluded.has(c.id)) {
+        excluded.add(c.id);
+        grew = true;
+      }
+    }
+  }
+  return allCategories.value.filter((c) => !excluded.has(c.id));
 });
 
-// Transliteration
-const translitMap: Record<string, string> = {
-  а: "a",
-  б: "b",
-  в: "v",
-  г: "g",
-  д: "d",
-  е: "e",
-  ё: "yo",
-  ж: "zh",
-  з: "z",
-  и: "i",
-  й: "y",
-  к: "k",
-  л: "l",
-  м: "m",
-  н: "n",
-  о: "o",
-  п: "p",
-  р: "r",
-  с: "s",
-  т: "t",
-  у: "u",
-  ф: "f",
-  х: "h",
-  ц: "ts",
-  ч: "ch",
-  ш: "sh",
-  щ: "sch",
-  ъ: "",
-  ы: "y",
-  ь: "",
-  э: "e",
-  ю: "yu",
-  я: "ya",
-  " ": "-",
-};
-
 function generateSlug() {
-  if (editingItem.value) return; // Don't auto-generate when editing
-  form.slug = form.name
-    .toLowerCase()
-    .split("")
-    .map((char) => translitMap[char] || char)
-    .join("")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  if (editingItem.value) return; // don't touch the slug of an existing item
+  form.slug = makeSlug(form.name);
 }
 
 let searchTimeout: number;
@@ -439,9 +413,7 @@ async function saveItem() {
     loadAllCategories();
   } catch (e: any) {
     error.value =
-      e.response?.data?.detail ||
-      e.response?.data?.name?.[0] ||
-      "Ошибка сохранения";
+      adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     saving.value = false;
   }
@@ -464,7 +436,7 @@ async function deleteItem() {
     loadAllCategories();
   } catch (e: any) {
     alert(
-      "Ошибка удаления: " + (e.response?.data?.detail || "Неизвестная ошибка")
+      adminErrorMessage(e, "Ошибка удаления")
     );
   } finally {
     deleting.value = false;

@@ -191,6 +191,7 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, computed, onMounted } from "vue";
 import { messagesAdminAPI } from "@/api/admin";
 
@@ -257,7 +258,7 @@ async function markProcessed(item: Message) {
     await messagesAdminAPI.markProcessed(item.id);
     item.is_processed = true;
   } catch (e) {
-    alert("Ошибка");
+    alert(adminErrorMessage(e, "Ошибка"));
   }
 }
 
@@ -274,7 +275,7 @@ async function deleteItem() {
     showDeleteModal.value = false;
     loadItems();
   } catch (e) {
-    alert("Ошибка удаления");
+    alert(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }

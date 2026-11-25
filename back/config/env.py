@@ -7,7 +7,6 @@ import os
 import re
 from pathlib import Path
 from typing import Mapping
-from urllib.parse import parse_qsl, unquote, urlsplit
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
@@ -91,40 +90,43 @@ def build_cors_origins(environ: Mapping[str, str], debug: bool) -> list[str]:
     return list(dict.fromkeys(origins))
 
 
-_PG_SCHEMES = {"postgres", "postgresql", "pgsql"}
-
-
 def database_config(environ: Mapping[str, str], base_dir: Path) -> dict:
-    """DATABASES['default'] from DATABASE_URL.
+    """DATABASES['default']. The project uses SQLite only (one file, no database server).
 
-    Empty -> SQLite at <base_dir>/db.sqlite3 (local development).
-    postgres://user:password@host:port/name?sslmode=require -> PostgreSQL.
-    sqlite:////absolute/path.db -> SQLite at that path.
+    SQLITE_PATH: path to the database file. Empty -> <base_dir>/db.sqlite3 (local development).
+    In Docker it is /data/db.sqlite3 on the persistent "ncf-data" volume.
+
+    WAL journal + IMMEDIATE transactions + busy timeout: several gunicorn workers can
+    read and write at the same time without "database is locked" errors.
     """
-    url = environ.get("DATABASE_URL", "").strip()
-    if not url:
-        return {"ENGINE": "django.db.backends.sqlite3", "NAME": base_dir / "db.sqlite3"}
-    parts = urlsplit(url)
-    if parts.scheme == "sqlite":
-        path = parts.path[1:]  # sqlite:////abs/path -> /abs/path; sqlite:///rel.db -> rel.db
-        if not path:
-            raise ImproperlyConfigured("DATABASE_URL sqlite:// needs a file path, e.g. sqlite:////var/data/db.sqlite3")
-        return {"ENGINE": "django.db.backends.sqlite3", "NAME": Path(path)}
-    if parts.scheme in _PG_SCHEMES:
-        name = unquote(parts.path.lstrip("/"))
-        if not name:
-            raise ImproperlyConfigured("DATABASE_URL must include the database name, e.g. postgres://u:p@host:5432/ncf")
-        return {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": name,
-            "USER": unquote(parts.username or ""),
-            "PASSWORD": unquote(parts.password or ""),
-            "HOST": parts.hostname or "",
-            "PORT": str(parts.port or ""),
-            "OPTIONS": dict(parse_qsl(parts.query)),
-            "CONN_MAX_AGE": 60,
-        }
-    raise ImproperlyConfigured("DATABASE_URL must start with postgres:// (or sqlite:// for SQLite).")
+    if environ.get("DATABASE_URL", "").strip():
+        raise ImproperlyConfigured(
+            "DATABASE_URL is no longer used: the project runs on SQLite only. "
+            "Remove DATABASE_URL; set SQLITE_PATH if the database file must live elsewhere."
+        )
+    path = environ.get("SQLITE_PATH", "").strip()
+    return {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": Path(path) if path else base_dir / "db.sqlite3",
+        "OPTIONS": {
+            "timeout": 20,
+            "transaction_mode": "IMMEDIATE",
+            "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
+        },
+    }
+
+
+def media_root(environ: Mapping[str, str], base_dir: Path) -> str:
+    """Folder for uploaded images. Empty MEDIA_ROOT -> <base_dir>/media.
+    In Docker it is /data/media on the same volume as the database."""
+    return environ.get("MEDIA_ROOT", "").strip() or str(base_dir / "media")
+
+
+def frontend_dir(environ: Mapping[str, str]) -> str:
+    """Folder with the built Vue site (Front/dist). Set in the Docker image, where Django
+    serves the site, the admin panel and the API from one process. Empty (local
+    development) = the site runs on the Vite dev server instead."""
+    return environ.get("FRONTEND_DIR", "").strip()
 
 
 def cache_dir(environ: Mapping[str, str]) -> str:

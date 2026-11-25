@@ -472,6 +472,7 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, onMounted, watch, computed } from "vue";
 import {
   featuresAdminAPI,
@@ -817,9 +818,7 @@ async function saveFeature() {
     await loadItems();
   } catch (e: any) {
     error.value =
-      e.response?.data?.detail ||
-      e.response?.data?.name?.[0] ||
-      "Ошибка сохранения";
+      adminErrorMessage(e, "Ошибка сохранения");
     console.error("Error saving feature:", error.value);
   } finally {
     saving.value = false;
@@ -854,7 +853,7 @@ async function saveValue() {
     loadItems();
   } catch (e: any) {
     error.value =
-      e.response?.data?.detail || e.response?.data?.value?.[0] || "Ошибка";
+      adminErrorMessage(e, "Ошибка");
   } finally {
     saving.value = false;
   }
@@ -885,7 +884,7 @@ async function performDelete() {
     showDeleteModal.value = false;
     loadItems();
   } catch (e) {
-    alert("Ошибка удаления");
+    alert(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }

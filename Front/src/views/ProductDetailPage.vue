@@ -821,6 +821,7 @@
 <script setup lang="ts">
 import { describeSubmitError } from "@/utils/apiError";
 import { ref, onMounted, computed, watch } from "vue";
+import { textToHtml, truncateText } from "@/utils/richText";
 import { useRoute } from "vue-router";
 import {
   productsAPI,
@@ -1005,8 +1006,7 @@ const loadSimilarProducts = async () => {
 const truncatedDescription = computed(() => {
   if (!product.value?.description) return "";
   const text = product.value.description;
-  if (text.length <= 100) return formatContent(text);
-  return formatContent(text.substring(0, 100) + "...");
+  return textToHtml(truncateText(text, 100));
 });
 
 // Группировка характеристик по feature_name
@@ -1061,10 +1061,7 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
-const formatContent = (content: string) => {
-  if (!content) return "";
-  return content.replace(/\n/g, "<br>");
-};
+const formatContent = textToHtml; // escapes HTML, keeps line breaks
 
 const closeModal = () => {
   showContactModal.value = false;

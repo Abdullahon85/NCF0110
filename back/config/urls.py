@@ -4,6 +4,8 @@ from django.conf import settings
 from django.urls import re_path
 from django.views.static import serve
 
+from config.views import spa_index
+
 
 urlpatterns = [
     path('api/', include('api.urls')),
@@ -18,3 +20,9 @@ if settings.DEBUG or settings.SERVE_MEDIA:
     urlpatterns += [
         re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     ]
+
+# Single Docker container: every other path is a route of the Vue site -> index.html.
+# Must stay last. /assets/ is excluded so a missing build file is a real 404.
+urlpatterns += [
+    re_path(r'^(?!(?:api|media|static|assets|dashboard-ctrl-panel)/).*$', spa_index),
+]

@@ -1,15 +1,15 @@
 #models.py
 from django.db import models
-from django.utils.text import slugify
-from django.core.validators import URLValidator
+from .slugs import make_slug, unique_slug
 import random
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError
 
 
 class Category(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
     slug = models.SlugField(max_length=200, unique=True, blank=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True,related_name='children',verbose_name='Родительская категория')
+    # PROTECT: a category with subcategories cannot be deleted (they would vanish with it).
+    parent = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True,related_name='children',verbose_name='Родительская категория')
     image = models.ImageField(upload_to='categories/', blank=True, null=True, verbose_name='Изображение')
     order = models.IntegerField(default=0, verbose_name='Порядок сортировки')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -20,23 +20,26 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
         ordering = ['order', 'name']
 
+    def clean(self):
+        # Same rule as the admin API (CategoryAdminSerializer.validate_parent),
+        # for the optional stock Django admin.
+        from django.core.exceptions import ValidationError
+        from .categories import is_self_or_descendant
+        if self.pk and self.parent_id and is_self_or_descendant(self.parent_id, self.pk):
+            raise ValidationError({'parent': 'Нельзя выбрать родителем сам каталог или его подкаталог.'})
+
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = unique_slug(Category, self.name, 200, self.pk)
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
     def get_all_products(self):
-        """Получить все товары категории включая подкатегории (оптимизировано)"""
-        categories = [self]
-        children = list(self.children.all())
-        while children:
-            child = children.pop()
-            categories.append(child)
-            children.extend(list(child.children.all()))
-        return Product.objects.filter(category__in=categories).select_related(
+        """Все товары каталога, включая подкаталоги любой глубины (безопасно при цикле)."""
+        from .categories import subtree_ids
+        return Product.objects.filter(category_id__in=subtree_ids([self.id])).select_related(
             'category', 'brand'
         ).prefetch_related('images')
 
@@ -48,7 +51,7 @@ class Brand(models.Model):
     description = models.TextField(blank=True, null=True)  # 👈 добавь
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)[:160]
+            self.slug = unique_slug(Brand, self.name, 160, self.pk)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -59,7 +62,8 @@ class Product(models.Model):
     slug = models.SlugField(max_length=200, unique=True, blank=True)
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT, null=True, blank=True, related_name='products')
     description = models.TextField(verbose_name='Описание')
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products',verbose_name='Категория')
+    # PROTECT: deleting a category must never silently delete its products.
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='products',verbose_name='Категория')
     price = models.DecimalField(max_digits=25, decimal_places=2, null=True, blank=True, verbose_name='Цена')
     is_available = models.BooleanField(default=True, verbose_name='В наличии')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -73,7 +77,7 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = unique_slug(Product, self.name, 200, self.pk)
         if not self.internal_sku:
             # префикс: три буквы из slug категории или из названия
             raw_prefix = (self.category.slug if self.category and self.category.slug else self.name[:3])
@@ -197,7 +201,7 @@ class Tag(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)[:120]
+            self.slug = make_slug(self.name, 120)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -290,7 +294,7 @@ class NewsItem(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title)
+            self.slug = unique_slug(NewsItem, self.title, 200, self.pk)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -426,7 +430,7 @@ class Banner(models.Model):
         ordering = ['order', '-created_at']
 
     def __str__(self):
-        return self.title
+        return self.title or f'Баннер #{self.pk}'
 
 
 class ProductReview(models.Model):

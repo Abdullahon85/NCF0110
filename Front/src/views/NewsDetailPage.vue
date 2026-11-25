@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { textToHtml } from "@/utils/richText";
 import { useRoute } from "vue-router";
 import { newsAPI } from "@/api";
 import type { NewsItem } from "@/types";
@@ -66,10 +67,7 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const formatContent = (content: string) => {
-  // Простая обработка переносов строк
-  return content.replace(/\n/g, "<br>");
-};
+const formatContent = textToHtml; // escapes HTML, keeps line breaks
 
 onMounted(async () => {
   const slug = route.params.slug;

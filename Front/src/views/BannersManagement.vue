@@ -249,6 +249,7 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, computed, onMounted } from "vue";
 import { bannersAdminAPI } from "@/api/admin";
 import type { Banner } from "@/types";
@@ -415,7 +416,7 @@ async function saveItem() {
     closeModal();
     await loadItems();
   } catch (e: any) {
-    error.value = e.response?.data?.detail || "Ошибка сохранения";
+    error.value = adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     saving.value = false;
   }
@@ -438,7 +439,7 @@ async function deleteItem() {
   } catch (e: any) {
     console.error("Failed to delete banner:", e);
     alert(
-      e?.response?.data?.detail || e?.message || "Ошибка при удалении баннера"
+      adminErrorMessage(e, "Ошибка при удалении баннера")
     );
   } finally {
     deleting.value = false;

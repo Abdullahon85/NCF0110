@@ -510,7 +510,10 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
+import { uploadEach } from "@/utils/uploads";
 import { ref, reactive, computed, onMounted } from "vue";
+import { makeSlug } from "@/utils/slug";
 import {
   productsAdminAPI,
   categoriesAdminAPI,
@@ -626,54 +629,9 @@ const totalPages = computed(() => Math.ceil(totalCount.value / pageSize));
 
 // ==================== METHODS ====================
 
-// Transliteration for slug
-const translitMap: Record<string, string> = {
-  а: "a",
-  б: "b",
-  в: "v",
-  г: "g",
-  д: "d",
-  е: "e",
-  ё: "yo",
-  ж: "zh",
-  з: "z",
-  и: "i",
-  й: "y",
-  к: "k",
-  л: "l",
-  м: "m",
-  н: "n",
-  о: "o",
-  п: "p",
-  р: "r",
-  с: "s",
-  т: "t",
-  у: "u",
-  ф: "f",
-  х: "h",
-  ц: "ts",
-  ч: "ch",
-  ш: "sh",
-  щ: "sch",
-  ъ: "",
-  ы: "y",
-  ь: "",
-  э: "e",
-  ю: "yu",
-  я: "ya",
-  " ": "-",
-};
-
 function generateSlug() {
-  if (editingProduct.value) return; // Don't auto-generate for edit
-  form.slug = form.name
-    .toLowerCase()
-    .split("")
-    .map((c) => translitMap[c] || c)
-    .join("")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  if (editingProduct.value) return; // don't touch the slug of an existing product
+  form.slug = makeSlug(form.name);
 }
 
 function formatPrice(price: number | null) {
@@ -867,7 +825,7 @@ async function editProduct(product: Product) {
     showModal.value = true;
   } catch (e) {
     console.error("Failed to load product:", e);
-    alert("Ошибка при загрузке товара");
+    alert(adminErrorMessage(e, "Ошибка при загрузке товара"));
   }
 }
 
@@ -1050,28 +1008,30 @@ async function saveProduct() {
       productId = response.data.id;
     }
 
-    // Upload new images
+    // Upload new images; a bad file must not be lost silently.
     const newImages = form.images.filter((img) => img._new && img.file);
-    for (const img of newImages) {
-      if (img.file) {
+    const failedUploads = await uploadEach(
+      newImages,
+      (img) => {
         const formData = new FormData();
-        formData.append("image", img.file);
-        try {
-          await productsAdminAPI.uploadImage(productId, formData);
-        } catch (e) {
-          console.warn("Image upload failed:", e);
-        }
-      }
-    }
+        formData.append("image", img.file as File);
+        return productsAdminAPI.uploadImage(productId, formData);
+      },
+      (img) => (img.file as File).name,
+    );
 
     closeModal();
     loadProducts();
+    if (failedUploads.length) {
+      alert(
+        "Товар сохранён, но эти изображения не загрузились:\n" +
+          failedUploads.join("\n"),
+      );
+    }
   } catch (e: any) {
     console.error("Failed to save product:", e);
     formError.value =
-      e.response?.data?.detail ||
-      JSON.stringify(e.response?.data) ||
-      "Ошибка сохранения";
+      adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     saving.value = false;
   }
@@ -1095,7 +1055,7 @@ async function deleteProduct() {
     loadProducts();
   } catch (e) {
     console.error("Failed to delete product:", e);
-    alert("Ошибка при удалении товара");
+    alert(adminErrorMessage(e, "Ошибка при удалении товара"));
   } finally {
     deleting.value = false;
   }

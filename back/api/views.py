@@ -2,10 +2,10 @@
 from decimal import Decimal
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.exceptions import ObjectDoesNotExist, ValidationError as DjangoValidationError
 from django.db import DataError, IntegrityError
+from django.db.models import ProtectedError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -18,21 +18,23 @@ from .auth import revoke_all_refresh_tokens
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from .throttles import LoginRateThrottle, ORDER_THROTTLES, PUBLIC_WRITE_THROTTLES
-from .models import Brand, Product
-from .serializers import BrandSerializer, ProductListSerializer
 from .filters import BrandFilter, parse_price
 
-from .pagination import StandardResultsSetPagination
+from .pagination import LargeListPagination, StandardResultsSetPagination
+from .categories import subtree_ids
+from .slugs import make_slug, unique_slug
+from .params import date_param, inline_list, int_param, price_value
+from rest_framework.exceptions import ValidationError
 from .models import (
     Category, Product, NewsItem, AboutContent,
-    ContactInfo, ContactMessage, Brand, ProductFeature, Tag, Feature, ProductTagGroup, TagName, FeatureValue, Image, Banner, Order, OrderItem,
+    ContactInfo, ContactMessage, Brand, ProductFeature, Tag, Feature, ProductTagGroup, TagName, FeatureValue, Image, Banner, Order,
     ProductReview, ProductQuestion
 )
 from .serializers import (
     CategorySerializer, ProductListSerializer, ProductDetailSerializer,
     NewsItemSerializer, NewsDetailSerializer, AboutContentSerializer,
     ContactInfoSerializer, ContactMessageSerializer, BrandSerializer, TagSerializer,
-    ProductTagGroupSerializer, BannerSerializer, OrderSerializer, OrderAdminSerializer,
+    BannerSerializer, OrderSerializer, OrderAdminSerializer,
     ProductReviewSerializer, ProductQuestionSerializer,
     ProductReviewAdminSerializer, ProductQuestionAdminSerializer
 )
@@ -120,11 +122,10 @@ def admin_logout(request):
 @api_view(['GET'])
 def features_tags_by_category(request):
     """Get features, tags, and feature values for a specific category"""
+    category_id = int_param(request.GET, 'category')  # 400 on a non-number
+    if category_id is None:
+        return JsonResponse({'error': 'category parameter is required'}, status=400)
     try:
-        category_id = request.GET.get('category')
-        
-        if not category_id:
-            return JsonResponse({'error': 'category parameter is required'}, status=400)
         
         # Get all features with their values for this category
         features = Feature.objects.filter(category_id=category_id).prefetch_related('values')
@@ -188,8 +189,8 @@ def features_tags_by_category(request):
 @api_view(['GET'])
 def feature_values_by_feature(request):
     """Получить значения характеристики по её ID"""
-    feature_id = request.GET.get('feature_id')
-    if not feature_id:
+    feature_id = int_param(request.GET, 'feature_id')  # 400 on a non-number
+    if feature_id is None:
         return JsonResponse({'error': 'feature_id is required'}, status=400)
     
     try:
@@ -205,11 +206,12 @@ def feature_values_by_feature(request):
         return JsonResponse({'error': 'Internal server error'}, status=500)
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all().order_by('name')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = TagSerializer
 
     @action(detail=False, methods=['get'])
     def with_count(self, request):
-        tags = Tag.objects.annotate(count=Count('producttaggroup')).order_by('-count')
+        tags = Tag.objects.annotate(count=Count('producttaggroup_tags')).order_by('-count', 'name')
         data = [{'id': t.id, 'name': t.name, 'slug': t.slug, 'count': t.count} for t in tags]
         return Response(data)
 
@@ -229,6 +231,12 @@ def products_by_feature_value(request):
 
     serializer = ProductListSerializer(queryset, many=True, context={'request': request})
     return Response(serializer.data)
+
+
+def with_list_relations(queryset):
+    """Everything ProductListSerializer reads, loaded in a fixed number of queries
+    instead of several queries per product."""
+    return queryset.select_related('category', 'brand').prefetch_related('images', 'tag_groups__tags')
 
 
 def apply_product_filters(request, queryset):
@@ -300,16 +308,8 @@ def apply_product_filters(request, queryset):
     if category_slug:
         slugs = [s.strip() for s in category_slug.split(',') if s.strip()]
         if slugs:
-            def collect_category_ids(cat):
-                ids = [cat.id]
-                for child in cat.children.all():
-                    ids.extend(collect_category_ids(child))
-                return ids
-
-            categories = Category.objects.filter(slug__in=slugs)
-            all_category_ids = []
-            for category in categories:
-                all_category_ids.extend(collect_category_ids(category))
+            root_ids = Category.objects.filter(slug__in=slugs).values_list('id', flat=True)
+            all_category_ids = subtree_ids(root_ids)
 
             if all_category_ids:
                 queryset = queryset.filter(category_id__in=all_category_ids)
@@ -337,9 +337,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        queryset = Product.objects.all()
-        queryset = apply_product_filters(self.request, queryset)
-        return queryset
+        return with_list_relations(apply_product_filters(self.request, Product.objects.all()))
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -365,8 +363,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         agg = qs.aggregate(min_price=Min('price'), max_price=Max('price'))
 
         return Response({
-            'min_price': float(agg['min_price']) if agg['min_price'] else None,
-            'max_price': float(agg['max_price']) if agg['max_price'] else None,
+            'min_price': float(agg['min_price']) if agg['min_price'] is not None else None,
+            'max_price': float(agg['max_price']) if agg['max_price'] is not None else None,
         })
 
 
@@ -394,11 +392,7 @@ class BrandViewSet(viewsets.ReadOnlyModelViewSet):
         # Start from products belonging to this brand and apply the same product filters
         products_qs = Product.objects.filter(brand=brand)
         # Reuse global product filters (price, tags, category, search, availability, etc.)
-        try:
-            products_qs = apply_product_filters(request, products_qs)
-        except Exception:
-            # Fallback to a basic queryset if filtering fails for any reason
-            products_qs = products_qs.order_by('name')
+        products_qs = with_list_relations(apply_product_filters(request, products_qs))
 
         page = self.paginate_queryset(products_qs)
         if page is not None:
@@ -470,7 +464,10 @@ class BrandViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Category.objects.filter(parent=None).order_by('order', 'name')
+    # The list shows the root categories (children are nested inside them);
+    # detail pages and their actions accept any category, subcategories included.
+    queryset = Category.objects.all().order_by('order', 'name')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = CategorySerializer
     lookup_field = 'slug'
 
@@ -486,9 +483,11 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = super().get_queryset().annotate(
             direct_products_count=Count('products', distinct=True)
         )
-        limit = parse_limit(self.request.query_params.get('limit'))
-        if limit:
-            queryset = queryset[:limit]
+        if self.action == 'list':
+            queryset = queryset.filter(parent=None)
+            limit = parse_limit(self.request.query_params.get('limit'))
+            if limit:
+                queryset = queryset[:limit]
         return queryset
 
     @action(detail=True, methods=['get'])
@@ -498,16 +497,15 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
         except Http404:
             return Response({'error': 'Категория не найдена'}, status=404)
 
-        products = category.get_all_products()
-        products = apply_product_filters(request, products)
+        products = with_list_relations(apply_product_filters(request, category.get_all_products()))
 
         paginator = StandardResultsSetPagination()
         page = paginator.paginate_queryset(products, request)
         if page is not None:
-            serializer = ProductListSerializer(page, many=True)
+            serializer = ProductListSerializer(page, many=True, context={'request': request})
             return paginator.get_paginated_response(serializer.data)
 
-        serializer = ProductListSerializer(products, many=True)
+        serializer = ProductListSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
@@ -658,7 +656,7 @@ class BannerViewSet(viewsets.ReadOnlyModelViewSet):
 class NewsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = NewsItem.objects.filter(is_published=True).order_by('-pub_date')
     lookup_field = 'slug'
-    pagination_class = StandardResultsSetPagination
+    pagination_class = LargeListPagination  # the news page lists every published item
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -668,7 +666,7 @@ class NewsViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         limit = parse_limit(self.request.query_params.get('limit'))
-        if limit:
+        if limit and self.action == 'list':
             queryset = queryset[:limit]
         return queryset
 
@@ -712,10 +710,8 @@ from .serializers import (
     TagNameAdminSerializer, FeatureAdminSerializer, FeatureValueAdminSerializer,
     NewsAdminSerializer, AboutContentAdminSerializer, ContactInfoAdminSerializer,
     ContactMessageAdminSerializer, ImageAdminSerializer,
-    UserSerializer, LoginSerializer, ChangePasswordSerializer, UpdateProfileSerializer
+    UserSerializer, ChangePasswordSerializer, UpdateProfileSerializer
 )
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 # File upload validation lives in api/uploads.py (content-based, via Pillow).
@@ -733,8 +729,8 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         search = self.request.query_params.get('search')
-        category = self.request.query_params.get('category')
-        brand = self.request.query_params.get('brand')
+        category = int_param(self.request.query_params, 'category')
+        brand = int_param(self.request.query_params, 'brand')
         is_available = self.request.query_params.get('is_available')
         
         if search:
@@ -743,9 +739,9 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
                 Q(internal_sku__icontains=search) | 
                 Q(manufacturer_sku__icontains=search)
             )
-        if category:
+        if category is not None:
             queryset = queryset.filter(category_id=category)
-        if brand:
+        if brand is not None:
             queryset = queryset.filter(brand_id=brand)
         if is_available is not None:
             queryset = queryset.filter(is_available=is_available.lower() in ['true', '1'])
@@ -767,30 +763,78 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
         except self._BAD_INPUT_ERRORS as exc:
             return Response({'detail': f'Некорректные данные товара: {exc}'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @staticmethod
+    def _check_lengths(data):
+        # SQLite does not enforce max_length, and this view bypasses the serializer.
+        for field in ('name', 'manufacturer_sku', 'internal_sku'):
+            limit = Product._meta.get_field(field).max_length
+            if len(str(data.get(field) or '')) > limit:
+                raise ValidationError({field: f'Не длиннее {limit} символов.'})
+
+    @staticmethod
+    def _validated_name(data):
+        name = str(data.get('name') or '').strip()
+        if not name:
+            raise ValidationError({'name': 'Укажите название товара.'})
+        return name
+
+    @staticmethod
+    def _validated_category_id(data):
+        category_id = int_param(data, 'category')
+        if category_id is None:
+            raise ValidationError({'category': 'Выберите каталог.'})
+        if not Category.objects.filter(pk=category_id).exists():
+            raise ValidationError({'category': 'Каталог не найден.'})
+        return category_id
+
+    @staticmethod
+    def _validated_brand_id(data):
+        if not data.get('brand'):
+            return None
+        brand_id = int_param(data, 'brand')
+        if not Brand.objects.filter(pk=brand_id).exists():
+            raise ValidationError({'brand': 'Бренд не найден.'})
+        return brand_id
+
+    @staticmethod
+    def _validated_internal_sku(data, exclude_pk=None):
+        sku = str(data.get('internal_sku') or '').strip() or None
+        if sku and Product.objects.filter(internal_sku=sku).exclude(pk=exclude_pk).exists():
+            raise ValidationError({'internal_sku': f'Внутренний SKU «{sku}» уже есть у другого товара.'})
+        return sku
+
     def _create(self, request, *args, **kwargs):
         """Создание товара с inline данными"""
         from django.db import transaction
         data = request.data
+        self._check_lengths(data)
+        name = self._validated_name(data)
+        category_id = self._validated_category_id(data)
+        price = price_value(data)
+        brand_id = self._validated_brand_id(data)
+        internal_sku = self._validated_internal_sku(data)
+        features_data = inline_list(data, 'features')
+        tag_groups_data = inline_list(data, 'tag_groups')
         
         with transaction.atomic():
             # Основные данные товара
             product_data = {
-                'name': data.get('name'),
-                'slug': data.get('slug') or None,
+                'name': name,
+                # Taken slug (same product name twice) -> kamera-x-2 instead of an error.
+                'slug': unique_slug(Product, data.get('slug') or name, 200),
                 'description': data.get('description', ''),
-                'category_id': data.get('category'),
-                'brand_id': data.get('brand') or None,
-                'price': data.get('price') or None,
+                'category_id': category_id,
+                'brand_id': brand_id,
+                'price': price,
                 'is_available': data.get('is_available', True),
                 'manufacturer_sku': data.get('manufacturer_sku', ''),
-                'internal_sku': data.get('internal_sku') or None,
+                'internal_sku': internal_sku,
             }
             
             product = Product(**product_data)
             product.save()
             
             # Обработка характеристик (features)
-            features_data = data.get('features', [])
             for feat in features_data:
                 if feat.get('feature_id') and feat.get('value_id'):
                     ProductFeature.objects.create(
@@ -800,7 +844,6 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
                     )
             
             # Обработка групп тегов (tag_groups)
-            tag_groups_data = data.get('tag_groups', [])
             for tg in tag_groups_data:
                 if tg.get('group_name_id'):
                     tag_group = ProductTagGroup.objects.create(
@@ -820,31 +863,39 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
         kwargs.pop('partial', False)
         product = self.get_object()
         data = request.data
-        
+        self._check_lengths(data)
+        name = self._validated_name(data) if 'name' in data else product.name
+        category_id = self._validated_category_id(data) if 'category' in data else product.category_id
+        price = price_value(data) if 'price' in data else product.price
+        brand_id = self._validated_brand_id(data) if 'brand' in data else product.brand_id
+        internal_sku = self._validated_internal_sku(data, product.pk) if data.get('internal_sku') else product.internal_sku
+        features_data = inline_list(data, 'features') if 'features' in data else None
+        tag_groups_data = inline_list(data, 'tag_groups') if 'tag_groups' in data else None
+        images_data = inline_list(data, 'images') if 'images' in data else None
+
         with transaction.atomic():
             # Обновляем основные поля товара
-            product.name = data.get('name', product.name)
-            if 'slug' in data:
-                product.slug = data['slug'] or product.slug
+            product.name = name
+            if data.get('slug') and data['slug'] != product.slug:
+                new_slug = make_slug(data['slug'], 200)
+                if Product.objects.filter(slug=new_slug).exclude(pk=product.pk).exists():
+                    raise ValidationError({'slug': f'Адрес (slug) «{new_slug}» уже занят другим товаром.'})
+                product.slug = new_slug
             product.description = data.get('description', product.description)
-            if 'category' in data:
-                product.category_id = data['category']
-            if 'brand' in data:
-                product.brand_id = data['brand'] or None
-            if 'price' in data:
-                product.price = data['price'] or None
+            product.category_id = category_id
+            product.brand_id = brand_id
+            product.price = price
             if 'is_available' in data:
                 product.is_available = data['is_available']
             if 'manufacturer_sku' in data:
                 product.manufacturer_sku = data['manufacturer_sku'] or ''
-            if 'internal_sku' in data and data['internal_sku']:
-                product.internal_sku = data['internal_sku']
+            product.internal_sku = internal_sku
             product.save()
             
             # Обновляем характеристики
-            if 'features' in data:
+            if features_data is not None:
                 product.features.all().delete()
-                for feat in data['features']:
+                for feat in features_data:
                     if feat.get('feature_id') and feat.get('value_id'):
                         ProductFeature.objects.create(
                             product=product,
@@ -853,9 +904,9 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
                         )
             
             # Обновляем группы тегов
-            if 'tag_groups' in data:
+            if tag_groups_data is not None:
                 product.tag_groups.all().delete()
-                for tg in data['tag_groups']:
+                for tg in tag_groups_data:
                     if tg.get('group_name_id'):
                         tag_group = ProductTagGroup.objects.create(
                             product=product,
@@ -866,8 +917,8 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
                             tag_group.tags.set(tag_ids)
             
             # Обновляем изображения (порядок и is_main)
-            if 'images' in data:
-                for img_data in data['images']:
+            if images_data is not None:
+                for img_data in images_data:
                     if img_data.get('id'):
                         try:
                             img = Image.objects.get(id=img_data['id'], product=product)
@@ -920,9 +971,36 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Image not found'}, status=404)
 
 
-class CategoryAdminViewSet(viewsets.ModelViewSet):
+def plural_ru(n, one, few, many):
+    """1 товар, 2 товара, 5 товаров."""
+    if n % 10 == 1 and n % 100 != 11:
+        return f"{n} {one}"
+    if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        return f"{n} {few}"
+    return f"{n} {many}"
+
+
+class ProtectedDeleteMixin:
+    """DELETE of an object that others still depend on (on_delete=PROTECT) answers
+    400 with an explanation for the admin instead of a 500."""
+
+    def protected_delete_message(self, obj):
+        raise NotImplementedError
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {'detail': self.protected_delete_message(self.get_object())},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class CategoryAdminViewSet(ProtectedDeleteMixin, viewsets.ModelViewSet):
     """CRUD для категорий (админка)"""
     queryset = Category.objects.all().order_by('order', 'name')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = CategoryAdminSerializer
     lookup_field = 'pk'
     permission_classes = [IsAdminUser]
@@ -938,10 +1016,21 @@ class CategoryAdminViewSet(viewsets.ModelViewSet):
             if parent == 'null':
                 queryset = queryset.filter(parent__isnull=True)
             else:
-                queryset = queryset.filter(parent_id=parent)
+                queryset = queryset.filter(parent_id=int_param(self.request.query_params, 'parent'))
         
         return queryset
     
+    def protected_delete_message(self, category):
+        parts = []
+        products = category.products.count()
+        children = category.children.count()
+        if products:
+            parts.append(plural_ru(products, 'товар', 'товара', 'товаров'))
+        if children:
+            parts.append(plural_ru(children, 'подкаталог', 'подкаталога', 'подкаталогов'))
+        return (f'Нельзя удалить каталог «{category.name}»: в нём {" и ".join(parts)}. '
+                'Сначала перенесите их в другой каталог или удалите.')
+
     @action(detail=True, methods=['post'], url_path='upload-image')
     def upload_image(self, request, pk=None):
         category = self.get_object()
@@ -965,9 +1054,15 @@ class CategoryAdminViewSet(viewsets.ModelViewSet):
         return Response({'image': None})
 
 
-class BrandAdminViewSet(viewsets.ModelViewSet):
+class BrandAdminViewSet(ProtectedDeleteMixin, viewsets.ModelViewSet):
     """CRUD для брендов (админка)"""
+
+    def protected_delete_message(self, brand):
+        count = plural_ru(brand.products.count(), 'товар', 'товара', 'товаров')
+        return (f'Нельзя удалить бренд «{brand.name}»: к нему привязано {count}. '
+                'Сначала смените бренд у этих товаров или удалите их.')
     queryset = Brand.objects.all().order_by('name')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = BrandAdminSerializer
     lookup_field = 'pk'
     permission_classes = [IsAdminUser]
@@ -998,6 +1093,7 @@ class BrandAdminViewSet(viewsets.ModelViewSet):
 class TagAdminViewSet(viewsets.ModelViewSet):
     """CRUD для тегов (админка)"""
     queryset = Tag.objects.all().order_by('name')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = TagAdminSerializer
     lookup_field = 'pk'
     permission_classes = [IsAdminUser]
@@ -1005,14 +1101,14 @@ class TagAdminViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         search = self.request.query_params.get('search')
-        category = self.request.query_params.get('category')
-        tag_name = self.request.query_params.get('tag_name')
+        category = int_param(self.request.query_params, 'category')
+        tag_name = int_param(self.request.query_params, 'tag_name')
         
         if search:
             queryset = queryset.filter(name__icontains=search)
-        if category:
+        if category is not None:
             queryset = queryset.filter(category_id=category)
-        if tag_name:
+        if tag_name is not None:
             queryset = queryset.filter(tag_name_id=tag_name)
         
         return queryset
@@ -1021,6 +1117,7 @@ class TagAdminViewSet(viewsets.ModelViewSet):
 class TagNameAdminViewSet(viewsets.ModelViewSet):
     """CRUD для имен тегов (админка)"""
     queryset = TagName.objects.all().order_by('name')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = TagNameAdminSerializer
     lookup_field = 'pk'
     permission_classes = [IsAdminUser]
@@ -1028,11 +1125,11 @@ class TagNameAdminViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         search = self.request.query_params.get('search')
-        category = self.request.query_params.get('category')
+        category = int_param(self.request.query_params, 'category')
         
         if search:
             queryset = queryset.filter(name__icontains=search)
-        if category:
+        if category is not None:
             queryset = queryset.filter(category_id=category)
         
         return queryset
@@ -1058,29 +1155,14 @@ class FeatureAdminViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         search = self.request.query_params.get('search')
-        category = self.request.query_params.get('category')
+        category = int_param(self.request.query_params, 'category')
         
         if search:
             queryset = queryset.filter(name__icontains=search)
-        if category:
+        if category is not None:
             queryset = queryset.filter(category_id=category)
         
         return queryset
-    
-    @action(detail=False, methods=['get'])
-    def debug_first(self, request):
-        """Debug action to show first feature with all details"""
-        try:
-            feature = Feature.objects.select_related('category').prefetch_related('values').first()
-            if feature:
-                serializer = self.get_serializer(feature)
-                return Response({
-                    'feature': serializer.data,
-                    'raw_values': [{'id': v.id, 'value': v.value} for v in feature.values.all()]
-                })
-            return Response({'error': 'No features found'}, status=404)
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
 
 
 class FeatureValueAdminViewSet(viewsets.ModelViewSet):
@@ -1094,14 +1176,14 @@ class FeatureValueAdminViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         search = self.request.query_params.get('search')
-        category = self.request.query_params.get('category')
-        feature = self.request.query_params.get('feature')
+        category = int_param(self.request.query_params, 'category')
+        feature = int_param(self.request.query_params, 'feature')
         
         if search:
             queryset = queryset.filter(value__icontains=search)
-        if category:
+        if category is not None:
             queryset = queryset.filter(category_id=category)
-        if feature:
+        if feature is not None:
             # Фильтруем значения, привязанные к указанной характеристике
             queryset = queryset.filter(features__id=feature).distinct()
         
@@ -1111,6 +1193,7 @@ class FeatureValueAdminViewSet(viewsets.ModelViewSet):
 class NewsAdminViewSet(viewsets.ModelViewSet):
     """CRUD для новостей (админка)"""
     queryset = NewsItem.objects.all().order_by('-pub_date')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = NewsAdminSerializer
     lookup_field = 'pk'
     permission_classes = [IsAdminUser]
@@ -1133,14 +1216,15 @@ class NewsAdminViewSet(viewsets.ModelViewSet):
 class ImageAdminViewSet(viewsets.ModelViewSet):
     """CRUD для изображений товаров (админка)"""
     queryset = Image.objects.all().order_by('order')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = ImageAdminSerializer
     lookup_field = 'pk'
     permission_classes = [IsAdminUser]
     
     def get_queryset(self):
         queryset = super().get_queryset()
-        product = self.request.query_params.get('product')
-        if product:
+        product = int_param(self.request.query_params, 'product')
+        if product is not None:
             queryset = queryset.filter(product_id=product)
         return queryset
 
@@ -1176,6 +1260,7 @@ class ContactInfoAdminView(generics.RetrieveUpdateAPIView):
 class ContactMessageAdminViewSet(viewsets.ModelViewSet):
     """Управление сообщениями от посетителей"""
     queryset = ContactMessage.objects.all().order_by('-created_at')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = ContactMessageAdminSerializer
     permission_classes = [IsAdminUser]
     lookup_field = 'pk'
@@ -1247,33 +1332,6 @@ class BannerAdminViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(banner)
         return Response(serializer.data)
-
-
-@api_view(['POST'])
-def admin_login(request):
-    """Вход в админку"""
-    serializer = LoginSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    username = serializer.validated_data['username']
-    password = serializer.validated_data['password']
-    
-    user = authenticate(request, username=username, password=password)
-    
-    if user is not None:
-        if user.is_staff or user.is_superuser:
-            login(request, user)
-            return Response({
-                'message': 'Успешный вход',
-                'user': UserSerializer(user).data
-            })
-        else:
-            return Response({'error': 'Доступ запрещен. Требуются права администратора.'}, 
-                          status=status.HTTP_403_FORBIDDEN)
-    else:
-        return Response({'error': 'Неверный логин или пароль'}, 
-                       status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
@@ -1374,40 +1432,19 @@ class OrderViewSet(viewsets.ModelViewSet):
         return [IsAdminUser()]
 
     def get_queryset(self):
-        qs = Order.objects.prefetch_related('items').order_by('-created_at')
-        search = self.request.query_params.get('search', '').strip()
-        status_filter = self.request.query_params.get('status', '').strip()
-        date_from = self.request.query_params.get('date_from', '').strip()
-        date_to = self.request.query_params.get('date_to', '').strip()
-        if search:
-            qs = qs.filter(
-                Q(customer_name__icontains=search) |
-                Q(customer_phone__icontains=search) |
-                Q(customer_email__icontains=search)
-            )
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        if date_from:
-            qs = qs.filter(created_at__date__gte=date_from)
-        if date_to:
-            qs = qs.filter(created_at__date__lte=date_to)
-        return qs
+        return filter_orders(
+            Order.objects.prefetch_related('items').order_by('-created_at'),
+            self.request.query_params,
+        )
 
 
-import csv
-from django.http import HttpResponse
-from .csv_safety import safe_csv_cell
-
-@api_view(['GET'])
-@permission_classes([IsAdminUser])
-def export_orders_csv(request):
-    """Экспорт заявок в CSV с фильтрами: search, status, date_from, date_to."""
-    qs = Order.objects.prefetch_related('items').order_by('-created_at')
-    search = request.query_params.get('search', '').strip()
-    status_filter = request.query_params.get('status', '').strip()
-    date_from = request.query_params.get('date_from', '').strip()
-    date_to = request.query_params.get('date_to', '').strip()
-
+def filter_orders(qs, params):
+    """Order list filters shared by the admin list and the CSV export:
+    search, status, date_from, date_to (YYYY-MM-DD; anything else -> 400)."""
+    search = params.get('search', '').strip()
+    status_filter = params.get('status', '').strip()
+    date_from = date_param(params, 'date_from')
+    date_to = date_param(params, 'date_to')
     if search:
         qs = qs.filter(
             Q(customer_name__icontains=search) |
@@ -1420,6 +1457,18 @@ def export_orders_csv(request):
         qs = qs.filter(created_at__date__gte=date_from)
     if date_to:
         qs = qs.filter(created_at__date__lte=date_to)
+    return qs
+
+
+import csv
+from django.http import HttpResponse
+from .csv_safety import safe_csv_cell
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def export_orders_csv(request):
+    """Экспорт заявок в CSV с фильтрами: search, status, date_from, date_to."""
+    qs = filter_orders(Order.objects.prefetch_related('items').order_by('-created_at'), request.query_params)
 
     STATUS_MAP = {
         'new': 'Новый',
@@ -1537,7 +1586,7 @@ def similar_products(request, slug):
         .filter(category=product.category, is_available=True)
         .exclude(id=product.id)
         .select_related('category', 'brand')
-        .prefetch_related('images', 'features__value')
+        .prefetch_related('images', 'features', 'tag_groups__tags')
     )
 
     # -- Price bounds for ±20% check --
@@ -1582,20 +1631,21 @@ def similar_products(request, slug):
 class ReviewAdminViewSet(viewsets.ModelViewSet):
     """Управление отзывами о товарах"""
     queryset = ProductReview.objects.select_related('product').order_by('-created_at')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = ProductReviewAdminSerializer
     permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         queryset = super().get_queryset()
         is_published = self.request.query_params.get('is_published')
-        product = self.request.query_params.get('product')
-        rating = self.request.query_params.get('rating')
+        product = int_param(self.request.query_params, 'product')
+        rating = int_param(self.request.query_params, 'rating')
         search = self.request.query_params.get('search')
         if is_published is not None:
             queryset = queryset.filter(is_published=is_published.lower() == 'true')
-        if product:
+        if product is not None:
             queryset = queryset.filter(product_id=product)
-        if rating:
+        if rating is not None:
             queryset = queryset.filter(rating=rating)
         if search:
             queryset = queryset.filter(
@@ -1614,17 +1664,18 @@ class ReviewAdminViewSet(viewsets.ModelViewSet):
 class QuestionAdminViewSet(viewsets.ModelViewSet):
     """Управление вопросами о товарах"""
     queryset = ProductQuestion.objects.select_related('product').order_by('-created_at')
+    pagination_class = LargeListPagination  # the frontend shows the whole list, no page switching
     serializer_class = ProductQuestionAdminSerializer
     permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         queryset = super().get_queryset()
         is_published = self.request.query_params.get('is_published')
-        product = self.request.query_params.get('product')
+        product = int_param(self.request.query_params, 'product')
         search = self.request.query_params.get('search')
         if is_published is not None:
             queryset = queryset.filter(is_published=is_published.lower() == 'true')
-        if product:
+        if product is not None:
             queryset = queryset.filter(product_id=product)
         if search:
             queryset = queryset.filter(

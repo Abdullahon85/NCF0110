@@ -21,3 +21,69 @@ export function describeSubmitError(error: any, fallback: string): string {
   }
   return fallback;
 }
+
+// Labels for the field names the admin API reports errors on.
+const FIELD_LABELS: Record<string, string> = {
+  name: "Название",
+  title: "Заголовок",
+  slug: "Адрес (slug)",
+  category: "Каталог",
+  parent: "Родительский каталог",
+  brand: "Бренд",
+  price: "Цена",
+  description: "Описание",
+  content: "Текст",
+  preview: "Краткое описание",
+  image: "Изображение",
+  logo: "Логотип",
+  link: "Ссылка",
+  email: "Email",
+  phone: "Телефон",
+  address: "Адрес",
+  map_url: "Ссылка на карту",
+  instagram: "Instagram",
+  telegram: "Telegram",
+  whatsapp: "WhatsApp",
+  facebook: "Facebook",
+  value: "Значение",
+  status: "Статус",
+  old_password: "Текущий пароль",
+  new_password: "Новый пароль",
+  features: "Характеристики",
+  tag_groups: "Группы тегов",
+};
+
+// First human-readable message in a DRF error body (strings, lists, nested objects).
+function firstMessage(value: unknown): string | null {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = firstMessage(item);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (value && typeof value === "object") {
+    for (const item of Object.values(value)) {
+      const found = firstMessage(item);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// Message for a failed admin action: the server's explanation, the first field
+// error with a russian label, or the fallback when there is no readable body.
+export function adminErrorMessage(error: unknown, fallback: string): string {
+  const data = (error as any)?.response?.data;
+  if (!data || typeof data !== "object") return fallback;
+  if (typeof data.detail === "string") return data.detail;
+  if (typeof data.error === "string") return data.error;
+  for (const [field, value] of Object.entries(data)) {
+    const message = firstMessage(value);
+    if (!message) continue;
+    const label = FIELD_LABELS[field];
+    return label ? `${label}: ${message}` : message;
+  }
+  return fallback;
+}

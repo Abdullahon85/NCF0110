@@ -171,7 +171,9 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, onMounted } from "vue";
+import { makeSlug } from "@/utils/slug";
 import { brandsAdminAPI } from "@/api/admin";
 
 interface Brand {
@@ -199,53 +201,9 @@ const logoPreview = ref("");
 const selectedLogoFile = ref<File | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-const translitMap: Record<string, string> = {
-  а: "a",
-  б: "b",
-  в: "v",
-  г: "g",
-  д: "d",
-  е: "e",
-  ё: "yo",
-  ж: "zh",
-  з: "z",
-  и: "i",
-  й: "y",
-  к: "k",
-  л: "l",
-  м: "m",
-  н: "n",
-  о: "o",
-  п: "p",
-  р: "r",
-  с: "s",
-  т: "t",
-  у: "u",
-  ф: "f",
-  х: "h",
-  ц: "ts",
-  ч: "ch",
-  ш: "sh",
-  щ: "sch",
-  ъ: "",
-  ы: "y",
-  ь: "",
-  э: "e",
-  ю: "yu",
-  я: "ya",
-  " ": "-",
-};
-
 function generateSlug() {
-  if (editingItem.value) return;
-  form.slug = form.name
-    .toLowerCase()
-    .split("")
-    .map((c) => translitMap[c] || c)
-    .join("")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  if (editingItem.value) return; // don't touch the slug of an existing item
+  form.slug = makeSlug(form.name);
 }
 
 function truncate(str: string, len: number) {
@@ -352,7 +310,7 @@ async function saveItem() {
     closeModal();
     loadItems();
   } catch (e: any) {
-    error.value = e.response?.data?.detail || "Ошибка сохранения";
+    error.value = adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     saving.value = false;
   }
@@ -372,7 +330,9 @@ async function deleteItem() {
     deletingItem.value = null;
     loadItems();
   } catch (e: any) {
-    alert("Ошибка удаления");
+    alert(
+      adminErrorMessage(e, "Ошибка удаления")
+    );
   } finally {
     deleting.value = false;
   }

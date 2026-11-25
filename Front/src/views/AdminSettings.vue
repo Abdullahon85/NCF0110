@@ -152,6 +152,7 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, onMounted } from "vue";
 import { settingsAdminAPI } from "@/api/admin";
 
@@ -222,7 +223,7 @@ async function saveAbout() {
     aboutSuccess.value = true;
     setTimeout(() => (aboutSuccess.value = false), 2000);
   } catch (e: any) {
-    aboutError.value = e.response?.data?.detail || "Ошибка сохранения";
+    aboutError.value = adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     savingAbout.value = false;
   }
@@ -237,7 +238,7 @@ async function saveContact() {
     contactSuccess.value = true;
     setTimeout(() => (contactSuccess.value = false), 2000);
   } catch (e: any) {
-    contactError.value = e.response?.data?.detail || "Ошибка сохранения";
+    contactError.value = adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     savingContact.value = false;
   }
@@ -252,7 +253,7 @@ async function saveSocial() {
     socialSuccess.value = true;
     setTimeout(() => (socialSuccess.value = false), 2000);
   } catch (e: any) {
-    socialError.value = e.response?.data?.detail || "Ошибка сохранения";
+    socialError.value = adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     savingSocial.value = false;
   }

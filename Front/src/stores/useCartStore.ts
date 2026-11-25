@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { CartItem } from "@/types";
 import { useLocalStorage } from "@/composables/useLocalStorage";
+import { clampQty } from "@/utils/quantity";
 
 export const useCartStore = defineStore("cart", () => {
   // сидируем из localStorage
@@ -12,9 +13,9 @@ export const useCartStore = defineStore("cart", () => {
   const add = (product: any, qty = 1, options = {}) => {
     const idx = items.value.findIndex((i) => i.product.id === product.id);
     if (idx >= 0) {
-      items.value[idx].quantity += qty;
+      items.value[idx].quantity = clampQty(items.value[idx].quantity + qty);
     } else {
-      items.value.push({ product, quantity: qty, selectedOptions: options });
+      items.value.push({ product, quantity: clampQty(qty), selectedOptions: options });
     }
   };
 
@@ -25,7 +26,7 @@ export const useCartStore = defineStore("cart", () => {
   const setQty = (productId: number, qty: number) => {
     const i = items.value.find((it) => it.product.id === productId);
     if (!i) return;
-    i.quantity = Math.max(1, qty);
+    i.quantity = clampQty(qty);
   };
 
   const clear = () => {

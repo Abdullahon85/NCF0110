@@ -476,7 +476,6 @@ export const featuresAdminAPI = {
     return adminApi.delete(`/admin/features/${id}/`);
   },
 
-  debugFirst: () => adminApi.get("/admin/features/debug_first/"),
 };
 
 // ============ FEATURE VALUES API ============
@@ -698,6 +697,11 @@ export const ordersAdminAPI = {
     validateId(id, "order");
     return adminApi.delete(`/orders/${id}/`);
   },
+
+  // CSV file of the orders matching the filters. Goes through adminApi, so an
+  // expired access token is refreshed like for any other admin request.
+  exportCsv: (params: Record<string, string>) =>
+    adminApi.get<Blob>("/admin/orders/export-csv/", { params, responseType: "blob" }),
 };
 
 // ============ REVIEWS ADMIN API ============

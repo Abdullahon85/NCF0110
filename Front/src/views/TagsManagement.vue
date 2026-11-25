@@ -345,7 +345,9 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, onMounted, watch, computed } from "vue";
+import { makeSlug } from "@/utils/slug";
 import {
   tagsAdminAPI,
   tagNamesAdminAPI,
@@ -397,52 +399,8 @@ const availableTags = computed(() => {
   return allTags.value.filter((t) => !selectedIds.has(t.id));
 });
 
-const translitMap: Record<string, string> = {
-  а: "a",
-  б: "b",
-  в: "v",
-  г: "g",
-  д: "d",
-  е: "e",
-  ё: "yo",
-  ж: "zh",
-  з: "z",
-  и: "i",
-  й: "y",
-  к: "k",
-  л: "l",
-  м: "m",
-  н: "n",
-  о: "o",
-  п: "p",
-  р: "r",
-  с: "s",
-  т: "t",
-  у: "u",
-  ф: "f",
-  х: "h",
-  ц: "ts",
-  ч: "ch",
-  ш: "sh",
-  щ: "sch",
-  ъ: "",
-  ы: "y",
-  ь: "",
-  э: "e",
-  ю: "yu",
-  я: "ya",
-  " ": "-",
-};
-
 function generateSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .split("")
-    .map((c) => translitMap[c] || c)
-    .join("")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  return makeSlug(text);
 }
 
 function generateTagSlug() {
@@ -619,7 +577,7 @@ async function saveTag() {
     loadItems();
     loadAllTags();
   } catch (e: any) {
-    error.value = e.response?.data?.detail || "Ошибка";
+    error.value = adminErrorMessage(e, "Ошибка");
   } finally {
     saving.value = false;
   }
@@ -672,7 +630,7 @@ async function saveTagName() {
       await loadAllTags(newTagName.category);
     }
   } catch (e: any) {
-    error.value = e.response?.data?.detail || "Ошибка";
+    error.value = adminErrorMessage(e, "Ошибка");
   } finally {
     saving.value = false;
   }
@@ -702,7 +660,7 @@ async function performDelete() {
     deletingItem.value = null;
     loadItems();
   } catch (e) {
-    alert("Ошибка удаления");
+    alert(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }

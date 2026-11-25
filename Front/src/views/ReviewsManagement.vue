@@ -198,6 +198,7 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, onMounted } from "vue";
 import { reviewsAdminAPI } from "@/api/admin";
 
@@ -274,7 +275,7 @@ async function saveReply() {
     showReplyModal.value = false;
     loadItems();
   } catch (e) {
-    alert("Ошибка сохранения");
+    alert(adminErrorMessage(e, "Ошибка сохранения"));
   } finally {
     saving.value = false;
   }
@@ -285,7 +286,7 @@ async function togglePublished(item: ReviewItem) {
     await reviewsAdminAPI.update(item.id, { is_published: !item.is_published });
     item.is_published = !item.is_published;
   } catch (e) {
-    alert("Ошибка");
+    alert(adminErrorMessage(e, "Ошибка"));
   }
 }
 
@@ -302,7 +303,7 @@ async function deleteItem() {
     showDeleteModal.value = false;
     loadItems();
   } catch (e) {
-    alert("Ошибка удаления");
+    alert(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }

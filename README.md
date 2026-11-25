@@ -5,9 +5,9 @@
 | Часть | Стек | Папка |
 |---|---|---|
 | Бэкенд (REST API) | Python 3.10+, Django 5.2, Django REST Framework, SimpleJWT | `back/` |
-| Фронтенд (сайт + админка) | Vue 3, TypeScript, Vite, Pinia, Node 20 | `Front/` |
-| База данных | PostgreSQL (production) или SQLite (локально). MSSQL не поддерживается. | — |
-| Развёртывание | Docker Compose (`docker-compose.yml`) или вручную | корень |
+| Фронтенд (сайт + админка) | Vue 3, TypeScript, Vite, Pinia, Node 22 LTS | `Front/` |
+| База данных | SQLite (один файл, отдельный сервер БД не нужен) | — |
+| Развёртывание | Один Docker-контейнер (`Dockerfile`, `docker-compose.yml`) или вручную | корень |
 
 Проект не привязан к хостингу: все домены, ключи и адреса задаются переменными окружения.
 
@@ -33,7 +33,7 @@ python manage.py createsuperuser      # вход в админ-панель са
 python manage.py runserver            # http://127.0.0.1:8000
 ```
 
-`DEBUG=True` обязателен для локального запуска: без него Django считает окружение production-окружением и требует `SECRET_KEY` и `ALLOWED_HOSTS`. В режиме DEBUG без `DATABASE_URL` используется SQLite (`back/db.sqlite3`), а ключ генерируется случайно при каждом запуске.
+`DEBUG=True` обязателен для локального запуска: без него Django считает окружение production-окружением и требует `SECRET_KEY` и `ALLOWED_HOSTS`. База — SQLite (`back/db.sqlite3`), а ключ генерируется случайно при каждом запуске.
 
 ### Фронтенд
 
@@ -60,7 +60,8 @@ Dev-сервер Vite проксирует `/api` и `/media` на `http://127.0
 | `DEBUG` | — | `True` только локально. По умолчанию `False`. |
 | `ALLOWED_HOSTS` | да | Домены API через запятую, например `api.shop.uz`. `*` запрещён. |
 | `CORS_ALLOWED_ORIGINS` | если фронт на другом домене | Например `https://shop.uz`, без пути. Если фронт и API на одном домене, оставить пустым. |
-| `DATABASE_URL` | рекомендуется | `postgres://user:password@host:5432/dbname` (опционально `?sslmode=require`). Пусто = SQLite. Спецсимволы в пароле кодируются: `@` → `%40`, `:` → `%3A`, `/` → `%2F`. |
+| `SQLITE_PATH` | — | Путь к файлу базы SQLite. Пусто = `back/db.sqlite3`. В Docker задан в образе: `/data/db.sqlite3`. `DATABASE_URL` больше не используется: если он задан, приложение не запустится (чтобы старый `.env` с PostgreSQL не подключился молча к другой базе). |
+| `MEDIA_ROOT` | — | Папка загруженных картинок. Пусто = `back/media`. В Docker: `/data/media`. |
 | `TRUSTED_PROXY_COUNT` | — | Сколько прокси перед Django дописывают `X-Forwarded-For`: nginx → gunicorn = `1`, без прокси = `0`. Нужна для лимитов по реальному IP, см. «Безопасность». |
 | `SECURE_SSL_REDIRECT` | — | `True` по умолчанию. `False`, если HTTPS-редирект делает nginx или балансировщик. |
 | `SERVE_MEDIA` | — | `True` (по умолчанию): Django сам отдаёт `/media/`. `False`, если `/media/` раздаёт nginx (рекомендуется). |
@@ -84,24 +85,25 @@ Dev-сервер Vite проксирует `/api` и `/media` на `http://127.0
 
 ## Docker (рекомендуемый способ)
 
-В репозитории есть готовые образы и `docker-compose.yml`:
+Всё работает в **одном контейнере** (`Dockerfile` в корне, сервис `ncf` в `docker-compose.yml`):
 
-| Сервис | Образ | Что делает |
-|---|---|---|
-| `backend` | `back/Dockerfile` (Python 3.12, gunicorn) | REST API. При старте ждёт базу и применяет миграции. |
-| `frontend` | `Front/Dockerfile` (сборка Vite → nginx 1.27) | Отдаёт сайт и админ-панель, проксирует `/api` на `backend`, раздаёт загруженные картинки из тома `media`. |
-| `db` (опционально) | `postgres:16-alpine` | Только для тестового стенда: `--profile with-db`. В production используется PostgreSQL сервера. |
+- при сборке Vue-сайт собирается (`npm run build`) и кладётся в образ рядом с Django;
+- gunicorn + Django отдают на одном порту всё: сайт и админ-панель (`/`), REST API (`/api/`), загруженные картинки (`/media/`), статику Django-админки (`/static/`);
+- база — **SQLite**, файл `/data/db.sqlite3`; картинки — `/data/media`. Папка `/data` — это том `ncf-data`, он переживает пересборку и перезапуск контейнера;
+- при старте контейнер один раз применяет миграции и запускает gunicorn. Ждать базу не нужно: это файл на томе.
 
-**Внешние сервисы не нужны:** ни почты, ни Redis, ни S3, ни очередей, ни внешних API. Нужны только PostgreSQL и постоянный том для картинок. **MSSQL не поддерживается** (используйте PostgreSQL).
+**Внешние сервисы не нужны:** ни PostgreSQL, ни nginx внутри, ни почты, ни Redis, ни S3, ни очередей. Нужен только постоянный том `ncf-data`.
 
 ```bash
-cp .env.docker.example .env        # заполнить SECRET_KEY, ALLOWED_HOSTS, DATABASE_URL
+cp .env.docker.example .env        # заполнить SECRET_KEY и ALLOWED_HOSTS
 docker compose up -d --build
-docker compose exec backend python manage.py createsuperuser
-docker compose logs -f backend     # проверить, что миграции прошли и gunicorn запущен
+docker compose exec ncf python manage.py createsuperuser
+docker compose logs -f ncf         # проверить, что миграции прошли и gunicorn запущен
 ```
 
-Сайт откроется на порту `HTTP_PORT` (по умолчанию 8080). HTTPS и домен настраиваются на обратном прокси сервера (nginx, traefik и т.п.), который проксирует домен на этот порт. HTTPS-редирект делает этот прокси, поэтому в шаблоне `SECURE_SSL_REDIRECT=False`.
+Сайт откроется на порту `HTTP_PORT` (по умолчанию 8080). Если открываете его по IP сервера (`http://IP:8080`), добавьте этот IP в `ALLOWED_HOSTS`, иначе любая страница ответит `400 Bad Request`. HTTPS и домен настраиваются на обратном прокси сервера (nginx, traefik и т.п.), который проксирует домен на этот порт. HTTPS-редирект делает этот прокси, поэтому в шаблоне `SECURE_SSL_REDIRECT=False`.
+
+> **Том `ncf-data` — это вся база и все картинки.** Не удаляйте его: `docker compose down -v` и `docker volume rm` стирают данные безвозвратно. Обычные `docker compose down`, `up --build`, `pull` данные не трогают.
 
 ### Через реестр образов (сборка на одной машине, запуск на сервере)
 
@@ -109,20 +111,22 @@ docker compose logs -f backend     # проверить, что миграции
    - Windows: `.\deploy\push-images.ps1 -Registry registry.example.uz:5000`
    - Linux/macOS: `./deploy/push-images.sh registry.example.uz:5000`
 
-   Скрипт спросит логин и пароль реестра, соберёт `ncf-backend` и `ncf-frontend` и запушит их с тегами `<коммит>` и `latest`. Если push падает с ошибкой `http: server gave HTTP response to HTTPS client`, реестр работает по HTTP: добавьте его в `insecure-registries` (Docker Desktop → Settings → Docker Engine) и повторите.
-2. **На сервере** нужны только `docker-compose.yml` и `.env`. В `.env` указать `REGISTRY`, порты `HTTP_PORT` и `API_PORT` и остальные переменные, затем:
+   Скрипт спросит логин и пароль реестра, соберёт один образ `ncf` и запушит его с тегами `<коммит>` и `latest`. Если push падает с ошибкой `http: server gave HTTP response to HTTPS client`, реестр работает по HTTP: добавьте его в `insecure-registries` (Docker Desktop → Settings → Docker Engine) и повторите.
+2. **На сервере** нужны только `docker-compose.yml` и `.env`. В `.env` указать `REGISTRY`, `HTTP_PORT` и остальные переменные, затем:
    ```bash
    docker login registry.example.uz:5000
-   docker compose pull backend frontend && docker compose up -d
-   docker compose exec backend python manage.py createsuperuser
+   docker compose pull && docker compose up -d
+   docker compose exec ncf python manage.py createsuperuser
    ```
-   Домен проксируется на `HTTP_PORT`: туда идут сайт, админка, `/api` и `/media`. `API_PORT` — прямой доступ к API, для работы сайта он не нужен.
+   Домен проксируется на `HTTP_PORT`: туда идут сайт, админка, `/api` и `/media`.
 
-- **База на том же сервере, вне Docker:** `DATABASE_URL=postgres://ncf:ПАРОЛЬ@host.docker.internal:5432/ncf`. PostgreSQL должен принимать подключения из сети Docker: `listen_addresses` и правило в `pg_hba.conf` для подсети Docker, например `172.16.0.0/12`. База и пользователь создаются заранее: `CREATE USER ncf WITH PASSWORD '...'; CREATE DATABASE ncf OWNER ncf;`.
-- **`TRUSTED_PROXY_COUNT`:** `1`, если порт контейнера `frontend` открыт напрямую; `2`, если перед ним обратный прокси сервера, который дописывает `X-Forwarded-For`. Проверка после запуска: 6 неверных попыток входа подряд, каждая с новым заголовком `X-Forwarded-For`, на шестой должны дать `429`. Если `429` приходит всем пользователям сразу, значение слишком маленькое.
-- **Резервные копии:** база данных и том `media` (`docker run --rm -v <проект>_media:/m -v $PWD:/b alpine tar czf /b/media.tgz -C /m .`).
-- **Обновление:** `git pull && docker compose up -d --build`. Миграции применятся при старте `backend`.
-- **Очистка токенов:** раз в сутки `docker compose exec backend python manage.py flushexpiredtokens`.
+- **`TRUSTED_PROXY_COUNT`:** `1`, если перед контейнером стоит обратный прокси сервера, который дописывает `X-Forwarded-For` (обычный вариант с HTTPS); `0`, если порт контейнера открыт в интернет напрямую. Проверка после запуска: 6 неверных попыток входа подряд, каждая с новым заголовком `X-Forwarded-For`, на шестой должны дать `429`. Если `429` приходит всем пользователям сразу, значение слишком маленькое.
+- **Резервные копии базы:** `docker compose exec ncf python manage.py backup_db --keep 14` — согласованная копия в `/data/backups/` (на том же томе), можно запускать на работающем сайте, например из cron раз в сутки. Не копируйте `db.sqlite3` простым `cp` во время работы: из-за WAL-журнала копия может оказаться неполной. Чтобы забрать копии и картинки с сервера: `docker run --rm -v <проект>_ncf-data:/d -v $PWD:/b alpine tar czf /b/ncf-data.tgz -C /d backups media`.
+- **Перенос существующей базы:** остановить контейнер (`docker compose stop ncf`), скопировать файл в том (`docker compose cp ./db.sqlite3 ncf:/data/db.sqlite3`), запустить (`docker compose start ncf`); недостающие миграции применятся сами.
+- **Свой каталог вместо тома:** вместо `ncf-data:/data` можно указать папку сервера, например `/srv/ncf-data:/data`. Владельцем папки должен быть пользователь с UID 1000 (`chown -R 1000:1000 /srv/ncf-data`), иначе контейнер не сможет писать базу.
+- **Обновление:** `git pull && docker compose up -d --build`. Миграции применятся при старте контейнера.
+- **Очистка токенов:** раз в сутки `docker compose exec ncf python manage.py flushexpiredtokens`.
+- **Нагрузка:** SQLite в режиме WAL спокойно обслуживает каталог с админкой (много чтений, редкие записи). Запуск нескольких копий контейнера на разных серверах с одной базой не поддерживается.
 
 ## Production без Docker (пример: Linux + nginx + gunicorn)
 
@@ -135,7 +139,7 @@ cd back
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 
-export SECRET_KEY='...' ALLOWED_HOSTS='shop.uz' DATABASE_URL='postgres://ncf:***@127.0.0.1:5432/ncf' \
+export SECRET_KEY='...' ALLOWED_HOSTS='shop.uz' SQLITE_PATH=/srv/ncf/data/db.sqlite3 \
        TRUSTED_PROXY_COUNT=1 SECURE_SSL_REDIRECT=False SERVE_MEDIA=False
 
 python manage.py migrate
@@ -233,7 +237,7 @@ server {
 
 ### 4. Обслуживание
 
-- **Резервные копии:** база данных (`pg_dump` по расписанию) и `back/media/` (картинки товаров, брендов, категорий и баннеров; в git их нет).
+- **Резервные копии:** база данных (`python manage.py backup_db --keep 14` по расписанию) и `back/media/` (картинки товаров, брендов, категорий и баннеров; в git их нет).
 - **Очистка таблиц токенов:** раз в сутки, например через cron:
 
   ```bash
@@ -263,10 +267,11 @@ pip-audit -r requirements.txt                      # (pip install pip-audit)
 
 cd ../Front
 npm run build                                      # включает проверку типов vue-tsc
+npm test                                           # тесты утилит (node --test, нужен Node 22.18+)
 npm audit --omit=dev                               # зависимости, попадающие в сайт
 ```
 
-Тесты проходят на SQLite и на PostgreSQL 16: для этого задайте `DATABASE_URL`. Кэш в тестах всегда в памяти (`config/test_runner.py`).
+Тесты идут на SQLite (база в памяти). Кэш в тестах всегда в памяти (`config/test_runner.py`).
 
 ---
 
@@ -274,7 +279,7 @@ npm audit --omit=dev                               # зависимости, п�
 
 ```
 back/
-  config/            settings.py, urls.py, env.py (чтение переменных окружения), test_runner.py
+  config/            settings.py, urls.py, env.py (чтение переменных окружения), views.py (отдача Vue-сайта в Docker), test_runner.py
   api/
     models.py        товары, категории, бренды, теги, характеристики, заказы, отзывы, вопросы, баннеры
     views.py         публичный API + админский API (/api/admin/...)
@@ -309,6 +314,7 @@ docs/superpowers/    аудит безопасности и планы испр�
 
 ### Известные ограничения
 
-- Тексты «О нас», новостей, брендов и описаний товаров выводятся через `v-html`, то есть HTML из админки исполняется на сайте. Вводить их может только staff. Если админов будет несколько или контент будет приходить из внешних источников, стоит добавить санитизацию (например, DOMPurify).
-- Медиафайлы хранятся на локальном диске (`back/media/`). При нескольких серверах нужно общее хранилище (S3 и т.п.).
+- Тексты «О нас», новостей, брендов и описаний товаров — обычный текст из полей админки: при выводе HTML экранируется (`Front/src/utils/richText.ts`), сохраняются только переносы строк. HTML-разметка, введённая в эти поля, показывается как текст и не выполняется.
+- Медиафайлы (`/data/media` в Docker) удаляются с диска вместе с записью или при замене картинки (`back/api/signals.py`).
+- Медиафайлы хранятся на локальном диске (`back/media/`, в Docker — том `ncf-data`). При нескольких серверах нужно общее хранилище (S3 и т.п.).
 - Стандартная Django-админка не ограничивает число попыток входа, поэтому в production она выключена (`ENABLE_DJANGO_ADMIN=False`).

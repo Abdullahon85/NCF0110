@@ -227,9 +227,9 @@
 </template>
 
 <script setup lang="ts">
+import { adminErrorMessage } from "@/utils/apiError";
 import { ref, computed, onMounted } from "vue";
 import { ordersAdminAPI } from "@/api/admin";
-import axios from "axios";
 
 interface OrderItemData {
   product_name: string;
@@ -294,7 +294,7 @@ const loadOrders = async () => {
     orders.value = data.results ?? data;
     total.value = data.count ?? orders.value.length;
   } catch (e: any) {
-    error.value = e?.response?.data?.detail || "Ошибка загрузки";
+    error.value = adminErrorMessage(e, "Ошибка загрузки");
   } finally {
     loading.value = false;
   }
@@ -303,27 +303,22 @@ const loadOrders = async () => {
 const exportCsv = async () => {
   exporting.value = true;
   try {
-    const baseUrl = import.meta.env.VITE_API_URL || "/api";
-    const token = sessionStorage.getItem("admin_token");
-    const params = new URLSearchParams();
-    if (search.value) params.set("search", search.value);
-    if (statusFilter.value) params.set("status", statusFilter.value);
-    if (dateFrom.value) params.set("date_from", dateFrom.value);
-    if (dateTo.value) params.set("date_to", dateTo.value);
-    const url = `${baseUrl}/admin/orders/export-csv/?${params.toString()}`;
-    const res = await axios.get(url, {
-      responseType: "blob",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const params: Record<string, string> = {};
+    if (search.value) params.search = search.value;
+    if (statusFilter.value) params.status = statusFilter.value;
+    if (dateFrom.value) params.date_from = dateFrom.value;
+    if (dateTo.value) params.date_to = dateTo.value;
+    const res = await ordersAdminAPI.exportCsv(params);
     const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     const date = new Date().toLocaleDateString("ru-RU").replace(/\./g, "-");
     link.download = `orders_${date}.csv`;
     link.click();
-    URL.revokeObjectURL(link.href);
-  } catch {
-    alert("Ошибка экспорта");
+    // Revoking at once can cancel the download in some browsers.
+    setTimeout(() => URL.revokeObjectURL(link.href), 10_000);
+  } catch (e: any) {
+    alert(adminErrorMessage(e, "Ошибка экспорта"));
   } finally {
     exporting.value = false;
   }
@@ -343,8 +338,9 @@ const updateStatus = async (order: OrderData, newStatus: string) => {
   order.status = newStatus;
   try {
     await ordersAdminAPI.updateStatus(order.id, newStatus);
-  } catch {
+  } catch (e: any) {
     order.status = prev;
+    alert(adminErrorMessage(e, "Не удалось изменить статус заказа"));
   }
 };
 
@@ -362,7 +358,7 @@ const doDelete = async () => {
     if (expanded.value === targetId) expanded.value = null;
     deleteTarget.value = null;
   } catch (e: any) {
-    error.value = e?.response?.data?.detail || "Ошибка удаления";
+    error.value = adminErrorMessage(e, "Ошибка удаления");
     deleteTarget.value = null;
   }
 };

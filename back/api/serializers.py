@@ -113,8 +113,12 @@ class CategorySerializer(serializers.ModelSerializer):
         return None
     
     def get_children(self, obj):
-        children = obj.children.all().order_by('order', 'name')
-        return CategorySerializer(children, many=True, context=self.context).data
+        # Categories already above this one are skipped, so a broken tree with a
+        # cycle cannot recurse forever.
+        ancestors = self.context.get('_category_ancestors', frozenset()) | {obj.id}
+        children = obj.children.exclude(id__in=ancestors).order_by('order', 'name')
+        context = {**self.context, '_category_ancestors': ancestors}
+        return CategorySerializer(children, many=True, context=context).data
     
     def get_products_count(self, obj):
         # Use annotated value from viewset when available (avoids N+1 query)
@@ -325,7 +329,18 @@ class CategoryAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'parent', 'parent_name', 'image', 'order', 'products_count']
-    
+
+    def validate_parent(self, value):
+        # A category under itself or under its own subcategory would make a cycle:
+        # the whole branch would disappear from the site.
+        if value is not None and self.instance is not None:
+            from .categories import is_self_or_descendant
+            if is_self_or_descendant(value.id, self.instance.id):
+                raise serializers.ValidationError(
+                    'Нельзя выбрать родителем сам каталог или его подкаталог.'
+                )
+        return value
+
     def get_products_count(self, obj):
         return obj.products.count()
 
@@ -583,11 +598,6 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'date_joined', 'last_login']
 
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
-
-
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)
@@ -653,6 +663,12 @@ class OrderSerializer(serializers.ModelSerializer):
                     quantity=item_data['quantity'],
                 )
         return order
+
+    def update(self, instance, validated_data):
+        # Order lines are fixed once the customer has sent the order.
+        if 'items' in validated_data:
+            raise serializers.ValidationError({'items': 'Состав заказа нельзя изменить.'})
+        return super().update(instance, validated_data)
 
 
 class OrderAdminSerializer(OrderSerializer):

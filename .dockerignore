@@ -1,0 +1,17 @@
+.git
+.superpowers
+**/node_modules
+Front/dist
+**/__pycache__
+**/*.pyc
+back/media
+back/staticfiles
+back/db.sqlite3*
+back/*.bak
+**/.env
+**/.env.*
+!**/.env.example
+!.env.docker.example
+**/*.tsbuildinfo
+docs
+deploy

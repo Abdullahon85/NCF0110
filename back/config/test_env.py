@@ -11,6 +11,8 @@ from config.env import (
     cache_dir,
     media_url,
     database_config,
+    frontend_dir,
+    media_root,
     env_bool,
     env_list,
     resolve_secret_key,
@@ -116,28 +118,33 @@ class DatabaseConfigTest(SimpleTestCase):
         cfg = database_config({}, self.BASE)
         self.assertEqual((cfg["ENGINE"], cfg["NAME"]), ("django.db.backends.sqlite3", self.BASE / "db.sqlite3"))
 
-    def test_postgres_url(self):
-        cfg = database_config({"DATABASE_URL": "postgres://shop:p%40ss@db.local:5433/ncf"}, self.BASE)
-        self.assertEqual(
-            {k: cfg[k] for k in ("ENGINE", "NAME", "USER", "PASSWORD", "HOST", "PORT")},
-            {"ENGINE": "django.db.backends.postgresql", "NAME": "ncf", "USER": "shop",
-             "PASSWORD": "p@ss", "HOST": "db.local", "PORT": "5433"},
-        )
-        self.assertEqual(cfg["CONN_MAX_AGE"], 60)
+    def test_sqlite_path(self):
+        cfg = database_config({"SQLITE_PATH": "/data/db.sqlite3"}, self.BASE)
+        self.assertEqual((cfg["ENGINE"], str(cfg["NAME"])), ("django.db.backends.sqlite3", "/data/db.sqlite3"))
 
-    def test_postgresql_scheme_and_options(self):
-        cfg = database_config({"DATABASE_URL": "postgresql://u@h/ncf?sslmode=require"}, self.BASE)
-        self.assertEqual((cfg["ENGINE"], cfg["PORT"], cfg["OPTIONS"]),
-                         ("django.db.backends.postgresql", "", {"sslmode": "require"}))
+    def test_concurrent_writers_settings(self):
+        opts = database_config({}, self.BASE)["OPTIONS"]
+        self.assertEqual(opts["transaction_mode"], "IMMEDIATE")
+        self.assertIn("journal_mode=WAL", opts["init_command"])
+        self.assertGreater(opts["timeout"], 0)
 
-    def test_sqlite_url(self):
-        cfg = database_config({"DATABASE_URL": "sqlite:////var/data/shop.db"}, self.BASE)
-        self.assertEqual((cfg["ENGINE"], str(cfg["NAME"])), ("django.db.backends.sqlite3", "/var/data/shop.db"))
-
-    def test_invalid_urls_rejected(self):
-        for url in ("mysql://u:p@h/db", "postgres://u:p@h/", "not a url"):
+    def test_database_url_rejected(self):
+        # An old .env with a PostgreSQL URL must fail loudly, not silently use another database.
+        for url in ("postgres://u:p@h/ncf", "sqlite:////data/db.sqlite3"):
             with self.subTest(url=url), self.assertRaises(ImproperlyConfigured):
                 database_config({"DATABASE_URL": url}, self.BASE)
+
+
+class MediaRootAndFrontendDirTest(SimpleTestCase):
+    BASE = Path("/srv/app")
+
+    def test_media_root(self):
+        self.assertEqual(media_root({}, self.BASE), str(self.BASE / "media"))
+        self.assertEqual(media_root({"MEDIA_ROOT": "/data/media"}, self.BASE), "/data/media")
+
+    def test_frontend_dir(self):
+        self.assertEqual(frontend_dir({}), "")
+        self.assertEqual(frontend_dir({"FRONTEND_DIR": " /app/frontend "}), "/app/frontend")
 
 
 class CacheDirTest(SimpleTestCase):

@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { textToHtml } from "@/utils/richText";
 import { aboutAPI } from "@/api";
 import type { AboutContent } from "@/types";
 
@@ -38,9 +39,7 @@ const aboutContent = ref<AboutContent | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-const formatContent = (content: string) => {
-  return content.replace(/\n/g, "<br>");
-};
+const formatContent = textToHtml; // escapes HTML, keeps line breaks
 
 onMounted(async () => {
   try {

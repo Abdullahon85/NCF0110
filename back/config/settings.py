@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-from config.env import build_allowed_hosts, build_cors_origins, cache_dir, database_config, media_url, env_bool, resolve_secret_key
+from config.env import build_allowed_hosts, build_cors_origins, cache_dir, database_config, frontend_dir, media_root, media_url, env_bool, resolve_secret_key
 
 # SECURITY: DEBUG is off unless explicitly enabled (DEBUG=True in the environment).
 DEBUG = env_bool('DEBUG', False)
@@ -124,7 +124,7 @@ TEST_RUNNER = 'config.test_runner.IsolatedCacheTestRunner'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASE_URL env: empty -> SQLite (back/db.sqlite3); postgres://... for production.
+# SQLite only. SQLITE_PATH env: empty -> back/db.sqlite3; Docker: /data/db.sqlite3 (volume).
 DATABASES = {
     'default': database_config(os.environ, BASE_DIR),
 }
@@ -228,7 +228,8 @@ SIMPLE_JWT = {
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# Russian: validation messages shown in the admin panel come from Django/DRF.
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
@@ -239,7 +240,17 @@ USE_TZ = True
 # Media files
 # '/media/' (same domain) or absolute https://api.example.uz/media/ when the API has its own domain.
 MEDIA_URL = media_url(os.environ)
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = media_root(os.environ, BASE_DIR)
+
+# Built Vue site (Front/dist). In the Docker image FRONTEND_DIR=/app/frontend and this
+# same process serves the site and the admin panel: WhiteNoise sends the files,
+# config.views.spa_index answers every Vue route with index.html.
+# Empty (local development) = the site runs on the Vite dev server.
+FRONTEND_DIR = frontend_dir(os.environ)
+if FRONTEND_DIR:
+    WHITENOISE_ROOT = FRONTEND_DIR
+# Vite puts a content hash into every file name under /assets/: browsers may cache them for a year.
+WHITENOISE_IMMUTABLE_FILE_TEST = r'^/assets/'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
