@@ -17,15 +17,11 @@
           </svg>
         </div>
         <h2>Заявка принята!</h2>
-        <p>
-          Мы свяжемся с вами в ближайшее время по указанному номеру телефона.
-        </p>
-        <p class="cart-success__order-id" v-if="createdOrderId">
+        <p>Мы свяжемся с вами в ближайшее время по указанному номеру телефона.</p>
+        <p v-if="createdOrderId" class="cart-success__order-id">
           Номер заявки: <strong>#{{ createdOrderId }}</strong>
         </p>
-        <router-link to="/catalog" class="btn btn-primary"
-          >Продолжить покупки</router-link
-        >
+        <router-link to="/catalog" class="btn btn-primary">Продолжить покупки</router-link>
       </div>
 
       <!-- ── Пустая корзина ── -->
@@ -41,16 +37,12 @@
           >
             <circle cx="9" cy="21" r="1" />
             <circle cx="20" cy="21" r="1" />
-            <path
-              d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
-            />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
           </svg>
         </div>
         <h2>Корзина пуста</h2>
         <p>Добавьте товары из каталога</p>
-        <router-link to="/catalog" class="btn btn-primary"
-          >Перейти в каталог</router-link
-        >
+        <router-link to="/catalog" class="btn btn-primary">Перейти в каталог</router-link>
       </div>
 
       <!-- ── Корзина с товарами ── -->
@@ -59,22 +51,13 @@
         <div class="cart-items-col">
           <div class="cart-header-row">
             <h1 class="cart-title">Корзина</h1>
-            <span class="cart-count"
-              >{{ cart.totalQty }} {{ itemWord(cart.totalQty) }}</span
-            >
+            <span class="cart-count">{{ cart.totalQty }} {{ itemWord(cart.totalQty) }}</span>
           </div>
 
           <div class="cart-list">
-            <div
-              v-for="item in cart.items"
-              :key="item.product.id"
-              class="cart-item"
-            >
+            <div v-for="item in cart.items" :key="item.product.id" class="cart-item">
               <!-- Изображение -->
-              <div
-                class="cart-item__img"
-                @click="goToProduct(item.product.slug)"
-              >
+              <div class="cart-item__img" @click="goToProduct(item.product.slug)">
                 <img
                   v-if="getImage(item.product)"
                   :src="getImage(item.product)"
@@ -98,10 +81,7 @@
 
               <!-- Инфо -->
               <div class="cart-item__info">
-                <p
-                  class="cart-item__name"
-                  @click="goToProduct(item.product.slug)"
-                >
+                <p class="cart-item__name" @click="goToProduct(item.product.slug)">
                   {{ item.product.name }}
                 </p>
                 <p v-if="item.product.manufacturer_sku" class="cart-item__sku">
@@ -111,19 +91,13 @@
                   <template v-if="item.product.price">{{
                     formatPrice(item.product.price)
                   }}</template>
-                  <template v-else
-                    ><span class="text-muted">По запросу</span></template
-                  >
+                  <template v-else><span class="text-muted">По запросу</span></template>
                 </p>
               </div>
 
               <!-- Количество -->
               <div class="cart-item__qty">
-                <button
-                  class="qty-btn"
-                  @click="decQty(item)"
-                  :disabled="item.quantity <= 1"
-                >
+                <button class="qty-btn" :disabled="item.quantity <= 1" @click="decQty(item)">
                   −
                 </button>
                 <span class="qty-value">{{ item.quantity }}</span>
@@ -133,9 +107,7 @@
               <!-- Итого по позиции -->
               <div class="cart-item__line-total">
                 <template v-if="item.product.price">
-                  {{
-                    formatPrice((item.product.price as number) * item.quantity)
-                  }}
+                  {{ formatPrice((item.product.price as number) * item.quantity) }}
                 </template>
                 <template v-else>—</template>
               </div>
@@ -143,8 +115,8 @@
               <!-- Удалить -->
               <button
                 class="cart-item__remove"
-                @click="cart.remove(item.product.id)"
                 title="Удалить"
+                @click="cart.remove(item.product.id)"
               >
                 <svg
                   width="18"
@@ -161,9 +133,7 @@
             </div>
           </div>
 
-          <button class="cart-clear-btn" @click="cart.clear()">
-            Очистить корзину
-          </button>
+          <button class="cart-clear-btn" @click="cart.clear()">Очистить корзину</button>
         </div>
 
         <!-- Правая колонка: итого + форма -->
@@ -179,10 +149,7 @@
               <span>Количество</span>
               <span>{{ cart.totalQty }}</span>
             </div>
-            <div
-              v-if="cart.hasPrice"
-              class="cart-summary__row cart-summary__total"
-            >
+            <div v-if="cart.hasPrice" class="cart-summary__row cart-summary__total">
               <span>Сумма</span>
               <span>{{ formatPrice(cart.subtotal) }}</span>
             </div>
@@ -190,11 +157,7 @@
               Часть товаров — по запросу. Менеджер уточнит стоимость.
             </div>
 
-            <button
-              v-if="!showForm"
-              class="btn btn-primary btn-block"
-              @click="showForm = true"
-            >
+            <button v-if="!showForm" class="btn btn-primary btn-block" @click="showForm = true">
               Оформить заявку
             </button>
           </div>
@@ -208,7 +171,7 @@
                 {{ formError }}
               </div>
 
-              <form @submit.prevent="submitOrder" novalidate>
+              <form novalidate @submit.prevent="submitOrder">
                 <div class="form-group">
                   <label>Имя <span class="req">*</span></label>
                   <input
@@ -217,9 +180,7 @@
                     placeholder="Ваше имя"
                     :class="{ error: v.customer_name }"
                   />
-                  <span v-if="v.customer_name" class="field-error">{{
-                    v.customer_name
-                  }}</span>
+                  <span v-if="v.customer_name" class="field-error">{{ v.customer_name }}</span>
                 </div>
 
                 <div class="form-group">
@@ -230,15 +191,11 @@
                     placeholder="+998 __ ___ __ __"
                     :class="{ error: v.customer_phone }"
                   />
-                  <span v-if="v.customer_phone" class="field-error">{{
-                    v.customer_phone
-                  }}</span>
+                  <span v-if="v.customer_phone" class="field-error">{{ v.customer_phone }}</span>
                 </div>
 
                 <div class="form-group">
-                  <label
-                    >Email <span class="optional">(необязательно)</span></label
-                  >
+                  <label>Email <span class="optional">(необязательно)</span></label>
                   <input
                     v-model="form.customer_email"
                     type="email"
@@ -260,32 +217,21 @@
                 </div>
 
                 <div class="form-group">
-                  <label
-                    >Комментарий
-                    <span class="optional">(необязательно)</span></label
-                  >
+                  <label>Комментарий <span class="optional">(необязательно)</span></label>
                   <textarea
-                    maxlength="1000"
                     v-model="form.comment"
+                    maxlength="1000"
                     rows="3"
                     placeholder="Уточнения по заказу..."
                   ></textarea>
                 </div>
 
                 <div class="cart-form__actions">
-                  <button
-                    type="submit"
-                    class="btn btn-primary"
-                    :disabled="submitting"
-                  >
+                  <button type="submit" class="btn btn-primary" :disabled="submitting">
                     <span v-if="submitting">Отправка...</span>
                     <span v-else>Отправить заявку</span>
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline"
-                    @click="showForm = false"
-                  >
+                  <button type="button" class="btn btn-outline" @click="showForm = false">
                     Отмена
                   </button>
                 </div>
@@ -300,6 +246,7 @@
 
 <script setup lang="ts">
 import { describeSubmitError } from "@/utils/apiError";
+import { itemWord, rejectedCartLines } from "@/utils/cartOrder";
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useCartStore } from "@/stores/useCartStore";
@@ -353,7 +300,11 @@ const submitOrder = async () => {
       customer_name: form.customer_name.trim(),
       customer_phone: form.customer_phone.trim(),
       customer_email: form.customer_email.trim(),
-      customer_telegram: form.telegram.trim() ? (form.telegram.trim().startsWith("@") ? form.telegram.trim() : "@" + form.telegram.trim()) : "",
+      customer_telegram: form.telegram.trim()
+        ? form.telegram.trim().startsWith("@")
+          ? form.telegram.trim()
+          : "@" + form.telegram.trim()
+        : "",
       comment: form.comment.trim(),
       items: cart.items.map((it: CartItem) => ({
         product: it.product.id,
@@ -370,6 +321,18 @@ const submitOrder = async () => {
     orderSuccess.value = true;
     showForm.value = false;
   } catch (e: any) {
+    // Products deleted from the catalog since they were put in the cart:
+    // take them out and tell the customer, the rest can be sent again.
+    const rejected = rejectedCartLines(e);
+    if (rejected.length) {
+      const lines = cart.items.filter((_, idx) => rejected.includes(idx));
+      lines.forEach((it) => cart.remove(it.product.id));
+      formError.value =
+        "Эти товары больше не продаются и убраны из корзины: " +
+        lines.map((it) => it.product.name).join(", ") +
+        ". Проверьте заказ и отправьте его ещё раз.";
+      return;
+    }
     formError.value = describeSubmitError(
       e,
       "Произошла ошибка при отправке. Попробуйте ещё раз или позвоните нам.",
@@ -405,14 +368,6 @@ const formatPrice = (price: number) =>
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);
-
-const itemWord = (n: number) => {
-  const m = n % 10;
-  if (n >= 11 && n <= 14) return "товаров";
-  if (m === 1) return "товар";
-  if (m >= 2 && m <= 4) return "товара";
-  return "товаров";
-};
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

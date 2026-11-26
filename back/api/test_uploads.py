@@ -1,4 +1,5 @@
 """Uploaded images are validated by content, not by client-supplied type (audit item 6)."""
+
 import io
 import shutil
 import tempfile
@@ -40,13 +41,21 @@ class ValidateUploadedImageTest(SimpleTestCase):
 
     def test_truncated_image_rejected(self):
         data = make_upload().read()[:60]
-        self.assertFalse(validate_uploaded_image(SimpleUploadedFile("x.png", data, content_type="image/png"))[0])
+        self.assertFalse(
+            validate_uploaded_image(SimpleUploadedFile("x.png", data, content_type="image/png"))[0]
+        )
 
     def test_unsupported_format_rejected(self):
-        self.assertFalse(validate_uploaded_image(make_upload(fmt="BMP", name="x.bmp", content_type="image/bmp"))[0])
+        self.assertFalse(
+            validate_uploaded_image(make_upload(fmt="BMP", name="x.bmp", content_type="image/bmp"))[
+                0
+            ]
+        )
 
     def test_oversize_rejected(self):
-        self.assertFalse(validate_uploaded_image(SimpleUploadedFile("x.png", b"0" * (MAX_UPLOAD_SIZE + 1)))[0])
+        self.assertFalse(
+            validate_uploaded_image(SimpleUploadedFile("x.png", b"0" * (MAX_UPLOAD_SIZE + 1)))[0]
+        )
 
     def test_too_many_pixels_rejected(self):
         self.assertFalse(validate_uploaded_image(make_upload(size=(8000, 8000), mode="1"))[0])
@@ -55,21 +64,24 @@ class ValidateUploadedImageTest(SimpleTestCase):
         f = make_upload(fmt="JPEG", size=(4000, 3000), name="IMG_1.jpg", content_type="image/jpeg")
         self.assertTrue(validate_uploaded_image(f)[0])
 
-
     def test_multi_picture_jpeg_from_phone_accepted(self):
         # Phones often embed a secondary image (MPF); Pillow reports such JPEGs as "MPO".
         buf = io.BytesIO()
-        PILImage.new("RGB", (64, 48)).save(buf, format="MPO", save_all=True,
-                                           append_images=[PILImage.new("RGB", (32, 24))])
+        PILImage.new("RGB", (64, 48)).save(
+            buf, format="MPO", save_all=True, append_images=[PILImage.new("RGB", (32, 24))]
+        )
         f = SimpleUploadedFile("IMG_2.jpg", buf.getvalue(), content_type="image/jpeg")
         self.assertEqual(validate_uploaded_image(f), (True, None))
         self.assertTrue(f.name.endswith(".jpg"))
+
 
 class UploadEndpointsTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cat = Category.objects.create(name="Cameras", slug="cameras")
-        cls.product = Product.objects.create(name="Cam", slug="cam", category=cat, description="d", price=10)
+        cls.product = Product.objects.create(
+            name="Cam", slug="cam", category=cat, description="d", price=10
+        )
         cls.staff = User.objects.create_user("staff", password="pw-staff-123", is_staff=True)
         cls.user = User.objects.create_user("user", password="pw-user-123")
 
@@ -87,7 +99,11 @@ class UploadEndpointsTest(TestCase):
         shutil.rmtree(self.media, ignore_errors=True)
 
     def _upload(self, f):
-        return self.api.post(f"/api/admin/products/{self.product.id}/upload-image/", {"images": f}, format="multipart")
+        return self.api.post(
+            f"/api/admin/products/{self.product.id}/upload-image/",
+            {"images": f},
+            format="multipart",
+        )
 
     def test_admin_upload_rejects_html(self):
         r = self._upload(SimpleUploadedFile("x.png", HTML_PAYLOAD, content_type="image/png"))
@@ -103,12 +119,18 @@ class UploadEndpointsTest(TestCase):
     def test_public_upload_route_removed(self):
         api = APIClient()
         api.force_authenticate(self.user)
-        r = api.post(f"/api/products/{self.product.slug}/upload-image/", {"images": make_upload()}, format="multipart")
+        r = api.post(
+            f"/api/products/{self.product.slug}/upload-image/",
+            {"images": make_upload()},
+            format="multipart",
+        )
         self.assertEqual(r.status_code, 404)
 
     def test_image_admin_rejects_svg(self):
         f = SimpleUploadedFile("x.svg", SVG_WITH_SCRIPT, content_type="image/svg+xml")
-        r = self.api.post("/api/admin/images/", {"product": self.product.id, "image": f}, format="multipart")
+        r = self.api.post(
+            "/api/admin/images/", {"product": self.product.id, "image": f}, format="multipart"
+        )
         self.assertEqual(r.status_code, 400)
 
     def test_image_admin_patch_order_still_works(self):

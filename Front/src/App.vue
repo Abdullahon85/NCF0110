@@ -1,6 +1,6 @@
 //App.vue
 <template>
-  <div id="app">
+  <div id="app" :class="{ site: !isAdminRoute }">
     <HeaderComponent v-if="!isAdminRoute" />
     <main class="main-content">
       <router-view v-slot="{ Component }">
@@ -16,9 +16,9 @@
     <transition name="fade-up">
       <button
         v-show="showScrollTop"
-        @click="scrollToTop"
         class="scroll-to-top"
         aria-label="Tepaga qaytish"
+        @click="scrollToTop"
       >
         <svg
           width="24"
@@ -38,25 +38,13 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  onMounted,
-  onBeforeUnmount,
-  defineAsyncComponent,
-} from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from "vue";
 import { useRoute } from "vue-router";
 
 // Lazy load Header, Footer, and BottomNav
-const HeaderComponent = defineAsyncComponent(
-  () => import("@/components/HeaderComponent.vue"),
-);
-const FooterComponent = defineAsyncComponent(
-  () => import("@/components/FooterComponent.vue"),
-);
-const BottomNav = defineAsyncComponent(
-  () => import("@/components/BottomNav.vue"),
-);
+const HeaderComponent = defineAsyncComponent(() => import("@/components/HeaderComponent.vue"));
+const FooterComponent = defineAsyncComponent(() => import("@/components/FooterComponent.vue"));
+const BottomNav = defineAsyncComponent(() => import("@/components/BottomNav.vue"));
 
 const route = useRoute();
 const showScrollTop = ref(false);
@@ -85,4 +73,4 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<!-- All styles are in main.css -->
+<!-- Styles in styles/site/ and styles/admin/ -->

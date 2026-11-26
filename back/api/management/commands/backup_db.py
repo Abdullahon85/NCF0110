@@ -7,6 +7,7 @@
 Docker: docker compose exec ncf python manage.py backup_db   (copies land in the ncf-data volume, /data/backups)
 Do not copy db.sqlite3 with cp while the site runs: with the WAL journal the copy can be incomplete.
 """
+
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -19,15 +20,25 @@ class Command(BaseCommand):
     help = "Make a consistent backup copy of the SQLite database (safe while the site is running)."
 
     def add_arguments(self, parser):
-        parser.add_argument("--output", help="Target file. Default: <database folder>/backups/db-<timestamp>.sqlite3")
-        parser.add_argument("--keep", type=int, default=0, help="Keep only the N newest copies in the default folder (0 = keep all).")
+        parser.add_argument(
+            "--output",
+            help="Target file. Default: <database folder>/backups/db-<timestamp>.sqlite3",
+        )
+        parser.add_argument(
+            "--keep",
+            type=int,
+            default=0,
+            help="Keep only the N newest copies in the default folder (0 = keep all).",
+        )
 
     def handle(self, *args, output=None, keep=0, **options):
         source = Path(settings.DATABASES["default"]["NAME"])
         if not source.exists():
             raise CommandError(f"Database file not found: {source}")
         backup_dir = source.parent / "backups"
-        target = Path(output) if output else backup_dir / f"db-{datetime.now():%Y%m%d-%H%M%S}.sqlite3"
+        target = (
+            Path(output) if output else backup_dir / f"db-{datetime.now():%Y%m%d-%H%M%S}.sqlite3"
+        )
         target.parent.mkdir(parents=True, exist_ok=True)
 
         src = sqlite3.connect(source)

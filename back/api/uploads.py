@@ -5,6 +5,7 @@ raster image Pillow can parse in one of the allowed formats. On success the
 file gets a random name with the extension of the detected format, so an
 uploaded file can never be served as HTML/SVG from the backend domain.
 """
+
 import uuid
 import warnings
 

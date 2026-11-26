@@ -24,9 +24,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   // Getters
   const isAuthenticated = computed(() => !!user.value);
-  const isAdmin = computed(
-    () => user.value?.is_staff || user.value?.is_superuser,
-  );
+  const isAdmin = computed(() => user.value?.is_staff || user.value?.is_superuser);
   const fullName = computed(() => {
     if (!user.value) return "";
     const parts = [user.value.first_name, user.value.last_name].filter(Boolean);
@@ -72,10 +70,7 @@ export const useAuthStore = defineStore("auth", () => {
       return { success: true };
     } catch (e: any) {
       const message =
-        e.response?.data?.detail ||
-        e.response?.data?.error ||
-        e.message ||
-        "Ошибка входа";
+        e.response?.data?.detail || e.response?.data?.error || e.message || "Ошибка входа";
       error.value = message;
       tokenStorage.clearTokens();
       return { success: false, error: message };
@@ -116,11 +111,7 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function updateProfile(data: {
-    email?: string;
-    first_name?: string;
-    last_name?: string;
-  }) {
+  async function updateProfile(data: { email?: string; first_name?: string; last_name?: string }) {
     try {
       loading.value = true;
       error.value = null;

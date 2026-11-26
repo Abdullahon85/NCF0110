@@ -1,4 +1,5 @@
 """Order creation must take price/name/SKU from the catalog, never from the client (audit item 3)."""
+
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -16,11 +17,19 @@ class OrderPricingTest(TestCase):
     def setUpTestData(cls):
         cat = Category.objects.create(name="Cameras", slug="cameras")
         cls.product = Product.objects.create(
-            name="Camera 4K", slug="camera-4k", category=cat, description="d",
-            price=Decimal("100.00"), manufacturer_sku="SKU-1",
+            name="Camera 4K",
+            slug="camera-4k",
+            category=cat,
+            description="d",
+            price=Decimal("100.00"),
+            manufacturer_sku="SKU-1",
         )
         cls.no_price = Product.objects.create(
-            name="Camera on request", slug="camera-on-request", category=cat, description="d", price=None,
+            name="Camera on request",
+            slug="camera-on-request",
+            category=cat,
+            description="d",
+            price=None,
         )
         cls.staff = User.objects.create_user("staff", password="pw-staff-123", is_staff=True)
         cls.user = User.objects.create_user("user", password="pw-user-123")
@@ -31,12 +40,23 @@ class OrderPricingTest(TestCase):
 
     def _item(self, product_id, quantity=1):
         # Same shape as Front/src/views/CartPage.vue submitOrder()
-        return {"product": product_id, "product_name": "Fake", "product_sku": "X", "price": "1", "quantity": quantity}
+        return {
+            "product": product_id,
+            "product_name": "Fake",
+            "product_sku": "X",
+            "price": "1",
+            "quantity": quantity,
+        }
 
     def _post(self, items, **extra):
         data = {
-            "customer_name": "Иван", "customer_phone": "+998901234567", "customer_email": "",
-            "customer_telegram": "", "comment": "", "items": items, **extra,
+            "customer_name": "Иван",
+            "customer_phone": "+998901234567",
+            "customer_email": "",
+            "customer_telegram": "",
+            "comment": "",
+            "items": items,
+            **extra,
         }
         return self.api.post(ORDERS_URL, data, format="json")
 
@@ -56,8 +76,10 @@ class OrderPricingTest(TestCase):
         self.assertIsNone(OrderItem.objects.get(order_id=r.data["id"]).price)
 
     def test_item_without_product_rejected(self):
-        for item in ({"product_name": "X", "price": "1", "quantity": 1},
-                     {"product": None, "product_name": "X", "price": "1", "quantity": 1}):
+        for item in (
+            {"product_name": "X", "price": "1", "quantity": 1},
+            {"product": None, "product_name": "X", "price": "1", "quantity": 1},
+        ):
             self.assertEqual(self._post([item]).status_code, 400)
         self.assertEqual(Order.objects.count(), 0)
 

@@ -28,16 +28,14 @@
         <line x1="6" y1="20" x2="6" y2="14" />
       </svg>
       <p>Вы ещё не добавили товары для сравнения</p>
-      <router-link to="/catalog" class="btn primary"
-        >Перейти в каталог</router-link
-      >
+      <router-link to="/catalog" class="btn primary">Перейти в каталог</router-link>
     </div>
 
     <div v-else>
       <!-- Toolbar -->
       <div class="compare-toolbar">
         <label class="compare-diff-label">
-          <input type="checkbox" v-model="showOnlyDiff" />
+          <input v-model="showOnlyDiff" type="checkbox" />
           <span>Показывать только различия</span>
         </label>
 
@@ -47,8 +45,8 @@
 
         <button
           class="btn cmp-share-btn"
-          @click="copyShareLink"
           :class="{ 'cmp-share-btn--copied': shareSuccess }"
+          @click="copyShareLink"
         >
           <svg
             v-if="!shareSuccess"
@@ -79,9 +77,7 @@
           {{ shareSuccess ? "Скопировано!" : "Поделиться" }}
         </button>
 
-        <button class="btn muted" @click="compareStore.clear()">
-          Очистить всё
-        </button>
+        <button class="btn muted" @click="compareStore.clear()">Очистить всё</button>
       </div>
 
       <!-- Loading -->
@@ -101,9 +97,7 @@
             @click="activeCategory = cat"
           >
             {{ cat }}
-            <span class="compare-tab-count">{{
-              productsByCategory[cat]?.length
-            }}</span>
+            <span class="compare-tab-count">{{ productsByCategory[cat]?.length }}</span>
           </button>
         </div>
 
@@ -120,11 +114,7 @@
                 </th>
 
                 <!-- Real product columns -->
-                <th
-                  v-for="product in activeProducts"
-                  :key="product.id"
-                  class="compare-product-col"
-                >
+                <th v-for="product in activeProducts" :key="product.id" class="compare-product-col">
                   <div class="cmp-card">
                     <button
                       class="cmp-remove-btn"
@@ -144,10 +134,7 @@
                       </svg>
                     </button>
 
-                    <router-link
-                      :to="`/product/${product.slug}`"
-                      class="cmp-card-link"
-                    >
+                    <router-link :to="`/product/${product.slug}`" class="cmp-card-link">
                       <div class="cmp-img-wrap">
                         <img
                           v-if="getImg(product)"
@@ -175,20 +162,14 @@
 
                     <div class="cmp-meta">
                       <p class="cmp-price">
-                        <span v-if="product.price">{{
-                          formatPrice(product.price)
-                        }}</span>
+                        <span v-if="product.price">{{ formatPrice(product.price) }}</span>
                         <span v-else class="text-muted">По запросу</span>
                       </p>
                       <span
                         class="cmp-badge"
-                        :class="
-                          product.is_available ? 'cmp-badge-ok' : 'cmp-badge-no'
-                        "
+                        :class="product.is_available ? 'cmp-badge-ok' : 'cmp-badge-no'"
                       >
-                        {{
-                          product.is_available ? "В наличии" : "Нет в наличии"
-                        }}
+                        {{ product.is_available ? "В наличии" : "Нет в наличии" }}
                       </span>
                       <button
                         v-if="product.is_available"
@@ -224,15 +205,9 @@
                         >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
-                        {{
-                          isJustAdded(product.id) ? "Добавлено" : "В корзину"
-                        }}
+                        {{ isJustAdded(product.id) ? "Добавлено" : "В корзину" }}
                       </button>
-                      <router-link
-                        v-else
-                        to="/contact"
-                        class="cmp-cart-btn cmp-cart-btn--request"
-                      >
+                      <router-link v-else to="/contact" class="cmp-cart-btn cmp-cart-btn--request">
                         Запросить цену
                       </router-link>
                     </div>
@@ -303,13 +278,8 @@
                 />
               </tr>
 
-              <tr
-                v-if="shouldShow(internalSkuValues)"
-                class="compare-feature-row"
-              >
-                <td class="compare-label compare-sticky-label">
-                  Внутренний арт.
-                </td>
+              <tr v-if="shouldShow(internalSkuValues)" class="compare-feature-row">
+                <td class="compare-label compare-sticky-label">Внутренний арт.</td>
                 <td
                   v-for="product in activeProducts"
                   :key="product.id"
@@ -326,10 +296,7 @@
               </tr>
 
               <!-- Feature groups -->
-              <template
-                v-for="grp in featureGroups"
-                :key="grp.group || '__ungrouped__'"
-              >
+              <template v-for="grp in featureGroups" :key="grp.group || '__ungrouped__'">
                 <!-- Group header (only rendered when group name is present) -->
                 <tr v-if="grp.group" class="compare-section-row">
                   <td :colspan="totalCols" class="compare-section-header">
@@ -338,16 +305,10 @@
                 </tr>
                 <!-- Single "Характеристики" header when no groups -->
                 <tr
-                  v-else-if="
-                    featureGroups.length === 1 &&
-                    !grp.group &&
-                    grp.features.length > 0
-                  "
+                  v-else-if="featureGroups.length === 1 && !grp.group && grp.features.length > 0"
                   class="compare-section-row"
                 >
-                  <td :colspan="totalCols" class="compare-section-header">
-                    Характеристики
-                  </td>
+                  <td :colspan="totalCols" class="compare-section-header">Характеристики</td>
                 </tr>
 
                 <!-- Feature rows in this group -->
@@ -451,8 +412,7 @@ const getBrand = (product: Product): string => {
 const getFeatureValue = (product: Product, featureName: string): string => {
   const feat = product.features?.find((f) => f.feature_name === featureName);
   if (!feat) return "—";
-  if (feat.value_names && feat.value_names.length > 0)
-    return feat.value_names.join(", ");
+  if (feat.value_names && feat.value_names.length > 0) return feat.value_names.join(", ");
   if (feat.value_name) return feat.value_name;
   return "—";
 };
@@ -464,9 +424,7 @@ const addToCart = (product: Product) => {
   cartStore.add(product);
   justAddedIds.value = new Set([...justAddedIds.value, product.id]);
   setTimeout(() => {
-    justAddedIds.value = new Set(
-      [...justAddedIds.value].filter((id) => id !== product.id),
-    );
+    justAddedIds.value = new Set([...justAddedIds.value].filter((id) => id !== product.id));
   }, 2000);
 };
 
@@ -501,9 +459,7 @@ const loadDetails = async () => {
       compareStore.items.map((p) => productsAPI.getBySlug(p.slug)),
     );
     detailedProducts.value = results
-      .map((r, i) =>
-        r.status === "fulfilled" ? r.value.data : compareStore.items[i],
-      )
+      .map((r, i) => (r.status === "fulfilled" ? r.value.data : compareStore.items[i]))
       .filter(Boolean) as Product[];
   } finally {
     loading.value = false;
@@ -534,23 +490,17 @@ const productsByCategory = computed<Record<string, Product[]>>(() => {
 
 const activeProducts = computed<Product[]>(() => {
   if (!activeCategory.value) return detailedProducts.value;
-  return (
-    productsByCategory.value[activeCategory.value] ?? detailedProducts.value
-  );
+  return productsByCategory.value[activeCategory.value] ?? detailedProducts.value;
 });
 
 // ─────────────────────────────────────────────
 // Empty slots (up to MAX_COMPARE_ITEMS total)
 // ─────────────────────────────────────────────
 // Empty slots = remaining global capacity (not per-category)
-const emptySlots = computed(() =>
-  Math.max(0, MAX_COMPARE_ITEMS - compareStore.items.length),
-);
+const emptySlots = computed(() => Math.max(0, MAX_COMPARE_ITEMS - compareStore.items.length));
 
 // Total columns = label + products + empty slots
-const totalCols = computed(
-  () => 1 + activeProducts.value.length + emptySlots.value,
-);
+const totalCols = computed(() => 1 + activeProducts.value.length + emptySlots.value);
 
 // ─────────────────────────────────────────────
 // Feature logic
@@ -580,9 +530,7 @@ const featureGroups = computed<{ group: string; features: string[] }[]>(() => {
   if (visibleFeatureNames.value.length === 0) return [];
 
   // Check if any feature has group_name info
-  const hasGroups = activeProducts.value.some((p) =>
-    p.features?.some((f) => f.group_name),
-  );
+  const hasGroups = activeProducts.value.some((p) => p.features?.some((f) => f.group_name));
 
   if (!hasGroups) {
     return [{ group: "", features: visibleFeatureNames.value }];
@@ -617,8 +565,7 @@ const internalSkuValues = computed(() =>
   activeProducts.value.map((p) => String(p.internal_sku ?? "—")),
 );
 
-const allSame = (values: string[] | readonly string[]): boolean =>
-  new Set(values).size <= 1;
+const allSame = (values: string[] | readonly string[]): boolean => new Set(values).size <= 1;
 
 const shouldShow = (values: string[] | readonly string[]): boolean => {
   if (!showOnlyDiff.value) return true;
@@ -642,4 +589,4 @@ watch(
 onMounted(() => loadDetails());
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

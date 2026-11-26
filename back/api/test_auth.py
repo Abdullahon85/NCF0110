@@ -1,4 +1,5 @@
 """JWT hardening: staff-only tokens, logout and password change revoke refresh tokens (audit items 6-7)."""
+
 from django.contrib.auth.models import User
 from django.core.cache import caches
 from django.test import TestCase
@@ -19,7 +20,9 @@ class AuthHardeningTest(TestCase):
             c.clear()
 
     def _login(self, username):
-        return APIClient().post("/api/admin/auth/login/", {"username": username, "password": PASSWORD}, format="json")
+        return APIClient().post(
+            "/api/admin/auth/login/", {"username": username, "password": PASSWORD}, format="json"
+        )
 
     def _refresh(self, token):
         return APIClient().post("/api/admin/auth/refresh/", {"refresh": token}, format="json")
@@ -27,7 +30,11 @@ class AuthHardeningTest(TestCase):
     def _change_password(self, access, old, new):
         api = APIClient()
         api.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
-        return api.post("/api/admin/auth/change-password/", {"old_password": old, "new_password": new}, format="json")
+        return api.post(
+            "/api/admin/auth/change-password/",
+            {"old_password": old, "new_password": new},
+            format="json",
+        )
 
     def test_non_staff_cannot_get_tokens(self):
         self.assertEqual(self._login("user").status_code, 401)
@@ -39,21 +46,35 @@ class AuthHardeningTest(TestCase):
         t = self._login("admin").data
         api = APIClient()
         api.credentials(HTTP_AUTHORIZATION=f"Bearer {t['access']}")
-        self.assertEqual(api.post("/api/admin/auth/logout/", {"refresh": t["refresh"]}, format="json").status_code, 200)
+        self.assertEqual(
+            api.post(
+                "/api/admin/auth/logout/", {"refresh": t["refresh"]}, format="json"
+            ).status_code,
+            200,
+        )
         self.assertEqual(self._refresh(t["refresh"]).status_code, 401)
 
     def test_logout_without_access_token_still_revokes(self):
         t = self._login("admin").data
-        self.assertEqual(APIClient().post("/api/admin/auth/logout/", {"refresh": t["refresh"]}, format="json").status_code, 200)
+        self.assertEqual(
+            APIClient()
+            .post("/api/admin/auth/logout/", {"refresh": t["refresh"]}, format="json")
+            .status_code,
+            200,
+        )
         self.assertEqual(self._refresh(t["refresh"]).status_code, 401)
 
     def test_logout_requires_refresh_field(self):
-        self.assertEqual(APIClient().post("/api/admin/auth/logout/", {}, format="json").status_code, 400)
+        self.assertEqual(
+            APIClient().post("/api/admin/auth/logout/", {}, format="json").status_code, 400
+        )
 
     def test_change_password_revokes_other_sessions(self):
         old = self._login("admin").data
         current = self._login("admin").data
-        self.assertEqual(self._change_password(current["access"], PASSWORD, NEW_PASSWORD).status_code, 200)
+        self.assertEqual(
+            self._change_password(current["access"], PASSWORD, NEW_PASSWORD).status_code, 200
+        )
         self.assertEqual(self._refresh(old["refresh"]).status_code, 401)
 
     def test_change_password_returns_working_new_tokens(self):

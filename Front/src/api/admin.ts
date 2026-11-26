@@ -1,13 +1,9 @@
 // src/api/admin.ts
 import axios from "axios";
-import type {
-  AxiosError,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
+import { isTokenExpired, sessionState } from "@/utils/jwt";
+import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "/api"; // empty value in .env -> same-domain /api
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api"; // empty value in .env -> same-domain /api
 // ============ SECURITY CONSTANTS ============
 const TOKEN_KEY = "admin_token";
 const REFRESH_KEY = "admin_refresh";
@@ -23,9 +19,7 @@ class RateLimiter {
     const timeSinceLastRequest = now - this.lastRequest;
 
     if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest),
-      );
+      await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest));
     }
 
     this.lastRequest = Date.now();
@@ -60,12 +54,7 @@ const tokenStorage = {
   },
 
   isTokenExpired(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return payload.exp * 1000 < Date.now();
-    } catch {
-      return true;
-    }
+    return isTokenExpired(token);
   },
 };
 
@@ -268,11 +257,7 @@ export const authAPI = {
       });
   },
 
-  updateProfile: (data: {
-    email?: string;
-    first_name?: string;
-    last_name?: string;
-  }) => {
+  updateProfile: (data: { email?: string; first_name?: string; last_name?: string }) => {
     if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
       return Promise.reject(new Error("Invalid email format"));
     }
@@ -288,13 +273,11 @@ export const authAPI = {
     return { access };
   },
 
-  checkSession: () => {
-    const token = tokenStorage.getToken();
-    if (!token || tokenStorage.isTokenExpired(token)) {
-      return false;
-    }
-    return true;
-  },
+  // True while the session can go on: a live access token, or an expired one with
+  // a live refresh token (the next request refreshes it). Reloading the admin page
+  // 15+ minutes after the last request must not log the admin out.
+  checkSession: () =>
+    sessionState(tokenStorage.getToken(), tokenStorage.getRefreshToken()) !== "none",
 };
 
 // ============ STATS API ============
@@ -302,7 +285,7 @@ export const statsAPI = {
   getDashboard: () => adminApi.get("/admin/stats/"),
 };
 
-// ============ FEATURES/TAGS BY CATEGORY ============
+// ============ FEATURES BY CATEGORY ============
 export const categoryDataAPI = {
   getByCategory: (categoryId: number) => {
     if (!categoryId || categoryId < 1) {
@@ -363,10 +346,23 @@ export const categoriesAdminAPI = {
   },
 };
 
+// ============ PAGES FOR BUYERS ============
+export const pagesAdminAPI = {
+  getAll: () => adminApi.get("/admin/pages/"),
+  create: (data: any) => adminApi.post("/admin/pages/", data),
+  update: (id: number, data: any) => {
+    validateId(id, "page");
+    return adminApi.patch(`/admin/pages/${id}/`, data);
+  },
+  delete: (id: number) => {
+    validateId(id, "page");
+    return adminApi.delete(`/admin/pages/${id}/`);
+  },
+};
+
 // ============ BRANDS API ============
 export const brandsAdminAPI = {
-  getAll: (params?: { search?: string }) =>
-    adminApi.get("/admin/brands/", { params }),
+  getAll: (params?: { search?: string }) => adminApi.get("/admin/brands/", { params }),
 
   getById: (id: number) => {
     validateId(id, "brand");
@@ -398,66 +394,10 @@ export const brandsAdminAPI = {
   },
 };
 
-// ============ TAGS API ============
-export const tagsAdminAPI = {
-  getAll: (params?: {
-    search?: string;
-    category?: number;
-    tag_name?: number;
-  }) => adminApi.get("/admin/tags/", { params }),
-
-  getById: (id: number) => {
-    validateId(id, "tag");
-    return adminApi.get(`/admin/tags/${id}/`);
-  },
-
-  create: (data: any) => adminApi.post("/admin/tags/", data),
-
-  update: (id: number, data: any) => {
-    validateId(id, "tag");
-    return adminApi.patch(`/admin/tags/${id}/`, data);
-  },
-
-  delete: (id: number) => {
-    validateId(id, "tag");
-    return adminApi.delete(`/admin/tags/${id}/`);
-  },
-
-  getByTagName: (tagNameId: number) =>
-    adminApi.get(`/admin/tags-by-tag-name/${tagNameId}/`),
-};
-
-// ============ TAG NAMES API ============
-export const tagNamesAdminAPI = {
-  getAll: (params?: { search?: string; category?: number }) =>
-    adminApi.get("/admin/tag-names/", { params }),
-
-  getById: (id: number) => {
-    validateId(id, "tag name");
-    return adminApi.get(`/admin/tag-names/${id}/`);
-  },
-
-  create: (data: any) => adminApi.post("/admin/tag-names/", data),
-
-  update: (id: number, data: any) => {
-    validateId(id, "tag name");
-    return adminApi.patch(`/admin/tag-names/${id}/`, data);
-  },
-
-  delete: (id: number) => {
-    validateId(id, "tag name");
-    return adminApi.delete(`/admin/tag-names/${id}/`);
-  },
-};
-
 // ============ FEATURES API ============
 export const featuresAdminAPI = {
-  getAll: (params?: {
-    search?: string;
-    category?: number;
-    page?: number;
-    page_size?: number;
-  }) => adminApi.get("/admin/features/", { params }),
+  getAll: (params?: { search?: string; category?: number; page?: number; page_size?: number }) =>
+    adminApi.get("/admin/features/", { params }),
 
   getById: (id: number) => {
     validateId(id, "feature");
@@ -475,7 +415,6 @@ export const featuresAdminAPI = {
     validateId(id, "feature");
     return adminApi.delete(`/admin/features/${id}/`);
   },
-
 };
 
 // ============ FEATURE VALUES API ============
@@ -538,8 +477,7 @@ export const newsAdminAPI = {
 
 // ============ IMAGES API ============
 export const imagesAdminAPI = {
-  getAll: (params?: { product?: number }) =>
-    adminApi.get("/admin/images/", { params }),
+  getAll: (params?: { product?: number }) => adminApi.get("/admin/images/", { params }),
 
   create: (data: any) => adminApi.post("/admin/images/", data),
 
@@ -565,8 +503,7 @@ export const settingsAdminAPI = {
 
 // ============ MESSAGES API ============
 export const messagesAdminAPI = {
-  getAll: (params?: { is_processed?: boolean }) =>
-    adminApi.get("/admin/messages/", { params }),
+  getAll: (params?: { is_processed?: boolean }) => adminApi.get("/admin/messages/", { params }),
 
   getById: (id: number) => {
     validateId(id, "message");
@@ -660,12 +597,25 @@ export const productsAdminAPI = {
     });
   },
 
+  // "Документация" tab: title + file (PDF, Word, Excel, archive up to 20 MB).
+  uploadDocument: (id: number, formData: FormData) => {
+    validateId(id, "product");
+    return adminApi.post(`/admin/products/${id}/documents/`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 120000,
+    });
+  },
+
+  deleteDocument: (productId: number, docId: number) => {
+    validateId(productId, "product");
+    validateId(docId, "document");
+    return adminApi.delete(`/admin/products/${productId}/documents/${docId}/`);
+  },
+
   deleteImage: (productId: number, imageId: number) => {
     validateId(productId, "product");
     validateId(imageId, "image");
-    return adminApi.delete(
-      `/admin/products/${productId}/delete-image/${imageId}/`,
-    );
+    return adminApi.delete(`/admin/products/${productId}/delete-image/${imageId}/`);
   },
 };
 
@@ -731,11 +681,8 @@ export const reviewsAdminAPI = {
 
 // ============ QUESTIONS ADMIN API ============
 export const questionsAdminAPI = {
-  getAll: (params?: {
-    search?: string;
-    product?: number;
-    is_published?: string;
-  }) => adminApi.get("/admin/questions/", { params }),
+  getAll: (params?: { search?: string; product?: number; is_published?: string }) =>
+    adminApi.get("/admin/questions/", { params }),
 
   getById: (id: number) => {
     validateId(id, "question");

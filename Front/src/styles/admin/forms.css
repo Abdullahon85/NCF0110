@@ -1,0 +1,104 @@
+/* Admin form controls (inside pages and modals). */
+
+.ad-content .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+.ad-content .form-group > label,
+.ad-content .form-fieldset > legend {
+  color: var(--ad-ink-2);
+  font-size: var(--ad-fs-sm);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.ad-content .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 16px;
+}
+
+.ad-content
+  .form-group
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="file"], [type="color"]),
+    select,
+    textarea
+  ) {
+  width: 100%;
+  min-height: var(--ad-control);
+  padding: 8px 12px;
+  border: 1px solid var(--ad-line-strong);
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-surface);
+  color: var(--ad-ink);
+  font-family: inherit;
+  font-size: var(--ad-fs-sm);
+  line-height: 1.4;
+  box-shadow: none;
+  transition:
+    border-color var(--ad-ease),
+    box-shadow var(--ad-ease);
+}
+
+.ad-content .form-group textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.ad-content .form-group :is(input, select, textarea):hover:not(:focus, :disabled) {
+  border-color: var(--ad-muted);
+}
+
+.ad-content .form-group :is(input, select, textarea):focus {
+  border-color: var(--ad-forest);
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.15);
+  outline: none;
+}
+
+.ad-content .form-group :is(input, select, textarea):disabled {
+  background: var(--ad-paper);
+  color: var(--ad-muted);
+}
+
+.ad-content .form-group :is(input, textarea)::placeholder {
+  color: #7a857e;
+  opacity: 1;
+}
+
+.ad-content .password-input input {
+  padding-right: 48px;
+}
+
+.ad-content .form-group small,
+.ad-content .field-hint {
+  color: var(--ad-muted);
+  font-size: var(--ad-fs-xs);
+}
+
+.ad-content .form-fieldset {
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid var(--ad-line);
+  border-radius: var(--ad-radius);
+}
+
+.ad-content :is(.checkbox-label, .checkbox-group label) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-weight: 500;
+  color: var(--ad-ink);
+  cursor: pointer;
+}
+
+.ad-content input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ad-forest);
+}

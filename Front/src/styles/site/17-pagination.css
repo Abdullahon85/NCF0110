@@ -1,0 +1,63 @@
+/* ===========================================
+   18. PAGINATION - Clean Design
+   =========================================== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.pagination-btn,
+.pagination-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: var(--space-2);
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--gray-700);
+}
+
+.pagination-btn:hover:not(:disabled),
+.pagination-number:hover:not(:disabled):not(.ellipsis) {
+  background: var(--primary);
+  color: var(--white);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-number.active {
+  background: var(--primary);
+  color: var(--white);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25);
+}
+
+.pagination-number.ellipsis {
+  cursor: default;
+  border: none;
+  background: transparent;
+}
+
+.page-info {
+  color: var(--gray-500);
+  font-size: var(--text-sm);
+}
+
+/* Responsive Pagination */

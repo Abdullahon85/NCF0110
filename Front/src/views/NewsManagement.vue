@@ -1,9 +1,8 @@
 <template>
   <div class="management-page">
     <div class="page-header">
-      <h1>📰 Управление новостями</h1>
-      <button @click="openCreateModal" class="btn btn-primary">
-        ➕ Добавить новость
+      <button class="btn btn-primary" @click="openCreateModal">
+        <AdminIcon name="plus" /> Добавить новость
       </button>
     </div>
 
@@ -11,15 +10,11 @@
       <input
         v-model="search"
         type="text"
-        placeholder="🔍 Поиск..."
+        placeholder="Поиск..."
         class="search-input"
         @input="debouncedSearch"
       />
-      <select
-        v-model="publishedFilter"
-        @change="loadItems"
-        class="filter-select"
-      >
+      <select v-model="publishedFilter" class="filter-select" @change="loadItems">
         <option value="">Все</option>
         <option value="true">Опубликованные</option>
         <option value="false">Черновики</option>
@@ -43,26 +38,28 @@
             <td data-label="Заголовок" class="name-cell">{{ item.title }}</td>
             <td data-label="Дата">{{ formatDate(item.pub_date) }}</td>
             <td data-label="Статус">
-              <span
-                :class="[
-                  'badge',
-                  item.is_published ? 'badge-success' : 'badge-warning',
-                ]"
-              >
+              <span :class="['badge', item.is_published ? 'badge-success' : 'badge-warning']">
                 {{ item.is_published ? "Опубликовано" : "Черновик" }}
               </span>
             </td>
             <td data-label="Действия">
               <div class="actions">
-                <button @click="editItem(item)" class="btn-icon">✏️</button>
-                <button @click="confirmDelete(item)" class="btn-icon delete">
-                  🗑️
+                <button class="btn-icon" aria-label="Редактировать" @click="editItem(item)">
+                  <AdminIcon name="edit" />
+                </button>
+                <button class="btn-icon delete" aria-label="Удалить" @click="confirmDelete(item)">
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
           </tr>
           <tr v-if="items.length === 0">
-            <td colspan="5" class="empty">Новости не найдены</td>
+            <td colspan="5" class="empty">
+              <p class="empty-text">Новости не найдены</p>
+              <button class="btn btn-primary" @click="openCreateModal">
+                <AdminIcon name="plus" /> Добавить новость
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -73,17 +70,14 @@
       <div class="modal modal-lg">
         <div class="modal-header">
           <h2>{{ editingItem ? "Редактировать новость" : "Новая новость" }}</h2>
-          <button @click="closeModal" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="closeModal">
+            <AdminIcon name="close" />
+          </button>
         </div>
-        <form @submit.prevent="saveItem" class="modal-body">
+        <form class="modal-body" @submit.prevent="saveItem">
           <div class="form-group">
             <label>Заголовок *</label>
-            <input
-              v-model="form.title"
-              type="text"
-              required
-              @input="generateSlug"
-            />
+            <input v-model="form.title" type="text" required @input="generateSlug" />
           </div>
           <div class="form-group">
             <label>Slug *</label>
@@ -91,12 +85,7 @@
           </div>
           <div class="form-group">
             <label>Краткое описание *</label>
-            <textarea
-              v-model="form.preview"
-              rows="2"
-              required
-              maxlength="500"
-            ></textarea>
+            <textarea v-model="form.preview" rows="2" required maxlength="500"></textarea>
           </div>
           <div class="form-group">
             <label>Содержание *</label>
@@ -114,42 +103,25 @@
           </div>
           <div v-if="error" class="error-msg">{{ error }}</div>
           <div class="modal-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              Отмена
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="saving">
-              Сохранить
-            </button>
+            <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
+            <button type="submit" class="btn btn-primary" :disabled="saving">Сохранить</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- Delete Modal -->
-    <div
-      v-if="showDeleteModal"
-      class="modal-overlay"
-      @click.self="showDeleteModal = false"
-    >
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal modal-sm">
         <div class="modal-header"><h2>Подтверждение</h2></div>
         <div class="modal-body">
           <p>
-            Удалить новость <strong>{{ deletingItem?.title }}</strong
-            >?
+            Удалить новость <strong>{{ deletingItem?.title }}</strong>?
           </p>
         </div>
         <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn btn-secondary">
-            Отмена
-          </button>
-          <button
-            @click="deleteItem"
-            class="btn btn-danger"
-            :disabled="deleting"
-          >
-            Удалить
-          </button>
+          <button class="btn btn-secondary" @click="showDeleteModal = false">Отмена</button>
+          <button class="btn btn-danger" :disabled="deleting" @click="deleteItem">Удалить</button>
         </div>
       </div>
     </div>
@@ -157,6 +129,8 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, onMounted } from "vue";
 import { makeSlug } from "@/utils/slug";
@@ -259,8 +233,7 @@ async function saveItem() {
     saving.value = true;
     error.value = "";
     const data = { ...form };
-    if (editingItem.value)
-      await newsAdminAPI.update(editingItem.value.id, data);
+    if (editingItem.value) await newsAdminAPI.update(editingItem.value.id, data);
     else await newsAdminAPI.create(data);
     closeModal();
     loadItems();
@@ -284,7 +257,7 @@ async function deleteItem() {
     showDeleteModal.value = false;
     loadItems();
   } catch (e) {
-    alert(adminErrorMessage(e, "Ошибка удаления"));
+    toast.error(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }
@@ -293,4 +266,4 @@ async function deleteItem() {
 onMounted(loadItems);
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

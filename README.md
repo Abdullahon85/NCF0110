@@ -273,6 +273,29 @@ npm audit --omit=dev                               # зависимости, п�
 
 Тесты идут на SQLite (база в памяти). Кэш в тестах всегда в памяти (`config/test_runner.py`).
 
+### Демо-раздел (посмотреть фильтры и страницу товара)
+
+```bash
+python manage.py demo_catalog            # раздел «Видеонаблюдение (демо)»: 15 товаров, характеристики, скидки, документы
+python manage.py demo_catalog --remove   # удалить всё демо (у демо-данных slug начинается с demo-)
+# в Docker: docker compose exec ncf python manage.py demo_catalog
+```
+
+### Стиль кода
+
+```bash
+cd back
+pip install -r requirements-dev.txt
+ruff format .        # оформление (настройки в back/pyproject.toml)
+ruff check .         # ошибки и порядок импортов; ruff check --fix . исправит часть сам
+
+cd ../Front
+npm run format       # Prettier (.prettierrc.json); проверка без правок: npm run format:check
+npm run lint         # ESLint (eslint.config.js): JS, TypeScript, Vue
+```
+
+Переводы строк файлов сохраняются как есть (Prettier `endOfLine: auto`, Ruff `line-ending = "auto"`).
+
 ---
 
 ## Структура

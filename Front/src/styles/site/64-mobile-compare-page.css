@@ -1,0 +1,54 @@
+/* ===========================================
+   29. COMPARE PAGE — Mobile improvements
+   =========================================== */
+@media (max-width: 768px) {
+  .compare-page {
+    padding: 12px 0;
+  }
+
+  .compare-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .compare-diff-label {
+    font-size: 13px;
+  }
+
+  .compare-limit-notice {
+    font-size: 12px;
+  }
+
+  .cmp-share-btn {
+    font-size: 13px;
+  }
+
+  .compare-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .compare-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .compare-tab-btn {
+    white-space: nowrap;
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+
+  .compare-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+
+  .compare-table {
+    min-width: 640px;
+  }
+}

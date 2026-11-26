@@ -3,10 +3,10 @@
     <!-- Profile Info -->
     <div class="card">
       <div class="card-header">
-        <h2>👤 Профиль пользователя</h2>
+        <h2>Профиль пользователя</h2>
       </div>
       <div class="card-body">
-        <form @submit.prevent="saveProfile" class="profile-form">
+        <form class="profile-form" @submit.prevent="saveProfile">
           <div class="form-row">
             <div class="form-group">
               <label>Логин</label>
@@ -21,47 +21,28 @@
 
             <div class="form-group">
               <label>Email</label>
-              <input
-                v-model="profileForm.email"
-                type="email"
-                placeholder="Введите email"
-              />
+              <input v-model="profileForm.email" type="email" placeholder="Введите email" />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>Имя</label>
-              <input
-                v-model="profileForm.first_name"
-                type="text"
-                placeholder="Введите имя"
-              />
+              <input v-model="profileForm.first_name" type="text" placeholder="Введите имя" />
             </div>
 
             <div class="form-group">
               <label>Фамилия</label>
-              <input
-                v-model="profileForm.last_name"
-                type="text"
-                placeholder="Введите фамилию"
-              />
+              <input v-model="profileForm.last_name" type="text" placeholder="Введите фамилию" />
             </div>
           </div>
 
-          <div
-            v-if="profileMessage"
-            :class="['message', profileSuccess ? 'success' : 'error']"
-          >
+          <div v-if="profileMessage" :class="['message', profileSuccess ? 'success' : 'error']">
             {{ profileMessage }}
           </div>
 
           <div class="form-actions">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="savingProfile"
-            >
+            <button type="submit" class="btn btn-primary" :disabled="savingProfile">
               {{ savingProfile ? "Сохранение..." : "Сохранить профиль" }}
             </button>
           </div>
@@ -72,10 +53,10 @@
     <!-- Change Password -->
     <div class="card">
       <div class="card-header">
-        <h2>🔐 Смена пароля</h2>
+        <h2>Смена пароля</h2>
       </div>
       <div class="card-body">
-        <form @submit.prevent="changePassword" class="password-form">
+        <form class="password-form" @submit.prevent="changePassword">
           <div class="form-group">
             <label>Текущий пароль</label>
             <div class="password-input">
@@ -89,9 +70,10 @@
               <button
                 type="button"
                 class="toggle-btn"
+                :aria-label="showOldPassword ? 'Скрыть пароль' : 'Показать пароль'"
                 @click="showOldPassword = !showOldPassword"
               >
-                {{ showOldPassword ? "👁️" : "👁️‍🗨️" }}
+                <AdminIcon :name="showOldPassword ? 'eye-off' : 'eye'" />
               </button>
             </div>
           </div>
@@ -110,9 +92,10 @@
               <button
                 type="button"
                 class="toggle-btn"
+                :aria-label="showNewPassword ? 'Скрыть пароль' : 'Показать пароль'"
                 @click="showNewPassword = !showNewPassword"
               >
-                {{ showNewPassword ? "👁️" : "👁️‍🗨️" }}
+                <AdminIcon :name="showNewPassword ? 'eye-off' : 'eye'" />
               </button>
             </div>
             <span class="hint">Минимум 8 символов</span>
@@ -131,9 +114,10 @@
               <button
                 type="button"
                 class="toggle-btn"
+                :aria-label="showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'"
                 @click="showConfirmPassword = !showConfirmPassword"
               >
-                {{ showConfirmPassword ? "👁️" : "👁️‍🗨️" }}
+                <AdminIcon :name="showConfirmPassword ? 'eye-off' : 'eye'" />
               </button>
             </div>
           </div>
@@ -152,19 +136,12 @@
             </span>
           </div>
 
-          <div
-            v-if="passwordMessage"
-            :class="['message', passwordSuccess ? 'success' : 'error']"
-          >
+          <div v-if="passwordMessage" :class="['message', passwordSuccess ? 'success' : 'error']">
             {{ passwordMessage }}
           </div>
 
           <div class="form-actions">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="changingPassword"
-            >
+            <button type="submit" class="btn btn-primary" :disabled="changingPassword">
               {{ changingPassword ? "Изменение..." : "Изменить пароль" }}
             </button>
           </div>
@@ -175,7 +152,7 @@
     <!-- Account Info -->
     <div class="card">
       <div class="card-header">
-        <h2>ℹ️ Информация об аккаунте</h2>
+        <h2>Информация об аккаунте</h2>
       </div>
       <div class="card-body">
         <div class="info-list">
@@ -184,29 +161,19 @@
             <span class="info-value">
               <span
                 class="badge"
-                :class="
-                  authStore.user?.is_superuser
-                    ? 'badge-danger'
-                    : 'badge-primary'
-                "
+                :class="authStore.user?.is_superuser ? 'badge-danger' : 'badge-primary'"
               >
-                {{
-                  authStore.user?.is_superuser ? "Суперадмин" : "Администратор"
-                }}
+                {{ authStore.user?.is_superuser ? "Суперадмин" : "Администратор" }}
               </span>
             </span>
           </div>
           <div class="info-item">
             <span class="info-label">Дата регистрации:</span>
-            <span class="info-value">{{
-              formatDate(authStore.user?.date_joined)
-            }}</span>
+            <span class="info-value">{{ formatDate(authStore.user?.date_joined) }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">Последний вход:</span>
-            <span class="info-value">{{
-              formatDate(authStore.user?.last_login)
-            }}</span>
+            <span class="info-value">{{ formatDate(authStore.user?.last_login) }}</span>
           </div>
         </div>
       </div>
@@ -215,6 +182,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { ref, reactive, computed, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 
@@ -289,9 +257,7 @@ async function saveProfile() {
 
   savingProfile.value = false;
   profileSuccess.value = result.success;
-  profileMessage.value = result.success
-    ? "Профиль успешно обновлен!"
-    : result.error || "Ошибка";
+  profileMessage.value = result.success ? "Профиль успешно обновлен!" : result.error || "Ошибка";
 
   if (result.success) {
     setTimeout(() => {
@@ -317,16 +283,11 @@ async function changePassword() {
   changingPassword.value = true;
   passwordMessage.value = "";
 
-  const result = await authStore.changePassword(
-    passwordForm.oldPassword,
-    passwordForm.newPassword,
-  );
+  const result = await authStore.changePassword(passwordForm.oldPassword, passwordForm.newPassword);
 
   changingPassword.value = false;
   passwordSuccess.value = result.success;
-  passwordMessage.value = result.success
-    ? "Пароль успешно изменен!"
-    : result.error || "Ошибка";
+  passwordMessage.value = result.success ? "Пароль успешно изменен!" : result.error || "Ошибка";
 
   if (result.success) {
     passwordForm.oldPassword = "";
@@ -351,4 +312,4 @@ function formatDate(dateString?: string): string {
 }
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

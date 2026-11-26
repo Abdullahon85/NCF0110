@@ -1,0 +1,92 @@
+/* ===========================================
+   4. CATEGORIES GRID — 2 columns mobile
+   =========================================== */
+@media (max-width: 768px) {
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .category-card {
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--gray-100);
+  }
+
+  .category-card::after {
+    display: none;
+  }
+
+  .category-card:hover {
+    transform: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  .category-card:active {
+    transform: scale(0.97);
+    opacity: 0.95;
+  }
+
+  .category-card .card-image {
+    height: 110px;
+  }
+
+  .category-card .card-image img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+  }
+
+  .category-card .card-content {
+    padding: 10px 10px 12px;
+    text-align: center;
+  }
+
+  .category-card .card-content::before {
+    display: none;
+  }
+
+  .category-card .card-content h3 {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 2px;
+  }
+
+  .products-count {
+    font-size: 11px;
+    opacity: 0.6;
+  }
+
+  /* Subcategories grid */
+  .subcategories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .subcat-image {
+    height: 90px;
+  }
+
+  .subcat-content {
+    padding: 8px;
+  }
+
+  .subcat-content h3 {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .categories-grid {
+    gap: 8px;
+  }
+
+  .category-card .card-image {
+    height: 95px;
+  }
+
+  .category-card .card-content h3 {
+    font-size: 12px;
+  }
+}

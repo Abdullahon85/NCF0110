@@ -1,0 +1,40 @@
+/* ===========================================
+   28. CART PAGE — 390px refinements
+   =========================================== */
+@media (max-width: 390px) {
+  .cart-item {
+    padding: 10px;
+  }
+
+  .cart-item__img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .cart-item {
+    grid-template-columns: 56px 1fr;
+  }
+
+  .cart-item__name {
+    font-size: 12px;
+  }
+
+  .cart-item__price,
+  .cart-item__line-total {
+    font-size: 13px;
+  }
+
+  .qty-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .qty-value {
+    min-width: 24px;
+    font-size: 13px;
+  }
+
+  .cart-summary {
+    padding: 12px;
+  }
+}

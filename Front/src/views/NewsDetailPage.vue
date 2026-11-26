@@ -36,9 +36,7 @@
         ></div>
 
         <div class="article-footer">
-          <router-link to="/news" class="back-link">
-            ← Вернуться к новостям
-          </router-link>
+          <router-link to="/news" class="back-link"> ← Вернуться к новостям </router-link>
         </div>
       </article>
     </div>
@@ -90,4 +88,4 @@ onMounted(async () => {
 });
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

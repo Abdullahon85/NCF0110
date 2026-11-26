@@ -4,6 +4,7 @@ Excel/LibreOffice treat a cell starting with = + - @ (or a leading tab/CR)
 as a formula. Customer-supplied text is prefixed with an apostrophe so it is
 shown as text. Phone-number-like values (+998 90 123-45-67) are left as is.
 """
+
 import re
 
 _FORMULA_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")

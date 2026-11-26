@@ -1,0 +1,350 @@
+/* Home page: first screen with the game, banners, categories, advantages, brands, request. */
+
+.hp {
+  background: var(--site-paper);
+  color: var(--site-ink);
+}
+
+.hp-wrap {
+  width: min(var(--site-max), 100% - 32px);
+  margin: 0 auto;
+}
+
+/* ── First screen ─────────────────────────────────────── */
+.hp-hero {
+  padding: 24px 0 40px;
+}
+
+.hp-hero-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 32px;
+  margin-bottom: 20px;
+}
+
+.hp-hero-copy {
+  flex: 1 1 560px;
+  max-width: 820px;
+}
+
+.hp-title {
+  margin: 0 0 8px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--site-ink);
+}
+
+.hp-lead {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--site-ink-2);
+}
+
+.hp-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ── Banners ─────────────────────────────────────────── */
+.hp-banners {
+  padding: 0 0 40px;
+}
+
+/* ── Sections ────────────────────────────────────────── */
+.hp-section {
+  padding: 48px 0;
+  border-top: 1px solid var(--site-line);
+}
+
+.hp-section--surface {
+  background: var(--site-surface);
+}
+
+.hp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hp-h2 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--site-ink);
+}
+
+.hp-desc {
+  margin: 8px 0 24px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--site-muted);
+}
+
+.hp-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--site-brand);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+/* Categories */
+.hp-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hp-cat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--site-line);
+  border-radius: var(--site-radius-card);
+  background: var(--site-surface);
+  color: var(--site-ink);
+  text-decoration: none;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.hp-cat:hover {
+  border-color: var(--site-brand);
+}
+
+.hp-cat-img {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  padding: 12px;
+  background: #fff;
+  color: var(--site-line-strong);
+}
+
+.hp-cat-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hp-cat-name {
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--site-line);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.hp-cat-skeleton {
+  aspect-ratio: 4 / 3.8;
+  border-radius: var(--site-radius-card);
+}
+
+/* Advantages */
+.hp-feat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hp-feat {
+  padding: 20px;
+  border: 1px solid var(--site-line);
+  border-radius: var(--site-radius-card);
+  background: var(--site-paper);
+}
+
+.hp-feat-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--site-radius-ctl);
+  background: var(--site-brand-tint);
+  color: var(--site-brand);
+}
+
+.hp-feat-title {
+  margin: 14px 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.hp-feat-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--site-ink-2);
+}
+
+/* Brands */
+.hp-brand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hp-brand {
+  display: grid;
+  place-items: center;
+  height: 88px;
+  padding: 14px;
+  border: 1px solid var(--site-line);
+  border-radius: var(--site-radius-card);
+  background: var(--site-surface);
+  color: var(--site-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hp-brand:hover {
+  border-color: var(--site-brand);
+}
+
+.hp-brand img {
+  max-width: 100%;
+  max-height: 56px;
+  object-fit: contain;
+}
+
+/* Request */
+.hp-cta {
+  padding: 40px 0;
+  border-top: 1px solid var(--site-line);
+  background: var(--site-brand-tint);
+  color: var(--site-ink);
+}
+
+.hp-cta-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.hp-cta-title {
+  margin: 0 0 6px;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--site-ink);
+}
+
+.hp-cta-sub {
+  margin: 0;
+  font-size: 16px;
+  color: var(--site-ink-2);
+}
+
+.hp-cta-btn {
+  flex: none;
+  background: var(--site-brand);
+  border: 1px solid var(--site-brand);
+  color: #fff;
+  font-weight: 700;
+}
+
+.hp-cta-btn:hover {
+  background: var(--site-brand-hover);
+  border-color: var(--site-brand-hover);
+  color: #fff;
+}
+
+/* ── Narrow screens ────────────────────────────────────── */
+@media (max-width: 960px) {
+  .hp-feat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .hp-hero {
+    padding: 20px 0 28px;
+  }
+  .hp-title {
+    font-size: 28px;
+  }
+  .hp-lead {
+    font-size: 15px;
+  }
+  /* on phones the catalog is one tap away in the bottom menu — keep the game in the first screen */
+  .hp-hero-actions {
+    display: none;
+  }
+  .hp-section {
+    padding: 32px 0;
+  }
+  .hp-h2,
+  .hp-cta-title {
+    font-size: 24px;
+  }
+  .hp-cat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .hp-cat-name {
+    font-size: 14px;
+  }
+  .hp-feat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hp-brand-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hp-cta-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Product tabs: Рекомендуем / Новинки / Акции / Популярное */
+.hp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.hp-tab {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--site-line-strong);
+  border-radius: 999px;
+  background: var(--site-surface);
+  color: var(--site-ink-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hp-tab[aria-selected="true"] {
+  border-color: var(--site-brand);
+  background: var(--site-brand);
+  color: #fff;
+}
+
+.hp-tabs .hp-more {
+  margin-left: auto;
+}

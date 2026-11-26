@@ -1,0 +1,82 @@
+/* ===========================================
+   22. PRICE FILTER - Range Slider
+   =========================================== */
+.price-filter {
+  margin-bottom: var(--space-6);
+}
+
+.price-legend {
+  margin-bottom: var(--space-3);
+  color: var(--gray-500);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.price-inputs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.price-inputs input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--gray-200);
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+  background: var(--white);
+}
+
+.price-inputs input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.range-wrapper {
+  position: relative;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--gray-200);
+  margin: var(--space-3) 0;
+}
+
+.range-track {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--primary-gradient);
+}
+
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 6px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--white);
+  border: 3px solid var(--primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast);
+}
+
+.range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}

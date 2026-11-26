@@ -16,7 +16,10 @@ SLUGGED = {
 
 def fill_empty_slugs(apps, schema_editor):
     for model_name, (source, max_length, unique) in SLUGGED.items():
-        model = apps.get_model("api", model_name)
+        try:
+            model = apps.get_model("api", model_name)
+        except LookupError:  # Tag was removed in 0046; nothing to fill there any more
+            continue
         for obj in model.objects.filter(slug="").order_by("pk"):
             text = getattr(obj, source)
             obj.slug = unique_slug(model, text, max_length, obj.pk) if unique else make_slug(text, max_length)

@@ -1,0 +1,102 @@
+/* Public site theme. Values apply only inside .site (the app root outside /admin),
+   so the admin keeps its own look. Old token names are re-pointed here so existing rules follow. */
+
+.site {
+  --site-paper: #f3f5f2;
+  --site-surface: #ffffff;
+  --site-line: #d7ddd8;
+  --site-line-strong: #b9c2bc;
+  --site-ink: #111a15;
+  --site-ink-2: #2a352f;
+  --site-muted: #4f5b54;
+  --site-deep: #0f2a1e;
+  --site-brand: #1b4332;
+  --site-brand-hover: #143426;
+  --site-brand-tint: #e4ede7;
+  --site-signal: #f2b705;
+  --site-danger: #b42318;
+  --site-radius-card: 10px;
+  --site-radius-ctl: 8px;
+  --site-max: 1240px;
+  --site-font: "Onest Variable", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+
+  /* existing tokens, re-pointed */
+  --primary: #1b4332;
+  --primary-hover: #143426;
+  --primary-light: rgba(27, 67, 50, 0.08);
+  --primary-dark: #0f2a1e;
+  --primary-gradient: #1b4332;
+  --accent: #1b4332;
+  --accent-hover: #2d6a4f;
+  --accent-light: rgba(27, 67, 50, 0.08);
+  --accent-dark: #0f2a1e;
+  --accent-gradient: #1b4332;
+  --dark: #0f2a1e;
+  --dark-soft: #143426;
+  --dark-medium: #1b4332;
+  --dark-elevated: #24533e;
+  --light: #f3f5f2;
+  --light-soft: #ecefeb;
+  --light-warm: #f3f5f2;
+  --success: #1d7a4a;
+  --error: #b42318;
+  --gray-50: #f7f8f6;
+  --gray-100: #eef1ee;
+  --gray-200: #dde2de;
+  --gray-300: #c5cdc7;
+  --gray-400: #97a29b;
+  --gray-500: #66716a;
+  --gray-600: #4f5b54;
+  --gray-700: #3a453f;
+  --gray-800: #1f2924;
+  --gray-900: #111a15;
+  --shadow-xs: none;
+  --shadow-sm: 0 1px 2px rgba(17, 26, 21, 0.06);
+  --shadow-md: 0 2px 6px rgba(17, 26, 21, 0.06);
+  --shadow-lg: 0 8px 20px rgba(17, 26, 21, 0.08);
+  --shadow-xl: 0 12px 28px rgba(17, 26, 21, 0.1);
+  --shadow-2xl: 0 16px 36px rgba(17, 26, 21, 0.12);
+  --shadow-card: 0 0 0 1px #d7ddd8;
+  --shadow-card-hover: 0 0 0 1px #97a29b;
+  --shadow-glow: none;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --font-sans: var(--site-font);
+  --font-display: var(--site-font);
+  --tracking-wide: 0;
+  --tracking-wider: 0;
+  --container-max: min(1240px, 92vw);
+
+  min-height: 100vh;
+  background: var(--site-paper);
+  color: var(--site-ink);
+  font-family: var(--site-font);
+}
+
+.site :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--site-font);
+  letter-spacing: -0.01em;
+}
+
+.site :is(.price, .product-price, .current-price, .old-price, .cart-total, .summary-total) {
+  font-variant-numeric: tabular-nums;
+}
+
+.site :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--site-brand);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site *,
+  .site *::before,
+  .site *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

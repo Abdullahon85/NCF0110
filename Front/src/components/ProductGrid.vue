@@ -1,6 +1,5 @@
-// ProductGrid.vue - Simplified using ProductCard component
 <template>
-  <div class="products-grid">
+  <div class="products-grid" :class="{ 'is-list': view === 'list' }">
     <ProductCard
       v-for="(product, index) in products"
       :key="product.slug || product.id"
@@ -14,11 +13,7 @@
 import ProductCard from "./ProductCard.vue";
 import type { Product } from "@/types";
 
-interface Props {
-  products: Product[];
-}
-
-defineProps<Props>();
+withDefaults(defineProps<{ products: Product[]; view?: "grid" | "list" }>(), { view: "grid" });
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

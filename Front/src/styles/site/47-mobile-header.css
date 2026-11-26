@@ -1,0 +1,213 @@
+/* ===========================================
+   1. HEADER — Compact mobile header
+   =========================================== */
+@media (max-width: 768px) {
+  .header {
+    margin-bottom: 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .navbar {
+    padding: 6px 0;
+    height: 52px;
+  }
+
+  .logo {
+    font-size: 1rem;
+  }
+
+  .logo span {
+    font-size: 1rem;
+  }
+
+  /* Hide desktop search — shown inside slide-out menu */
+  .search-container {
+    display: none;
+  }
+
+  /* Hide desktop icons — shown in bottom nav */
+  .header-icons {
+    display: none;
+  }
+
+  /* Show burger menu */
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  /* Burger animation */
+  .mobile-menu-toggle[aria-expanded="true"] span:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+  }
+  .mobile-menu-toggle[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+  }
+  .mobile-menu-toggle[aria-expanded="true"] span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+  }
+
+  /* Slide-out menu */
+  .nav-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 85%;
+    max-width: 320px;
+    height: 100vh;
+    height: 100dvh;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 0;
+    background: linear-gradient(180deg, var(--dark) 0%, var(--primary-dark) 100%);
+    padding: 72px 20px 32px;
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 99;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-menu.active {
+    transform: translateX(0);
+  }
+
+  /* Overlay behind menu */
+  .nav-menu.active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
+
+  /* Menu links */
+  .nav-menu li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .nav-menu a {
+    display: block;
+    padding: 14px 0;
+    font-size: 1rem;
+    text-transform: none;
+    letter-spacing: 0;
+    text-align: left;
+  }
+
+  .nav-menu a::before {
+    display: none;
+  }
+
+  /* Mobile search inside menu */
+  .mobile-search-item {
+    display: block;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+
+  .mobile-search-wrapper {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(212, 165, 116, 0.25);
+    border-radius: 999px;
+    overflow: hidden;
+    padding: 0 12px 0 16px;
+  }
+
+  .mobile-search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--white);
+    font-size: 16px;
+    padding: 12px 0;
+  }
+
+  .mobile-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 14px;
+  }
+
+  .mobile-search-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Dropdown in mobile menu */
+  .dropdown {
+    position: static;
+    transform: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 12px;
+    box-shadow: none;
+    padding: 4px 0;
+    min-width: 0;
+    margin: 4px 0;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .dropdown::before {
+    display: none;
+  }
+
+  .dropdown li a {
+    color: rgba(255, 255, 255, 0.7) !important;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .dropdown li a:hover {
+    background: rgba(255, 255, 255, 0.08);
+    padding-left: 20px;
+    color: var(--accent) !important;
+  }
+
+  /* Search results dropdown */
+  .search-results {
+    max-height: 60vh;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+}
+
+/* ===========================================
+   2. BANNER SLIDER — Hidden on mobile
+   =========================================== */
+@media (max-width: 768px) {
+  /* Banner slider completely hidden on mobile — takes too much space */
+  .banner-slider {
+    display: none !important;
+  }
+
+  .banner-slider .dots-container {
+    bottom: 8px;
+    gap: 5px;
+  }
+
+  .banner-slider .dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .banner-slider .banner-skeleton {
+    aspect-ratio: 16 / 9;
+    border-radius: 0;
+  }
+}
+
+/* Banner 390px block is also irrelevant since banner is hidden, skip it */

@@ -1,0 +1,160 @@
+/* ===========================================
+   14. HOMEPAGE SECTIONS
+   =========================================== */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 1.2rem;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+
+  .page-hero,
+  .hero-section {
+    padding: 16px 0 12px;
+  }
+
+  .page-hero h1,
+  .hero-section h1 {
+    font-size: 1.35rem;
+  }
+
+  .page-hero p,
+  .hero-section p {
+    font-size: 13px;
+    opacity: 0.8;
+  }
+
+  /* Featured categories section */
+  .featured-categories {
+    padding: 20px 0;
+  }
+
+  .categories-container {
+    padding: 0 16px;
+  }
+
+  .categories-title {
+    font-size: 1.2rem;
+    margin-bottom: 14px;
+  }
+
+  .categories-title::after {
+    display: none;
+  }
+
+  /* Featured brands section */
+  .featured-brands {
+    padding: 20px 0;
+  }
+
+  .featured-brands::before {
+    display: none;
+  }
+
+  .brands-container {
+    padding: 0 16px;
+  }
+
+  .brands-title {
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+  }
+
+  .brands-title::after {
+    display: none;
+  }
+
+  .brands-grid {
+    margin-top: 12px;
+    margin-bottom: 16px;
+  }
+
+  .brands-footer {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .brands-link {
+    font-size: 13px;
+    padding: 10px 20px;
+    width: 100%;
+    justify-content: center;
+    border-radius: 10px;
+  }
+
+  /* View all links */
+  .view-all-link,
+  .view-category-link {
+    font-size: 13px;
+    padding: 6px 14px;
+  }
+}
+
+/* ===========================================
+   15. BREADCRUMB
+   =========================================== */
+@media (max-width: 768px) {
+  .breadcrumb {
+    font-size: 12px;
+    gap: 4px;
+    padding: 8px 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .breadcrumb::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ===========================================
+   16. FORMS & CONTACT PAGE
+   =========================================== */
+@media (max-width: 768px) {
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .contact-layout,
+  .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .contact-info {
+    order: 1;
+  }
+
+  .contact-form {
+    order: 2;
+  }
+
+  textarea {
+    min-height: 120px;
+  }
+}
+
+/* ===========================================
+   17. ABOUT PAGE
+   =========================================== */
+@media (max-width: 768px) {
+  .about-page {
+    padding: 16px 0;
+  }
+
+  .about-section {
+    padding: 24px 16px;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

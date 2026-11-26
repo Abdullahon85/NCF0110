@@ -3,6 +3,7 @@
 Bad values raise DRF ValidationError, which the API turns into a 400 with the
 field name, instead of letting the database layer fail with a 500.
 """
+
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
@@ -16,7 +17,7 @@ def int_param(params, name: str) -> int | None:
     try:
         return int(str(raw).strip())
     except ValueError:
-        raise ValidationError({name: "Должно быть целое число."})
+        raise ValidationError({name: "Должно быть целое число."}) from None
 
 
 def date_param(params, name: str) -> date | None:
@@ -26,7 +27,7 @@ def date_param(params, name: str) -> date | None:
     try:
         return date.fromisoformat(raw)
     except ValueError:
-        raise ValidationError({name: "Дата должна быть в формате ГГГГ-ММ-ДД."})
+        raise ValidationError({name: "Дата должна быть в формате ГГГГ-ММ-ДД."}) from None
 
 
 def inline_list(data, key: str) -> list[dict]:
@@ -52,7 +53,9 @@ def price_value(data, name: str = "price") -> Decimal | None:
     try:
         value = Decimal(str(raw).strip().replace(",", "."))
     except InvalidOperation:
-        raise ValidationError({name: "Цена должна быть числом, например 1500000 или 99.50."})
+        raise ValidationError(
+            {name: "Цена должна быть числом, например 1500000 или 99.50."}
+        ) from None
     if not value.is_finite() or value < 0 or value >= MAX_PRICE:
         raise ValidationError({name: "Цена должна быть не меньше 0 и не больше 23 знаков."})
     if value.as_tuple().exponent < -2:

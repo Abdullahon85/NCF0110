@@ -1,0 +1,174 @@
+/* ===========================================
+   29. ADMIN PRODUCTS (Django Style)
+   =========================================== */
+
+.form-fieldset {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+  background: var(--gray-50);
+}
+
+.form-fieldset legend {
+  font-weight: 600;
+  font-size: 14px;
+  color: #417690;
+  padding: 0 10px;
+  background: white;
+}
+
+.hint-text {
+  font-size: 12px;
+  color: #16a34a;
+  margin: 6px 0 10px;
+  background: #f0fdf4;
+  border-left: 3px solid #22c55e;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+.hint-text.muted {
+  color: #6b7280;
+  background: #f9fafb;
+  border-left-color: #d1d5db;
+}
+
+.inline-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+}
+
+.inline-table th,
+.inline-table td {
+  padding: 8px;
+  border: 1px solid var(--gray-200);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.inline-table th {
+  background: var(--gray-100);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--gray-600);
+}
+
+.inline-table select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+}
+
+.inline-table .multi-select {
+  min-height: 120px;
+}
+
+.image-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inline-image-preview {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.file-input {
+  font-size: 12px;
+}
+
+.order-input {
+  width: 60px;
+  text-align: center;
+}
+
+.btn-remove {
+  background: var(--error);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-remove:hover {
+  background: #dc2626;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.hint-message {
+  color: var(--gray-600);
+  font-style: italic;
+  padding: 12px;
+  background: var(--warning-light);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--warning);
+}
+
+/* Password strength */
+
+/* Form actions */
+.form-actions {
+  margin-top: 8px;
+}
+
+/* Profile page */
+
+/* Message styling */
+.message {
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.message.success {
+  background: var(--success-light);
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.message.error {
+  background: var(--error-light);
+  border: 1px solid #fecaca;
+  color: var(--error);
+}
+
+/* Input disabled state */
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--gray-400);
+}
+
+/* ===========================================
+   25. ADMIN LOGIN PAGE
+   =========================================== */
+
+.back-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
+/* ===========================================
+   26. ADMIN PANEL LAYOUT
+   =========================================== */

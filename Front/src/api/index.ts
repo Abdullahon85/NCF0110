@@ -1,5 +1,6 @@
 // src/api/index.ts
 import axios from "axios";
+import type { CatalogFacets } from "@/utils/catalogQuery";
 import type {
   Category,
   Product,
@@ -8,19 +9,15 @@ import type {
   ContactInfo,
   ContactMessage,
   PaginatedResponse,
-  ProductFilters,
   Order,
   Review,
   ProductQuestion,
-  Tag,
   Brand,
   BrandFilters,
-  ProductTagGroup,
   Banner,
 } from "@/types";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "/api"; // empty value in .env -> same-domain /api
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api"; // empty value in .env -> same-domain /api
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -63,11 +60,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-// api.interceptors.request.use(async (cfg) => {
-//   const token = localStorage.getItem('token');
-//   if (token) cfg.headers = { ...cfg.headers, Authorization: `Bearer ${token}` };
-//   return cfg;
-// });
 
 export const categoriesAPI = {
   getAll: (limit?: number) => {
@@ -78,83 +70,20 @@ export const categoriesAPI = {
   getBySlug: (slug: string) => {
     return api.get<Category>(`/categories/${slug}/`);
   },
-
-  getProducts: (slug: string, params?: Record<string, any>) => {
-    return api.get<PaginatedResponse<Product>>(
-      `/categories/${slug}/products/`,
-      { params },
-    );
-  },
-
-  getPriceRange(categorySlug: string) {
-    // Update to match backend price range endpoint
-    return api.get(`/categories/${categorySlug}/price-range/`);
-  },
-
-  getBrands: (slug: string, params?: Record<string, any>) =>
-    api.get<Brand[]>(`/categories/${slug}/brands/`, { params }),
-  // Endpoint may return either a flat Tag[] or grouped ProductTagGroup[] depending on backend.
-  getTags: (
-    slug: string,
-    params?: { price_min?: number | null; price_max?: number | null },
-  ) =>
-    api.get<Tag[] | ProductTagGroup[]>(`/categories/${slug}/tags/`, { params }),
-  getFeatured: () =>
-    api.get("/categories/", {
-      params: {
-        page: 1,
-        page_size: 3,
-      },
-    }),
 };
 
 export const productsAPI = {
-  getAll: (params?: ProductFilters) => {
-    return api.get<PaginatedResponse<Product>>("/products/", { params });
-  },
-  search: (query: string, params?: Partial<ProductFilters>) => {
-    return api.get<PaginatedResponse<Product>>("/products/", {
-      params: {
-        search: query,
-        ...params,
-      },
-    });
-  },
-  getByFeatureValue: (value: string) => {
-    return api.get<Product[]>("/products/by-feature/", { params: { value } });
-  },
+  // Product lists of the site: filters, sorting, page (see utils/catalogQuery.ts).
+  list: (params: Record<string, string>) =>
+    api.get<PaginatedResponse<Product> & { page: number; page_size: number }>("/products/", {
+      params,
+    }),
+  // Filter groups with counts for the same parameters.
+  facets: (params: Record<string, string>) =>
+    api.get<CatalogFacets>("/products/facets/", { params }),
   getBySlug: (slug: string) => {
     return api.get<Product>(`/products/${slug}/`);
   },
-
-  getByBrand: (
-    brandSlug: string,
-    params?: { page?: number; page_size?: number },
-  ) => {
-    return api.get<PaginatedResponse<Product>>(
-      `/brands/${brandSlug}/products/`,
-      { params },
-    );
-  },
-  getPriceRange(categorySlug: string) {
-    return api.get("/products/price-range/", {
-      params: { category: categorySlug },
-    });
-  },
-
-  // CRUD operations
-  create: (data: Record<string, any>) => {
-    return api.post<Product>("/products/", data);
-  },
-
-  update: (slug: string, data: Record<string, any>) => {
-    return api.patch<Product>(`/products/${slug}/`, data);
-  },
-
-  delete: (slug: string) => {
-    return api.delete(`/products/${slug}/`);
-  },
-
 };
 
 export const newsAPI = {
@@ -172,23 +101,8 @@ export const brandsAPI = {
   getAll: (params?: BrandFilters) => {
     return api.get<PaginatedResponse<Brand>>("/brands/", { params });
   },
-  getById: (id: number | string) => {
-    return api.get<Brand>(`/brands/${id}/`);
-  },
   getBySlug: (slug: string) => {
     return api.get<Brand>(`/brands/${slug}/`);
-  },
-
-  getCategories: (slug: string) => {
-    return api.get<Category[]>(`/brands/${slug}/categories/`);
-  },
-  getTags: (slug: string) => {
-    return api.get<Tag[]>(`/brands/${slug}/tags/`);
-  },
-  getProducts: (slug: string, params?: Record<string, any>) => {
-    return api.get<PaginatedResponse<Product>>(`/brands/${slug}/products/`, {
-      params,
-    });
   },
 };
 
@@ -209,9 +123,6 @@ export const contactAPI = {
 
 export const ordersAPI = {
   create: (payload: Order) => api.post<Order>("/orders/", payload),
-  getById: (id: number) => api.get<Order>(`/orders/${id}/`),
-  list: (params?: Record<string, any>) =>
-    api.get<{ results: Order[]; count: number }>("/orders/", { params }),
 };
 
 export const reviewsAPI = {
@@ -219,24 +130,16 @@ export const reviewsAPI = {
     api.get<PaginatedResponse<Review>>(`/products/${productSlug}/reviews/`, {
       params,
     }),
-  create: (
-    productSlug: string,
-    payload: { author_name: string; rating: number; text: string },
-  ) => api.post<Review>(`/products/${productSlug}/reviews/`, payload),
+  create: (productSlug: string, payload: { author_name: string; rating: number; text: string }) =>
+    api.post<Review>(`/products/${productSlug}/reviews/`, payload),
 };
 
 export const questionsAPI = {
   listByProduct: (productSlug: string, params?: any) =>
-    api.get<PaginatedResponse<ProductQuestion>>(
-      `/products/${productSlug}/questions/`,
-      {
-        params,
-      },
-    ),
-  create: (
-    productSlug: string,
-    payload: { author_name: string; text: string },
-  ) =>
+    api.get<PaginatedResponse<ProductQuestion>>(`/products/${productSlug}/questions/`, {
+      params,
+    }),
+  create: (productSlug: string, payload: { author_name: string; text: string }) =>
     api.post<ProductQuestion>(`/products/${productSlug}/questions/`, payload),
 };
 
@@ -244,9 +147,13 @@ export const similarProductsAPI = {
   get: (slug: string) => api.get<Product[]>(`/products/${slug}/similar/`),
 };
 
-export const tagsAPI = {
-  getAll: (params?: Record<string, any>) =>
-    api.get<PaginatedResponse<Tag>>("/tags/", { params }),
+// Pages for buyers (Оплата, Доставка...): list for the footer, one page by slug.
+export const pagesAPI = {
+  list: () => api.get<{ slug: string; title: string }[]>("/pages/"),
+  get: (slug: string) =>
+    api.get<{ slug: string; title: string; content: string; updated_at: string }>(
+      `/pages/${slug}/`,
+    ),
 };
 
 export const bannersAPI = {

@@ -1,4 +1,5 @@
 """Hardening left over from the security review, verified before handover."""
+
 import io
 import shutil
 import tempfile
@@ -34,10 +35,14 @@ def html_as_png():
 class HandoverBase(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.staff = User.objects.create_user("admin", password=PASSWORD, is_staff=True, is_superuser=True)
+        cls.staff = User.objects.create_user(
+            "admin", password=PASSWORD, is_staff=True, is_superuser=True
+        )
         cat = Category.objects.create(name="Cameras", slug="cameras")
         cls.category = cat
-        cls.product = Product.objects.create(name="Cam", slug="cam", category=cat, description="d", price=10)
+        cls.product = Product.objects.create(
+            name="Cam", slug="cam", category=cat, description="d", price=10
+        )
 
     def setUp(self):
         for c in caches.all(initialized_only=False):
@@ -52,17 +57,30 @@ class HandoverBase(TestCase):
         shutil.rmtree(self.media, ignore_errors=True)
 
     def _login(self):
-        return APIClient().post("/api/admin/auth/login/", {"username": "admin", "password": PASSWORD}, format="json").data
+        return (
+            APIClient()
+            .post(
+                "/api/admin/auth/login/", {"username": "admin", "password": PASSWORD}, format="json"
+            )
+            .data
+        )
 
 
 class LogoutRobustnessTest(HandoverBase):
     def test_non_object_body_is_400(self):
-        self.assertEqual(self.api.post("/api/admin/auth/logout/", [1, 2], format="json").status_code, 400)
+        self.assertEqual(
+            self.api.post("/api/admin/auth/logout/", [1, 2], format="json").status_code, 400
+        )
 
     def test_stale_authorization_header_does_not_block_logout(self):
         t = self._login()
         self.api.credentials(HTTP_AUTHORIZATION="Bearer expired.or.garbage")
-        self.assertEqual(self.api.post("/api/admin/auth/logout/", {"refresh": t["refresh"]}, format="json").status_code, 200)
+        self.assertEqual(
+            self.api.post(
+                "/api/admin/auth/logout/", {"refresh": t["refresh"]}, format="json"
+            ).status_code,
+            200,
+        )
         r = APIClient().post("/api/admin/auth/refresh/", {"refresh": t["refresh"]}, format="json")
         self.assertEqual(r.status_code, 401)
 
@@ -72,7 +90,11 @@ class TokenRevocationTest(HandoverBase):
         t = self._login()
         api = APIClient()
         api.credentials(HTTP_AUTHORIZATION=f"Bearer {t['access']}")
-        r = api.post("/api/admin/auth/change-password/", {"old_password": PASSWORD, "new_password": "N3w-strong-pass-456"}, format="json")
+        r = api.post(
+            "/api/admin/auth/change-password/",
+            {"old_password": PASSWORD, "new_password": "N3w-strong-pass-456"},
+            format="json",
+        )
         self.assertEqual(r.status_code, 200)
         self.assertEqual(api.get("/api/admin/auth/me/").status_code, 401)
         fresh = APIClient()
@@ -98,7 +120,11 @@ class SafeLinkEdgeCasesTest(SimpleTestCase):
             validate_safe_link("https://[::1")
 
     def test_messenger_links_allowed(self):
-        for link in ("tg://resolve?domain=shop", "viber://chat?number=998901234567", "mailto:a@b.uz"):
+        for link in (
+            "tg://resolve?domain=shop",
+            "viber://chat?number=998901234567",
+            "mailto:a@b.uz",
+        ):
             with self.subTest(link=link):
                 self.assertEqual(validate_safe_link(link), link)
 
@@ -106,16 +132,23 @@ class SafeLinkEdgeCasesTest(SimpleTestCase):
 class UploadEdgeCasesTest(HandoverBase):
     def test_mixed_batch_saves_nothing(self):
         self.api.force_authenticate(self.staff)
-        r = self.api.post(f"/api/admin/products/{self.product.id}/upload-image/",
-                          {"images": [png(), html_as_png()]}, format="multipart")
+        r = self.api.post(
+            f"/api/admin/products/{self.product.id}/upload-image/",
+            {"images": [png(), html_as_png()]},
+            format="multipart",
+        )
         self.assertEqual(r.status_code, 400)
         self.assertEqual(Image.objects.count(), 0)
 
     def test_brand_logo_via_api_is_validated_and_renamed(self):
         self.api.force_authenticate(self.staff)
-        bad = self.api.post("/api/admin/brands/", {"name": "Bad", "logo": html_as_png()}, format="multipart")
+        bad = self.api.post(
+            "/api/admin/brands/", {"name": "Bad", "logo": html_as_png()}, format="multipart"
+        )
         self.assertEqual(bad.status_code, 400)
-        ok = self.api.post("/api/admin/brands/", {"name": "Good", "logo": png("evil.html.png")}, format="multipart")
+        ok = self.api.post(
+            "/api/admin/brands/", {"name": "Good", "logo": png("evil.html.png")}, format="multipart"
+        )
         self.assertEqual(ok.status_code, 201, ok.data)
         name = Brand.objects.get(name="Good").logo.name
         self.assertTrue(name.endswith(".png") and "evil" not in name, name)
@@ -128,9 +161,11 @@ class UploadEdgeCasesTest(HandoverBase):
         self.assertGreater(len(data), 1024 * 1024)
         self.api.force_authenticate(self.staff)
         with override_settings(FILE_UPLOAD_MAX_MEMORY_SIZE=1024):
-            r = self.api.post(f"/api/admin/products/{self.product.id}/upload-image/",
-                              {"images": SimpleUploadedFile("big.jpg", data, content_type="image/jpeg")},
-                              format="multipart")
+            r = self.api.post(
+                f"/api/admin/products/{self.product.id}/upload-image/",
+                {"images": SimpleUploadedFile("big.jpg", data, content_type="image/jpeg")},
+                format="multipart",
+            )
         self.assertEqual(r.status_code, 201, r.data)
 
 
@@ -142,12 +177,16 @@ class DjangoAdminFormsTest(HandoverBase):
         return form_class(data=data, files=files)
 
     def test_banner_admin_rejects_javascript_link(self):
-        form = self._form(Banner, {"title": "t", "link": "javascript:alert(1)", "order": 0, "is_active": True}, {})
+        form = self._form(
+            Banner, {"title": "t", "link": "javascript:alert(1)", "order": 0, "is_active": True}, {}
+        )
         self.assertFalse(form.is_valid())
         self.assertIn("link", form.errors)
 
     def test_category_admin_rejects_html_upload(self):
-        form = self._form(Category, {"name": "X", "slug": "x", "order": 0}, {"image": html_as_png()})
+        form = self._form(
+            Category, {"name": "X", "slug": "x", "order": 0}, {"image": html_as_png()}
+        )
         self.assertFalse(form.is_valid())
         self.assertIn("image", form.errors)
 
@@ -157,39 +196,60 @@ class OldServerErrorsTest(HandoverBase):
         Brand.objects.create(name="A", slug="a")
         for ordering in ("products_count", "-products_count"):
             with self.subTest(ordering=ordering):
-                self.assertEqual(self.client.get("/api/brands/", {"ordering": ordering}).status_code, 200)
+                self.assertEqual(
+                    self.client.get("/api/brands/", {"ordering": ordering}).status_code, 200
+                )
 
     def test_brand_price_filter_with_garbage(self):
-        self.assertEqual(self.client.get("/api/brands/", {"price_min": "abc", "price_max": "x"}).status_code, 200)
+        self.assertEqual(
+            self.client.get("/api/brands/", {"price_min": "abc", "price_max": "x"}).status_code, 200
+        )
 
     def test_admin_product_create_with_bad_category_is_400(self):
         self.api.force_authenticate(self.staff)
-        r = self.api.post("/api/admin/products/", {"name": "P", "category": 999999, "description": "d"}, format="json")
+        r = self.api.post(
+            "/api/admin/products/",
+            {"name": "P", "category": 999999, "description": "d"},
+            format="json",
+        )
         self.assertEqual(r.status_code, 400)
 
     def test_admin_product_update_with_bad_price_is_400(self):
         self.api.force_authenticate(self.staff)
-        r = self.api.patch(f"/api/admin/products/{self.product.id}/", {"price": "not-a-number"}, format="json")
+        r = self.api.patch(
+            f"/api/admin/products/{self.product.id}/", {"price": "not-a-number"}, format="json"
+        )
         self.assertEqual(r.status_code, 400)
 
 
 class TestSettingsIsolationTest(SimpleTestCase):
     def test_tests_use_in_memory_caches(self):
         for alias in ("default", "throttle"):
-            self.assertEqual(settings.CACHES[alias]["BACKEND"], "django.core.cache.backends.locmem.LocMemCache")
+            self.assertEqual(
+                settings.CACHES[alias]["BACKEND"], "django.core.cache.backends.locmem.LocMemCache"
+            )
 
 
 class FinalReviewFixesTest(HandoverBase):
     def test_price_filters_with_nan_inf_or_huge_values(self):
         cat = self.category.slug
         for value in ("nan", "inf", "-inf", "1e999999", "1e30"):
-            for url in ("/api/products/", f"/api/categories/{cat}/brands/", f"/api/categories/{cat}/tags/", "/api/brands/"):
+            for url in (
+                "/api/products/",
+                f"/api/products/facets/?category={cat}",
+                "/api/brands/",
+            ):
                 with self.subTest(url=url, value=value):
-                    self.assertEqual(self.client.get(url, {"price_min": value, "price_max": value}).status_code, 200)
+                    self.assertEqual(
+                        self.client.get(url, {"price_min": value, "price_max": value}).status_code,
+                        200,
+                    )
 
     def test_refresh_refused_after_password_changed_outside_api(self):
         t = self._login()
-        self.staff.set_password("Changed-via-manage-py-789")   # e.g. manage.py changepassword / Django admin
+        self.staff.set_password(
+            "Changed-via-manage-py-789"
+        )  # e.g. manage.py changepassword / Django admin
         self.staff.save()
         r = APIClient().post("/api/admin/auth/refresh/", {"refresh": t["refresh"]}, format="json")
         self.assertEqual(r.status_code, 401)

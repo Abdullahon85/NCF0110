@@ -1,4 +1,5 @@
 """Image files are removed from disk when their row is deleted or the image is replaced."""
+
 import io
 import os
 import shutil
@@ -27,7 +28,9 @@ class MediaCleanupTest(TestCase):
         override.enable()
         self.addCleanup(override.disable)
         self.cat = Category.objects.create(name="C", slug="c")
-        self.product = Product.objects.create(name="P", slug="p", description="d", category=self.cat)
+        self.product = Product.objects.create(
+            name="P", slug="p", description="d", category=self.cat
+        )
 
     def exists(self, fieldfile_name):
         return os.path.exists(os.path.join(self.media, fieldfile_name))
@@ -41,7 +44,9 @@ class MediaCleanupTest(TestCase):
         self.assertFalse(self.exists(name))
 
     def test_deleting_product_removes_its_image_files(self):
-        names = [Image.objects.create(product=self.product, image=png()).image.name for _ in range(2)]
+        names = [
+            Image.objects.create(product=self.product, image=png()).image.name for _ in range(2)
+        ]
         with self.captureOnCommitCallbacks(execute=True):
             self.product.delete()
         self.assertFalse(any(self.exists(n) for n in names))
@@ -70,6 +75,8 @@ class MediaCleanupTest(TestCase):
         client.force_authenticate(staff)
         img = Image.objects.create(product=self.product, image=png())
         with self.captureOnCommitCallbacks(execute=True):
-            response = client.delete(f"/api/admin/products/{self.product.id}/delete-image/{img.id}/")
+            response = client.delete(
+                f"/api/admin/products/{self.product.id}/delete-image/{img.id}/"
+            )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(self.exists(img.image.name))

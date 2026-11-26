@@ -7,7 +7,8 @@ test("one bad file does not stop the others and is reported", async () => {
   const failures = await uploadEach(
     ["a.jpg", "big.jpg", "c.png"],
     async (name) => {
-      if (name === "big.jpg") throw { response: { data: { error: "File too large. Maximum size is 10MB." } } };
+      if (name === "big.jpg")
+        throw { response: { data: { error: "File too large. Maximum size is 10MB." } } };
       done.push(name);
     },
     (name) => name,

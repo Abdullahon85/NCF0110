@@ -12,11 +12,7 @@
       </div>
 
       <div v-else-if="news.length" class="news-grid">
-        <NewsCardComponent
-          v-for="item in news"
-          :key="item.id"
-          :news-item="item"
-        />
+        <NewsCardComponent v-for="item in news" :key="item.id" :news-item="item" />
       </div>
 
       <div v-else class="empty-news">
@@ -40,8 +36,7 @@ onMounted(async () => {
   try {
     loading.value = true;
     const response = await newsAPI.getAll();
-    news.value =
-      "results" in response.data ? response.data.results : response.data;
+    news.value = "results" in response.data ? response.data.results : response.data;
   } catch (err) {
     error.value = "Ошибка загрузки новостей";
     console.error("Failed to load news:", err);
@@ -51,4 +46,4 @@ onMounted(async () => {
 });
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

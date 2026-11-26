@@ -1,4 +1,5 @@
 """Single-container mode: the built Vue site is served by Django itself."""
+
 from pathlib import Path
 
 from django.conf import settings
@@ -17,7 +18,7 @@ def spa_index(request):
     try:
         html = (Path(settings.FRONTEND_DIR) / "index.html").read_bytes()
     except FileNotFoundError:
-        raise Http404
+        raise Http404 from None
     response = HttpResponse(html, content_type="text/html; charset=utf-8")
     response["Cache-Control"] = "no-cache"  # always pick up a new build after a redeploy
     return response

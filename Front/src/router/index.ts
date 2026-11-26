@@ -93,6 +93,16 @@ const routes: RouteRecordRaw[] = [
     component: AboutPage,
   },
   {
+    path: "/promo",
+    name: "Promo",
+    component: () => import("../views/PromoPage.vue"),
+  },
+  {
+    path: "/info/:slug",
+    name: "InfoPage",
+    component: () => import("../views/InfoPage.vue"),
+  },
+  {
     path: "/contact",
     name: "Contact",
     component: ContactPage,
@@ -131,11 +141,6 @@ const routes: RouteRecordRaw[] = [
         component: () => import("../views/BrandsManagement.vue"),
       },
       {
-        path: "tags",
-        name: "TagsManagement",
-        component: () => import("../views/TagsManagement.vue"),
-      },
-      {
         path: "features",
         name: "FeaturesManagement",
         component: () => import("../views/FeaturesManagement.vue"),
@@ -169,6 +174,11 @@ const routes: RouteRecordRaw[] = [
         path: "questions",
         name: "QuestionsManagement",
         component: () => import("../views/QuestionsManagement.vue"),
+      },
+      {
+        path: "pages",
+        name: "PagesManagement",
+        component: () => import("../views/PagesManagement.vue"),
       },
       {
         path: "settings",

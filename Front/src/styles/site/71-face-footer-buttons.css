@@ -1,0 +1,133 @@
+/* Face: footer (deep green) and buttons. */
+
+.site .footer {
+  background: var(--site-deep);
+  color: rgba(255, 255, 255, 0.82);
+  border-top: 0;
+  box-shadow: none;
+}
+
+.site .footer::before,
+.site .footer::after {
+  content: none;
+}
+
+.site .footer .container {
+  max-width: var(--site-max);
+}
+
+.site .footer :is(h2, h3, h4) {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.site .footer :is(h2, h3, h4)::after {
+  content: none;
+}
+
+.site .footer p,
+.site .footer li {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.site .footer a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.site .footer a:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site .footer .svg__media a {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--site-radius-ctl);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  box-shadow: none;
+}
+
+.site .footer .svg__media a:hover {
+  background: var(--site-signal);
+  border-color: var(--site-signal);
+  color: var(--site-ink);
+  text-decoration: none;
+}
+
+.site .footer :is(.footer-hours-label, .footer-hours-tz) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.site .footer .footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Buttons */
+.site .btn {
+  min-height: 44px;
+  border-radius: var(--site-radius-ctl);
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: none;
+}
+
+.site .btn::before,
+.site .btn::after {
+  content: none;
+}
+
+.site .btn:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.site .btn-primary {
+  background: var(--site-brand);
+  border: 1px solid var(--site-brand);
+  color: #fff;
+}
+
+.site .btn-primary:hover:not(:disabled) {
+  background: var(--site-brand-hover);
+  border-color: var(--site-brand-hover);
+  color: #fff;
+}
+
+.site :is(.btn-secondary, .btn-outline, .btn-ghost) {
+  background: var(--site-surface);
+  border: 1px solid var(--site-line-strong);
+  color: var(--site-ink);
+}
+
+.site :is(.btn-secondary, .btn-outline, .btn-ghost):hover:not(:disabled) {
+  background: var(--site-paper);
+  border-color: var(--site-muted);
+  color: var(--site-ink);
+}
+
+.site .scroll-to-top {
+  background: var(--site-surface);
+  border: 1px solid var(--site-line);
+  color: var(--site-ink);
+  box-shadow: 0 4px 14px rgba(17, 26, 21, 0.12);
+}
+
+.site .scroll-to-top:hover {
+  background: var(--site-brand);
+  border-color: var(--site-brand);
+  color: #fff;
+}

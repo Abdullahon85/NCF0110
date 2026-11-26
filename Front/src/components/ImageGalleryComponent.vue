@@ -5,13 +5,13 @@
       <transition name="fade-scale" mode="out-in">
         <img
           v-if="selectedImageUrl"
+          :key="selectedImageUrl"
           :src="selectedImageUrl"
           :alt="alt"
           class="main-image"
-          :key="selectedImageUrl"
           loading="eager"
         />
-        <div v-else class="image-placeholder" :key="'placeholder'">
+        <div v-else :key="'placeholder'" class="image-placeholder">
           <svg
             width="80"
             height="80"
@@ -54,29 +54,17 @@
         :key="image.id"
         class="thumbnail"
         :class="{ active: selectedImageUrl === getImageUrl(image.image) }"
-        @click="selectImage(getImageUrl(image.image))"
         :aria-label="`Изображение ${index + 1}`"
+        @click="selectImage(getImageUrl(image.image))"
       >
-        <img
-          :src="getImageUrl(image.image)"
-          :alt="`${alt} - превью ${index + 1}`"
-          loading="lazy"
-        />
+        <img :src="getImageUrl(image.image)" :alt="`${alt} - превью ${index + 1}`" loading="lazy" />
       </button>
     </div>
 
     <!-- Fullscreen Modal -->
     <transition name="modal">
-      <div
-        v-if="fullscreenMode"
-        class="fullscreen-overlay"
-        @click="closeFullscreen"
-      >
-        <button
-          class="fullscreen-close"
-          @click="closeFullscreen"
-          aria-label="Закрыть"
-        >
+      <div v-if="fullscreenMode" class="fullscreen-overlay" @click="closeFullscreen">
+        <button class="fullscreen-close" aria-label="Закрыть" @click="closeFullscreen">
           <svg
             width="32"
             height="32"
@@ -90,19 +78,14 @@
           </svg>
         </button>
 
-        <img
-          :src="selectedImageUrl"
-          :alt="alt"
-          class="fullscreen-image"
-          @click.stop
-        />
+        <img :src="selectedImageUrl" :alt="alt" class="fullscreen-image" @click.stop />
 
         <!-- Navigation Arrows -->
         <button
           v-if="sortedImages.length > 1"
           class="nav-arrow prev"
-          @click.stop="navigateImage(-1)"
           aria-label="Предыдущее изображение"
+          @click.stop="navigateImage(-1)"
         >
           <svg
             width="32"
@@ -119,8 +102,8 @@
         <button
           v-if="sortedImages.length > 1"
           class="nav-arrow next"
-          @click.stop="navigateImage(1)"
           aria-label="Следующее изображение"
+          @click.stop="navigateImage(1)"
         >
           <svg
             width="32"
@@ -177,7 +160,7 @@ const closeFullscreen = () => {
 
 const navigateImage = (direction: number) => {
   const currentIndex = sortedImages.value.findIndex(
-    (img) => getImageUrl(img.image) === selectedImageUrl.value
+    (img) => getImageUrl(img.image) === selectedImageUrl.value,
   );
 
   if (currentIndex === -1) return;

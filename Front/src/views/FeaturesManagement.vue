@@ -1,22 +1,21 @@
 <template>
   <div class="management-page">
     <div class="page-header">
-      <h1>📋 Управление характеристиками</h1>
       <div class="header-actions">
         <button
-          @click="activeTab = 'features'"
           :class="['tab-btn', { active: activeTab === 'features' }]"
+          @click="activeTab = 'features'"
         >
           Характеристики
         </button>
         <button
-          @click="activeTab = 'values'"
           :class="['tab-btn', { active: activeTab === 'values' }]"
+          @click="activeTab = 'values'"
         >
           Значения
         </button>
-        <button @click="openCreateModal" class="btn btn-primary">
-          ➕ Добавить
+        <button class="btn btn-primary" @click="openCreateModal">
+          <AdminIcon name="plus" /> Добавить
         </button>
       </div>
     </div>
@@ -25,15 +24,11 @@
       <input
         v-model="search"
         type="text"
-        placeholder="🔍 Поиск..."
+        placeholder="Поиск..."
         class="search-input"
         @input="debouncedSearch"
       />
-      <select
-        v-model="categoryFilter"
-        @change="onCategoryFilterChange"
-        class="filter-select"
-      >
+      <select v-model="categoryFilter" class="filter-select" @change="onCategoryFilterChange">
         <option value="">Весь каталог</option>
         <option v-for="cat in categories" :key="cat.id" :value="cat.id">
           {{ cat.name }}
@@ -43,15 +38,11 @@
       <select
         v-if="activeTab === 'values'"
         v-model="featureFilter"
-        @change="onFeatureFilterChange"
         class="filter-select"
+        @change="onFeatureFilterChange"
       >
         <option value="">Все характеристики</option>
-        <option
-          v-for="feat in filteredFeatures"
-          :key="feat.id"
-          :value="feat.id"
-        >
+        <option v-for="feat in filteredFeatures" :key="feat.id" :value="feat.id">
           {{ feat.name }}
         </option>
       </select>
@@ -82,16 +73,10 @@
             <td data-label="Каталог">{{ item.category_name || "—" }}</td>
             <td data-label="Значения">
               <div class="values-preview">
-                <span
-                  v-if="item.values && item.values.length > 0"
-                  class="values-chips"
-                >
-                  <span
-                    v-for="val in item.values.slice(0, 3)"
-                    :key="val.id"
-                    class="chip"
-                    >{{ val.value }}</span
-                  >
+                <span v-if="item.values && item.values.length > 0" class="values-chips">
+                  <span v-for="val in item.values.slice(0, 3)" :key="val.id" class="chip">{{
+                    val.value
+                  }}</span>
                   <span v-if="item.values.length > 3" class="chip chip-more">
                     +{{ item.values.length - 3 }}
                   </span>
@@ -102,24 +87,31 @@
             <td data-label="Действия">
               <div class="actions">
                 <button
-                  @click="editFeature(item)"
                   class="btn-icon"
                   title="Редактировать"
+                  aria-label="Редактировать"
+                  @click="editFeature(item)"
                 >
-                  ✏️
+                  <AdminIcon name="edit" />
                 </button>
                 <button
-                  @click="confirmDeleteFeature(item)"
                   class="btn-icon delete"
                   title="Удалить"
+                  aria-label="Удалить"
+                  @click="confirmDeleteFeature(item)"
                 >
-                  🗑️
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
           </tr>
           <tr v-if="features.length === 0">
-            <td colspan="5" class="empty">Характеристики не найдены</td>
+            <td colspan="5" class="empty">
+              <p class="empty-text">Характеристики не найдены</p>
+              <button class="btn btn-primary" @click="openCreateModal">
+                <AdminIcon name="plus" /> Добавить
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -128,19 +120,17 @@
     <!-- Пагинация для характеристик -->
     <div v-if="activeTab === 'features' && totalPages > 1" class="pagination">
       <button
-        @click="goToPage(currentPage - 1)"
         :disabled="currentPage === 1"
         class="btn btn-secondary"
+        @click="goToPage(currentPage - 1)"
       >
         ← Назад
       </button>
-      <span class="page-info"
-        >Страница {{ currentPage }} из {{ totalPages }}</span
-      >
+      <span class="page-info">Страница {{ currentPage }} из {{ totalPages }}</span>
       <button
-        @click="goToPage(currentPage + 1)"
         :disabled="currentPage === totalPages"
         class="btn btn-secondary"
+        @click="goToPage(currentPage + 1)"
       >
         Далее →
       </button>
@@ -174,10 +164,7 @@
                     class="chip"
                     >{{ feat.name }}</span
                   >
-                  <span
-                    v-if="item.features_info.length > 3"
-                    class="chip chip-more"
-                  >
+                  <span v-if="item.features_info.length > 3" class="chip chip-more">
                     +{{ item.features_info.length - 3 }}
                   </span>
                 </span>
@@ -187,12 +174,15 @@
             <td data-label="Каталог">{{ item.category_name || "—" }}</td>
             <td data-label="Действия">
               <div class="actions">
-                <button @click="editValue(item)" class="btn-icon">✏️</button>
+                <button class="btn-icon" aria-label="Редактировать" @click="editValue(item)">
+                  <AdminIcon name="edit" />
+                </button>
                 <button
-                  @click="confirmDeleteValue(item)"
                   class="btn-icon delete"
+                  aria-label="Удалить"
+                  @click="confirmDeleteValue(item)"
                 >
-                  🗑️
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
@@ -207,42 +197,34 @@
     <!-- Пагинация для значений -->
     <div v-if="activeTab === 'values' && totalPages > 1" class="pagination">
       <button
-        @click="goToPage(currentPage - 1)"
         :disabled="currentPage === 1"
         class="btn btn-secondary"
+        @click="goToPage(currentPage - 1)"
       >
         ← Назад
       </button>
-      <span class="page-info"
-        >Страница {{ currentPage }} из {{ totalPages }}</span
-      >
+      <span class="page-info">Страница {{ currentPage }} из {{ totalPages }}</span>
       <button
-        @click="goToPage(currentPage + 1)"
         :disabled="currentPage === totalPages"
         class="btn btn-secondary"
+        @click="goToPage(currentPage + 1)"
       >
         Далее →
       </button>
     </div>
 
     <!-- Feature Modal (с выбором значений) -->
-    <div
-      v-if="showFeatureModal"
-      class="modal-overlay"
-      @click.self="showFeatureModal = false"
-    >
+    <div v-if="showFeatureModal" class="modal-overlay" @click.self="showFeatureModal = false">
       <div class="modal modal-lg">
         <div class="modal-header">
           <h2>
-            {{
-              editingFeature
-                ? "Редактировать характеристику"
-                : "Новая характеристика"
-            }}
+            {{ editingFeature ? "Редактировать характеристику" : "Новая характеристика" }}
           </h2>
-          <button @click="showFeatureModal = false" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="showFeatureModal = false">
+            <AdminIcon name="close" />
+          </button>
         </div>
-        <form @submit.prevent="saveFeature" class="modal-body">
+        <form class="modal-body" @submit.prevent="saveFeature">
           <div class="form-row">
             <div class="form-group">
               <label>Название *</label>
@@ -250,11 +232,7 @@
             </div>
             <div class="form-group">
               <label>Каталог *</label>
-              <select
-                v-model="featureForm.category"
-                @change="onFeatureCategoryChange"
-                required
-              >
+              <select v-model="featureForm.category" required @change="onFeatureCategoryChange">
                 <option :value="null" disabled>— Выберите —</option>
                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                   {{ cat.name }}
@@ -263,24 +241,49 @@
             </div>
           </div>
 
+          <!-- Как характеристика выглядит на сайте: таблица на странице товара и фильтр каталога -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Группа в таблице</label>
+              <input v-model="featureForm.group" type="text" placeholder="Общие" />
+            </div>
+            <div class="form-group">
+              <label>Порядок</label>
+              <input v-model.number="featureForm.order" type="number" step="1" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Вид в фильтре каталога</label>
+              <select v-model="featureForm.filter_type">
+                <option v-for="t in FILTER_TYPES" :key="t.value" :value="t.value">
+                  {{ t.label }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Единица</label>
+              <input
+                v-model="featureForm.unit"
+                type="text"
+                maxlength="20"
+                placeholder="Мп, Вт, шт"
+              />
+            </div>
+          </div>
+
           <!-- Блок привязки значений -->
-          <div class="form-group" v-if="featureForm.category">
+          <div v-if="featureForm.category" class="form-group">
             <label>
               Привязанные значения
-              <span
-                v-if="featureForm.selectedValues.length > 0"
-                class="count-badge"
-              >
+              <span v-if="featureForm.selectedValues.length > 0" class="count-badge">
                 {{ featureForm.selectedValues.length }}
               </span>
             </label>
 
             <!-- Текущие привязанные значения -->
             <div class="selected-values">
-              <div
-                v-if="featureForm.selectedValues.length > 0"
-                class="values-chips-edit"
-              >
+              <div v-if="featureForm.selectedValues.length > 0" class="values-chips-edit">
                 <span
                   v-for="val in featureForm.selectedValues"
                   :key="val.id"
@@ -289,10 +292,11 @@
                   {{ val.value }}
                   <button
                     type="button"
-                    @click="removeSelectedValue(val)"
                     class="chip-remove"
+                    aria-label="Удалить"
+                    @click="removeSelectedValue(val)"
                   >
-                    ✕
+                    <AdminIcon name="close" />
                   </button>
                 </span>
               </div>
@@ -302,15 +306,12 @@
             <!-- Выбор из доступных значений каталога -->
             <div class="available-values">
               <div class="values-header">
-                <label
-                  >Доступные значения для привязки (можно выбрать
-                  несколько):</label
-                >
+                <label>Доступные значения для привязки (можно выбрать несколько):</label>
                 <button
                   v-if="availableValuesForFeature.length > 0"
                   type="button"
-                  @click="selectAllValues"
                   class="btn-select-all"
+                  @click="selectAllValues"
                 >
                   {{ allValuesSelected ? "✓ Все выбраны" : "Выбрать все" }}
                 </button>
@@ -326,18 +327,13 @@
                   <input
                     type="checkbox"
                     :checked="isValueSelected(val.id)"
-                    @click.stop="toggleValueSelection(val)"
                     class="value-checkbox"
+                    @click.stop="toggleValueSelection(val)"
                   />
                   <span class="value-name">{{ val.value }}</span>
-                  <span class="value-check">{{
-                    isValueSelected(val.id) ? "✓" : "+"
-                  }}</span>
+                  <span class="value-check">{{ isValueSelected(val.id) ? "✓" : "+" }}</span>
                 </div>
-                <div
-                  v-if="availableValuesForFeature.length === 0"
-                  class="no-items"
-                >
+                <div v-if="availableValuesForFeature.length === 0" class="no-items">
                   Все значения уже привязаны или нет доступных значений
                 </div>
               </div>
@@ -355,11 +351,11 @@
                 />
                 <button
                   type="button"
-                  @click="quickAddValues"
                   class="btn btn-secondary"
                   :disabled="!newValuesInput.trim()"
+                  @click="quickAddValues"
                 >
-                  ➕ Добавить
+                  <AdminIcon name="plus" /> Добавить
                 </button>
               </div>
               <div v-if="quickAddStatus" class="quick-add-status">
@@ -368,17 +364,11 @@
             </div>
           </div>
 
-          <div v-else class="hint-message">
-            Сначала выберите каталог для привязки значений
-          </div>
+          <div v-else class="hint-message">Сначала выберите каталог для привязки значений</div>
 
           <div v-if="error" class="error-msg">{{ error }}</div>
           <div class="modal-actions">
-            <button
-              type="button"
-              @click="showFeatureModal = false"
-              class="btn btn-secondary"
-            >
+            <button type="button" class="btn btn-secondary" @click="showFeatureModal = false">
               Отмена
             </button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
@@ -390,28 +380,22 @@
     </div>
 
     <!-- Value Modal -->
-    <div
-      v-if="showValueModal"
-      class="modal-overlay"
-      @click.self="showValueModal = false"
-    >
+    <div v-if="showValueModal" class="modal-overlay" @click.self="showValueModal = false">
       <div class="modal">
         <div class="modal-header">
           <h2>{{ editingValue ? "Редактировать" : "Новое значение" }}</h2>
-          <button @click="showValueModal = false" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="showValueModal = false">
+            <AdminIcon name="close" />
+          </button>
         </div>
-        <form @submit.prevent="saveValue" class="modal-body">
+        <form class="modal-body" @submit.prevent="saveValue">
           <div class="form-group">
             <label>Значение *</label>
             <input v-model="valueForm.value" type="text" required />
           </div>
           <div class="form-group">
             <label>Каталог *</label>
-            <select
-              v-model="valueForm.category"
-              @change="onValueCategoryChange"
-              required
-            >
+            <select v-model="valueForm.category" required @change="onValueCategoryChange">
               <option :value="null" disabled>— Выберите —</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                 {{ cat.name }}
@@ -419,50 +403,33 @@
             </select>
           </div>
           <div class="info-message">
-            💡 Примечание: значения привязываются к характеристикам при
-            редактировании самих характеристик
+            💡 Примечание: значения привязываются к характеристикам при редактировании самих
+            характеристик
           </div>
           <div v-if="error" class="error-msg">{{ error }}</div>
           <div class="modal-actions">
-            <button
-              type="button"
-              @click="showValueModal = false"
-              class="btn btn-secondary"
-            >
+            <button type="button" class="btn btn-secondary" @click="showValueModal = false">
               Отмена
             </button>
-            <button type="submit" class="btn btn-primary" :disabled="saving">
-              Сохранить
-            </button>
+            <button type="submit" class="btn btn-primary" :disabled="saving">Сохранить</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- Delete Modal -->
-    <div
-      v-if="showDeleteModal"
-      class="modal-overlay"
-      @click.self="showDeleteModal = false"
-    >
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal modal-sm">
         <div class="modal-header"><h2>Подтверждение</h2></div>
         <div class="modal-body">
           <p>
             Удалить
-            <strong>{{ deletingItem?.name || deletingItem?.value }}</strong
-            >?
+            <strong>{{ deletingItem?.name || deletingItem?.value }}</strong>?
           </p>
         </div>
         <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn btn-secondary">
-            Отмена
-          </button>
-          <button
-            @click="performDelete"
-            class="btn btn-danger"
-            :disabled="deleting"
-          >
+          <button class="btn btn-secondary" @click="showDeleteModal = false">Отмена</button>
+          <button class="btn btn-danger" :disabled="deleting" @click="performDelete">
             Удалить
           </button>
         </div>
@@ -472,13 +439,11 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, onMounted, watch, computed } from "vue";
-import {
-  featuresAdminAPI,
-  featureValuesAdminAPI,
-  categoriesAdminAPI,
-} from "@/api/admin";
+import { featuresAdminAPI, featureValuesAdminAPI, categoriesAdminAPI } from "@/api/admin";
 
 interface FeatureValue {
   id: number;
@@ -507,9 +472,21 @@ const totalCountValues = ref(0);
 // Feature form с выбранными значениями
 const showFeatureModal = ref(false);
 const editingFeature = ref<any>(null);
+// Same values as Feature.FILTER_TYPES on the backend.
+const FILTER_TYPES = [
+  { value: "list", label: "Список значений с галочками" },
+  { value: "bool", label: "Да / Нет" },
+  { value: "range", label: "Числовой диапазон" },
+  { value: "none", label: "Не показывать в фильтре" },
+];
+
 const featureForm = reactive({
   name: "",
   category: null as number | null,
+  group: "",
+  order: 0,
+  filter_type: "list",
+  unit: "",
   selectedValues: [] as FeatureValue[],
   originalValueIds: [] as number[], // для отслеживания изменений
 });
@@ -526,10 +503,7 @@ const availableValuesForFeature = computed(() => {
 
 // Проверка, выбраны ли все доступные значения
 const allValuesSelected = computed(() => {
-  return (
-    availableValuesForFeature.value.length === 0 &&
-    allCategoryValues.value.length > 0
-  );
+  return availableValuesForFeature.value.length === 0 && allCategoryValues.value.length > 0;
 });
 
 // Value form
@@ -554,10 +528,7 @@ const filteredFeatures = computed(() => {
 
 // Pagination computed
 const totalPages = computed(() => {
-  const count =
-    activeTab.value === "features"
-      ? totalCountFeatures.value
-      : totalCountValues.value;
+  const count = activeTab.value === "features" ? totalCountFeatures.value : totalCountValues.value;
   return Math.ceil(count / pageSize);
 });
 
@@ -596,16 +567,14 @@ async function loadItems() {
       const featuresRes = await featuresAdminAPI.getAll(params);
 
       features.value = featuresRes.data.results || featuresRes.data;
-      totalCountFeatures.value =
-        featuresRes.data.count || features.value.length;
+      totalCountFeatures.value = featuresRes.data.count || features.value.length;
     } else {
       const valueParams: any = { ...params };
       if (featureFilter.value) valueParams.feature = featureFilter.value;
 
       const valuesRes = await featureValuesAdminAPI.getAll(valueParams);
       featureValues.value = valuesRes.data.results || valuesRes.data;
-      totalCountValues.value =
-        valuesRes.data.count || featureValues.value.length;
+      totalCountValues.value = valuesRes.data.count || featureValues.value.length;
     }
   } catch (e) {
     console.error("Error loading items:", e);
@@ -652,6 +621,10 @@ function openCreateModal() {
     editingFeature.value = null;
     featureForm.name = "";
     featureForm.category = null;
+    featureForm.group = "";
+    featureForm.order = 0;
+    featureForm.filter_type = "list";
+    featureForm.unit = "";
     featureForm.selectedValues.length = 0;
     featureForm.originalValueIds = [];
     allCategoryValues.value = [];
@@ -669,6 +642,10 @@ async function editFeature(item: any) {
   editingFeature.value = item;
   featureForm.name = item.name;
   featureForm.category = item.category;
+  featureForm.group = item.group || "";
+  featureForm.order = item.order ?? 0;
+  featureForm.filter_type = item.filter_type || "list";
+  featureForm.unit = item.unit || "";
   newValuesInput.value = "";
   error.value = "";
 
@@ -709,9 +686,7 @@ function addSelectedValue(val: FeatureValue) {
 }
 
 function removeSelectedValue(val: FeatureValue) {
-  featureForm.selectedValues = featureForm.selectedValues.filter(
-    (v) => v.id !== val.id,
-  );
+  featureForm.selectedValues = featureForm.selectedValues.filter((v) => v.id !== val.id);
 }
 
 // Toggle выбор значения (добавить/удалить)
@@ -787,9 +762,7 @@ async function quickAddValues() {
   if (linked > 0) messages.push(`🔗 Привязано: ${linked}`);
 
   quickAddStatus.value =
-    messages.length > 0
-      ? messages.join(", ")
-      : "Нет новых значений для добавления";
+    messages.length > 0 ? messages.join(", ") : "Нет новых значений для добавления";
 
   setTimeout(() => {
     quickAddStatus.value = "";
@@ -805,6 +778,10 @@ async function saveFeature() {
     const data = {
       name: featureForm.name,
       category: featureForm.category,
+      group: featureForm.group,
+      order: featureForm.order || 0,
+      filter_type: featureForm.filter_type,
+      unit: featureForm.unit,
       value_ids: featureForm.selectedValues.map((v) => v.id),
     };
 
@@ -817,8 +794,7 @@ async function saveFeature() {
     showFeatureModal.value = false;
     await loadItems();
   } catch (e: any) {
-    error.value =
-      adminErrorMessage(e, "Ошибка сохранения");
+    error.value = adminErrorMessage(e, "Ошибка сохранения");
     console.error("Error saving feature:", error.value);
   } finally {
     saving.value = false;
@@ -852,8 +828,7 @@ async function saveValue() {
     showValueModal.value = false;
     loadItems();
   } catch (e: any) {
-    error.value =
-      adminErrorMessage(e, "Ошибка");
+    error.value = adminErrorMessage(e, "Ошибка");
   } finally {
     saving.value = false;
   }
@@ -884,7 +859,7 @@ async function performDelete() {
     showDeleteModal.value = false;
     loadItems();
   } catch (e) {
-    alert(adminErrorMessage(e, "Ошибка удаления"));
+    toast.error(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }
@@ -902,390 +877,4 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.values-preview {
-  display: flex;
-  align-items: center;
-}
-
-.values-chips,
-.values-chips-edit,
-.values-chips-select {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  background: var(--surface-color, #e9ecef);
-  border-radius: 16px;
-  font-size: 12px;
-  color: var(--text-color, #333);
-}
-
-.chip-more {
-  background: var(--primary-color, #007bff);
-  color: white;
-}
-
-.chip-removable {
-  padding-right: 6px;
-  gap: 4px;
-}
-
-.chip-remove {
-  background: none;
-  border: none;
-  color: var(--danger-color, #dc3545);
-  cursor: pointer;
-  padding: 0 4px;
-  font-size: 12px;
-  line-height: 1;
-  border-radius: 50%;
-}
-
-.chip-remove:hover {
-  background: rgba(220, 53, 69, 0.1);
-}
-
-.chip-add {
-  cursor: pointer;
-  border: 1px dashed var(--primary-color, #007bff);
-  background: white;
-  color: var(--primary-color, #007bff);
-  transition: all 0.2s;
-}
-
-.chip-add:hover:not(:disabled) {
-  background: var(--primary-color, #007bff);
-  color: white;
-}
-
-.chip-add:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.no-values {
-  color: var(--text-muted, #888);
-  font-style: italic;
-  font-size: 13px;
-}
-
-.selected-values {
-  margin-bottom: 16px;
-  padding: 12px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  min-height: 60px;
-  display: flex;
-  align-items: center;
-}
-
-.selected-values .values-chips-edit {
-  width: 100%;
-}
-
-.chip-removable {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 8px 6px 12px;
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  color: white;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 500;
-  gap: 6px;
-  transition: all 0.2s ease;
-}
-
-.chip-removable:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-}
-
-.chip-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  cursor: pointer;
-  padding: 0;
-  font-size: 12px;
-  line-height: 1;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.chip-remove:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-}
-
-.available-values-section {
-  margin-bottom: 16px;
-}
-
-.available-values-section label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: var(--text-secondary, #666);
-}
-
-.available-values-list {
-  padding: 12px;
-  background: white;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 8px;
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-/* Улучшенные стили для выбора значений (как у тегов) */
-.available-values {
-  margin-bottom: 16px;
-}
-
-.values-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  gap: 12px;
-}
-
-.values-header label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary, #666);
-  margin: 0;
-}
-
-.btn-select-all {
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.btn-select-all:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-}
-
-.btn-select-all:active {
-  transform: translateY(0);
-}
-
-.values-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 8px;
-  padding: 12px;
-  background: white;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.value-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  gap: 8px;
-}
-
-.value-item:hover {
-  background: #e9ecef;
-  border-color: var(--primary-color, #007bff);
-  transform: translateY(-1px);
-}
-
-.value-item.selected {
-  background: #d1fae5;
-  border-color: #059669;
-  color: #065f46;
-}
-
-.value-checkbox {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: var(--primary-color, #007bff);
-  flex-shrink: 0;
-}
-
-.value-item.selected .value-checkbox {
-  accent-color: #059669;
-}
-
-.value-name {
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.value-check {
-  font-size: 16px;
-  font-weight: bold;
-  color: var(--primary-color, #007bff);
-}
-
-.value-item.selected .value-check {
-  color: #059669;
-}
-
-.no-items {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 20px;
-  color: var(--text-muted, #888);
-  font-style: italic;
-  font-size: 13px;
-}
-
-.quick-add-section {
-  margin-top: 16px;
-  padding: 16px;
-  background: #f8f9fa;
-  border: 1px dashed #dee2e6;
-  border-radius: 8px;
-}
-
-.quick-add-section label {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary, #666);
-}
-
-.quick-add-row {
-  display: flex;
-  gap: 8px;
-}
-
-.quick-add-row input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.2s ease;
-}
-
-.quick-add-row input:focus {
-  outline: none;
-  border-color: var(--primary-color, #007bff);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-.quick-add-form {
-  display: flex;
-  gap: 8px;
-}
-
-.quick-add-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.hint-text {
-  color: var(--text-muted, #888);
-  font-size: 13px;
-  font-style: italic;
-}
-
-.hint-message {
-  padding: 16px;
-  background: var(--warning-bg, #fff3cd);
-  border-radius: 8px;
-  color: var(--warning-color, #856404);
-  text-align: center;
-}
-
-.quick-add-status {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: #d1fae5;
-  color: #065f46;
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-.badge-primary {
-  background-color: var(--primary-color, #007bff);
-  color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-}
-
-.count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 8px;
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  color: white;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-left: 8px;
-}
-
-.badge-warning {
-  background-color: var(--warning-color, #ffc107);
-  color: #212529;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-}
-
-.modal-lg {
-  max-width: 700px;
-}
-
-.info-message {
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #e7f3ff 0%, #d0e7ff 100%);
-  border-left: 4px solid var(--primary-color, #007bff);
-  border-radius: 6px;
-  color: var(--text-color, #333);
-  font-size: 13px;
-  line-height: 1.5;
-  margin-bottom: 16px;
-}
-</style>
+<style scoped src="@/styles/views/FeaturesManagement.css"></style>

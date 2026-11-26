@@ -1,0 +1,34 @@
+/* Admin design tokens. Prefixed --ad- so the public site is untouched. */
+:root {
+  --ad-paper: #f4f6f4;
+  --ad-surface: #ffffff;
+  --ad-hover: #eef2ef;
+  --ad-line: #dce2dd;
+  --ad-line-strong: #c5cec7;
+  --ad-ink: #17211c;
+  --ad-ink-2: #2f3b34;
+  --ad-muted: #56635b;
+  --ad-forest: #1b4332;
+  --ad-forest-hover: #143426;
+  --ad-forest-tint: #e6eee8;
+  --ad-amber: #b26b00;
+  --ad-amber-ink: #8a4b00;
+  --ad-amber-tint: #fcefd9;
+  --ad-danger: #b42318;
+  --ad-danger-hover: #93190f;
+  --ad-danger-tint: #fdecea;
+
+  --ad-font: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ad-fs-xs: 13px;
+  --ad-fs-sm: 14px;
+  --ad-fs-md: 16px;
+  --ad-fs-lg: 20px;
+  --ad-fs-xl: 28px;
+
+  --ad-radius: 8px;
+  --ad-radius-sm: 6px;
+  --ad-control: 40px;
+  --ad-sidebar: 240px;
+  --ad-pop: 0 10px 28px rgba(23, 33, 28, 0.14);
+  --ad-ease: 160ms ease;
+}

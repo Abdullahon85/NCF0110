@@ -2,9 +2,8 @@
   <div class="products-management">
     <!-- Заголовок страницы -->
     <div class="page-header">
-      <h1>📦 Управление товарами</h1>
-      <button @click="openCreateModal" class="btn btn-primary">
-        ➕ Добавить товар
+      <button class="btn btn-primary" @click="openCreateModal">
+        <AdminIcon name="plus" /> Добавить товар
       </button>
     </div>
 
@@ -13,40 +12,28 @@
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="🔍 Поиск по названию или SKU..."
+        placeholder="Поиск по названию или SKU..."
         class="search-input"
         @input="debouncedSearch"
       />
-      <select
-        v-model="selectedCategory"
-        @change="applyFilters"
-        class="filter-select"
-      >
+      <select v-model="selectedCategory" class="filter-select" @change="applyFilters">
         <option value="">Весь каталог</option>
         <option v-for="cat in categories" :key="cat.id" :value="cat.id">
           {{ cat.name }}
         </option>
       </select>
-      <select
-        v-model="selectedBrand"
-        @change="applyFilters"
-        class="filter-select"
-      >
+      <select v-model="selectedBrand" class="filter-select" @change="applyFilters">
         <option value="">Все бренды</option>
         <option v-for="brand in brands" :key="brand.id" :value="brand.id">
           {{ brand.name }}
         </option>
       </select>
-      <select
-        v-model="availabilityFilter"
-        @change="applyFilters"
-        class="filter-select"
-      >
+      <select v-model="availabilityFilter" class="filter-select" @change="applyFilters">
         <option value="">Все товары</option>
         <option value="true">В наличии</option>
         <option value="false">Нет в наличии</option>
       </select>
-      <button @click="resetFilters" class="btn btn-secondary">Сбросить</button>
+      <button class="btn btn-secondary" @click="resetFilters">Сбросить</button>
     </div>
 
     <!-- Таблица товаров -->
@@ -81,39 +68,43 @@
             <td data-label="Название" class="name-cell">{{ product.name }}</td>
             <td data-label="SKU">{{ product.internal_sku || "—" }}</td>
             <td data-label="Каталог">{{ product.category_name || "—" }}</td>
-            <td data-label="Бренд">{{ (product.brand as any)?.name || (product as any).brand_name || "—" }}</td>
+            <td data-label="Бренд">
+              {{ (product.brand as any)?.name || (product as any).brand_name || "—" }}
+            </td>
             <td data-label="Цена">{{ formatPrice(product.price) }}</td>
             <td data-label="Статус">
-              <span
-                :class="[
-                  'badge',
-                  product.is_available ? 'badge-success' : 'badge-warning',
-                ]"
-              >
+              <span :class="['badge', product.is_available ? 'badge-success' : 'badge-warning']">
                 {{ product.is_available ? "В наличии" : "Нет" }}
               </span>
             </td>
             <td data-label="Действия">
               <div class="actions">
                 <button
-                  @click="editProduct(product)"
                   class="btn-icon"
                   title="Редактировать"
+                  aria-label="Редактировать"
+                  @click="editProduct(product)"
                 >
-                  ✏️
+                  <AdminIcon name="edit" />
                 </button>
                 <button
-                  @click="confirmDelete(product)"
                   class="btn-icon delete"
                   title="Удалить"
+                  aria-label="Удалить"
+                  @click="confirmDelete(product)"
                 >
-                  🗑️
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
           </tr>
           <tr v-if="products.length === 0">
-            <td colspan="9" class="empty">Товары не найдены</td>
+            <td colspan="9" class="empty">
+              <p class="empty-text">Товары не найдены</p>
+              <button class="btn btn-primary" @click="openCreateModal">
+                <AdminIcon name="plus" /> Добавить товар
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -122,19 +113,17 @@
     <!-- Пагинация -->
     <div v-if="totalPages > 1" class="pagination">
       <button
-        @click="goToPage(currentPage - 1)"
         :disabled="currentPage === 1"
         class="btn btn-secondary"
+        @click="goToPage(currentPage - 1)"
       >
         ← Назад
       </button>
-      <span class="page-info"
-        >Страница {{ currentPage }} из {{ totalPages }}</span
-      >
+      <span class="page-info">Страница {{ currentPage }} из {{ totalPages }}</span>
       <button
-        @click="goToPage(currentPage + 1)"
         :disabled="currentPage === totalPages"
         class="btn btn-secondary"
+        @click="goToPage(currentPage + 1)"
       >
         Далее →
       </button>
@@ -147,10 +136,12 @@
           <h2>
             {{ editingProduct ? "Редактировать товар" : "Добавить товар" }}
           </h2>
-          <button @click="closeModal" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="closeModal">
+            <AdminIcon name="close" />
+          </button>
         </div>
 
-        <form @submit.prevent="saveProduct" class="modal-body">
+        <form class="modal-body" @submit.prevent="saveProduct">
           <!-- ========== ОСНОВНАЯ ИНФОРМАЦИЯ ========== -->
           <fieldset class="form-fieldset">
             <legend>Основная информация</legend>
@@ -158,33 +149,20 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Название *</label>
-                <input
-                  v-model="form.name"
-                  type="text"
-                  required
-                  @input="generateSlug"
-                />
+                <input v-model="form.name" type="text" required @input="generateSlug" />
               </div>
               <div class="form-group">
                 <label>Slug</label>
-                <input
-                  v-model="form.slug"
-                  type="text"
-                  placeholder="auto-generated"
-                />
+                <input v-model="form.slug" type="text" placeholder="auto-generated" />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>Brand</label>
+                <label>Бренд</label>
                 <select v-model="form.brand">
                   <option :value="null">---------</option>
-                  <option
-                    v-for="brand in brands"
-                    :key="brand.id"
-                    :value="brand.id"
-                  >
+                  <option v-for="brand in brands" :key="brand.id" :value="brand.id">
                     {{ brand.name }}
                   </option>
                 </select>
@@ -199,17 +177,9 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Каталог *</label>
-                <select
-                  v-model="form.category"
-                  required
-                  @change="onCategoryChange"
-                >
+                <select v-model="form.category" required @change="onCategoryChange">
                   <option :value="null" disabled>---------</option>
-                  <option
-                    v-for="cat in categories"
-                    :key="cat.id"
-                    :value="cat.id"
-                  >
+                  <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                     {{ cat.name }}
                   </option>
                 </select>
@@ -224,17 +194,47 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Цена</label>
-                <input
-                  v-model.number="form.price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                />
+                <input v-model.number="form.price" type="number" step="0.01" min="0" />
               </div>
+              <div class="form-group">
+                <label>Старая цена (зачёркнутая)</label>
+                <input v-model.number="form.old_price" type="number" step="0.01" min="0" />
+              </div>
+            </div>
+
+            <div class="form-row">
               <div class="form-group checkbox-group">
                 <label class="checkbox-label">
                   <input v-model="form.is_available" type="checkbox" />
-                  В наличии
+                  В наличии (без галочки — «Под заказ»)
+                </label>
+              </div>
+              <div class="form-group">
+                <label>Количество, шт</label>
+                <input
+                  v-model.number="form.stock_quantity"
+                  type="number"
+                  step="1"
+                  min="0"
+                  placeholder="не указывать"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Ярлык на карточке</label>
+                <select v-model="form.status">
+                  <option value="">Нет</option>
+                  <option value="new">Новинка</option>
+                  <option value="promo">Акция</option>
+                  <option value="sale">Распродажа</option>
+                </select>
+              </div>
+              <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input v-model="form.is_recommended" type="checkbox" />
+                  Рекомендуем (вкладка на главной)
                 </label>
               </div>
             </div>
@@ -246,13 +246,80 @@
               </div>
               <div class="form-group">
                 <label>Внутренний SKU</label>
+                <input v-model="form.internal_sku" type="text" placeholder="auto-generated" />
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- ========== СОПУТСТВУЮЩИЕ ТОВАРЫ ========== -->
+          <fieldset class="form-fieldset">
+            <legend>Сопутствующие товары</legend>
+            <ul v-if="form.related.length" class="related-list">
+              <li v-for="item in form.related" :key="item.id">
+                <span
+                  >{{ item.name }}
+                  <small v-if="item.internal_sku">({{ item.internal_sku }})</small></span
+                >
+                <button
+                  type="button"
+                  class="btn-remove-sm"
+                  aria-label="Убрать"
+                  @click="removeRelated(item.id)"
+                >
+                  <AdminIcon name="close" />
+                </button>
+              </li>
+            </ul>
+            <div class="form-group">
+              <label>Добавить: поиск по названию или артикулу</label>
+              <input v-model="relatedSearch" type="search" @input="searchRelated" />
+            </div>
+            <ul v-if="relatedResults.length" class="related-results">
+              <li v-for="item in relatedResults" :key="item.id">
+                <button type="button" class="btn btn-secondary btn-sm" @click="addRelated(item)">
+                  <AdminIcon name="plus" /> {{ item.name }}
+                </button>
+              </li>
+            </ul>
+          </fieldset>
+
+          <!-- ========== ДОКУМЕНТАЦИЯ ========== -->
+          <fieldset class="form-fieldset">
+            <legend>Документация (PDF, Word, Excel, ZIP, RAR до 20 МБ)</legend>
+            <ul v-if="form.documents.length" class="related-list">
+              <li v-for="doc in form.documents" :key="doc.id">
+                <a :href="doc.url ?? undefined" target="_blank" rel="noopener">{{ doc.title }}</a>
+                <button
+                  type="button"
+                  class="btn-remove-sm"
+                  aria-label="Удалить"
+                  @click="removeDocument(doc.id)"
+                >
+                  <AdminIcon name="close" />
+                </button>
+              </li>
+            </ul>
+            <div v-for="(doc, idx) in form.newDocuments" :key="idx" class="form-row">
+              <div class="form-group">
+                <label>Название</label>
+                <input v-model="doc.title" type="text" maxlength="200" placeholder="Паспорт" />
+              </div>
+              <div class="form-group">
+                <label>Файл</label>
                 <input
-                  v-model="form.internal_sku"
-                  type="text"
-                  placeholder="auto-generated"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar"
+                  @change="doc.file = ($event.target as HTMLInputElement).files?.[0] ?? null"
                 />
               </div>
             </div>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              @click="form.newDocuments.push({ title: '', file: null })"
+            >
+              <AdminIcon name="plus" /> Добавить документ
+            </button>
           </fieldset>
 
           <!-- ========== ИЗОБРАЖЕНИЯ ТОВАРОВ ========== -->
@@ -260,11 +327,7 @@
             <legend>Изображения товаров</legend>
 
             <div class="images-grid">
-              <div
-                v-for="(img, idx) in form.images"
-                :key="idx"
-                class="image-item"
-              >
+              <div v-for="(img, idx) in form.images" :key="idx" class="image-item">
                 <div class="image-preview-box">
                   <img
                     v-if="img.preview || img.image"
@@ -273,32 +336,25 @@
                   />
                   <span v-else class="no-preview">📷</span>
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  @change="onFileChange($event, idx)"
-                />
+                <input type="file" accept="image/*" @change="onFileChange($event, idx)" />
                 <div class="image-controls">
                   <label>
-                    <input
-                      type="checkbox"
-                      :checked="img.is_main"
-                      @change="setMainImage(idx)"
-                    />
+                    <input type="checkbox" :checked="img.is_main" @change="setMainImage(idx)" />
                     Главное
                   </label>
                   <button
                     type="button"
-                    @click="removeImage(idx)"
                     class="btn-remove-sm"
+                    aria-label="Удалить"
+                    @click="removeImage(idx)"
                   >
-                    ✕
+                    <AdminIcon name="close" />
                   </button>
                 </div>
               </div>
 
-              <button type="button" @click="addImage" class="add-image-btn">
-                ➕ Добавить фото
+              <button type="button" class="add-image-btn" @click="addImage">
+                <AdminIcon name="plus" /> Добавить фото
               </button>
             </div>
           </fieldset>
@@ -316,25 +372,16 @@
                 <thead>
                   <tr>
                     <th>Характеристика</th>
-                    <th>
-                      Значения (удерживайте Ctrl для множественного выбора)
-                    </th>
+                    <th>Значения (удерживайте Ctrl для множественного выбора)</th>
                     <th style="width: 80px">Удалить?</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(feat, idx) in form.features" :key="idx">
                     <td data-label="Характеристика">
-                      <select
-                        v-model="feat.feature_id"
-                        @change="onFeatureChange(idx)"
-                      >
+                      <select v-model="feat.feature_id" @change="onFeatureChange(idx)">
                         <option :value="null">---------</option>
-                        <option
-                          v-for="f in categoryFeatures"
-                          :key="f.id"
-                          :value="f.id"
-                        >
+                        <option v-for="f in categoryFeatures" :key="f.id" :value="f.id">
                           {{ f.name }}
                         </option>
                       </select>
@@ -359,11 +406,7 @@
                       </select>
                     </td>
                     <td data-label="">
-                      <button
-                        type="button"
-                        @click="removeFeature(idx)"
-                        class="btn-remove"
-                      >
+                      <button type="button" class="btn-remove" @click="removeFeature(idx)">
                         Удалить
                       </button>
                     </td>
@@ -373,90 +416,12 @@
               <button
                 v-if="form.category"
                 type="button"
-                @click="addFeature"
                 class="btn btn-secondary btn-sm"
+                @click="addFeature"
               >
-                ➕ Добавить характеристику
+                <AdminIcon name="plus" /> Добавить характеристику
               </button>
             </div>
-          </fieldset>
-
-          <!-- ========== ГРУППЫ ТЕГОВ ТОВАРА ========== -->
-          <fieldset class="form-fieldset">
-            <legend>Группы тегов товара</legend>
-
-            <div v-if="!form.category" class="hint-message">
-              Сначала выберите каталог для отображения тегов
-            </div>
-
-            <table v-else class="inline-table">
-              <thead>
-                <tr>
-                  <th>Название тега</th>
-                  <th>Теги (удерживайте Ctrl для множественного выбора)</th>
-                  <th style="width: 80px">Удалить?</th>
-                </tr>
-              </thead>
-              <tbody class="tag-groups-tbody">
-                <tr
-                  class="tag-group-row"
-                  v-for="(tg, idx) in form.tag_groups"
-                  :key="idx"
-                >
-                  <td data-label="Название тега">
-                    <select
-                      v-model="tg.group_name_id"
-                      @change="onTagGroupChange(idx)"
-                    >
-                      <option :value="null">---------</option>
-                      <option
-                        v-for="tn in categoryTagNames"
-                        :key="tn.id"
-                        :value="tn.id"
-                      >
-                        {{ tn.name }}
-                      </option>
-                    </select>
-                  </td>
-                  <td data-label="Теги">
-                    <select
-                      v-model="tg.tag_ids"
-                      multiple
-                      class="multi-select"
-                      :disabled="!tg.group_name_id"
-                    >
-                      <option v-if="!tg.group_name_id" disabled>
-                        Сначала выберите группу
-                      </option>
-                      <option
-                        v-for="tag in getTagsForGroup(tg.group_name_id)"
-                        :key="tag.id"
-                        :value="tag.id"
-                      >
-                        {{ tag.name }}
-                      </option>
-                    </select>
-                  </td>
-                  <td data-label="">
-                    <button
-                      type="button"
-                      @click="removeTagGroup(idx)"
-                      class="btn-remove"
-                    >
-                      Удалить
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <button
-              v-if="form.category"
-              type="button"
-              @click="addTagGroup"
-              class="btn btn-secondary btn-sm"
-            >
-              ➕ Добавить группу тегов
-            </button>
           </fieldset>
 
           <!-- ========== ERROR MESSAGE ========== -->
@@ -464,9 +429,7 @@
 
           <!-- ========== ACTIONS ========== -->
           <div class="modal-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              Отмена
-            </button>
+            <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
               {{ saving ? "Сохранение..." : "Сохранить" }}
             </button>
@@ -476,11 +439,7 @@
     </div>
 
     <!-- =============== МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ =============== -->
-    <div
-      v-if="showDeleteModal"
-      class="modal-overlay"
-      @click.self="showDeleteModal = false"
-    >
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h2>Подтверждение удаления</h2>
@@ -488,19 +447,12 @@
         <div class="modal-body">
           <p>
             Вы уверены, что хотите удалить товар
-            <strong>{{ deletingProduct?.name }}</strong
-            >?
+            <strong>{{ deletingProduct?.name }}</strong>?
           </p>
         </div>
         <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn btn-secondary">
-            Отмена
-          </button>
-          <button
-            @click="deleteProduct"
-            class="btn btn-danger"
-            :disabled="deleting"
-          >
+          <button class="btn btn-secondary" @click="showDeleteModal = false">Отмена</button>
+          <button class="btn btn-danger" :disabled="deleting" @click="deleteProduct">
             {{ deleting ? "Удаление..." : "Удалить" }}
           </button>
         </div>
@@ -510,16 +462,13 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { uploadEach } from "@/utils/uploads";
 import { ref, reactive, computed, onMounted } from "vue";
 import { makeSlug } from "@/utils/slug";
-import {
-  productsAdminAPI,
-  categoriesAdminAPI,
-  brandsAdminAPI,
-  categoryDataAPI,
-} from "@/api/admin";
+import { productsAdminAPI, categoriesAdminAPI, brandsAdminAPI, categoryDataAPI } from "@/api/admin";
 import { getImageUrl } from "@/api";
 
 // ==================== TYPES ====================
@@ -541,13 +490,6 @@ interface ProductFeature {
   value_texts?: string[]; // Массив текстов значений
 }
 
-interface ProductTagGroup {
-  id?: number;
-  group_name_id: number | null;
-  group_name_text?: string;
-  tag_ids: number[];
-}
-
 interface Product {
   id: number;
   name: string;
@@ -563,7 +505,6 @@ interface Product {
   internal_sku: string;
   images: ProductImage[];
   features: ProductFeature[];
-  tag_groups: ProductTagGroup[];
 }
 
 interface Category {
@@ -605,8 +546,6 @@ const deleting = ref(false);
 // Category-specific data (filtered by category like in Django admin)
 const categoryFeatures = ref<any[]>([]);
 const categoryFeatureValues = ref<any[]>([]);
-const categoryTags = ref<any[]>([]);
-const categoryTagNames = ref<any[]>([]);
 
 // Form data
 const form = reactive({
@@ -616,12 +555,18 @@ const form = reactive({
   category: null as number | null,
   brand: null as number | null,
   price: null as number | null,
+  old_price: null as number | null,
+  stock_quantity: null as number | null,
+  status: "" as "" | "new" | "promo" | "sale",
+  is_recommended: false,
+  related: [] as RelatedProduct[],
+  documents: [] as ProductDocument[],
+  newDocuments: [] as { title: string; file: File | null }[],
   is_available: true,
   manufacturer_sku: "",
   internal_sku: "",
   images: [] as ProductImage[],
   features: [] as ProductFeature[],
-  tag_groups: [] as ProductTagGroup[],
 });
 
 // ==================== COMPUTED ====================
@@ -652,8 +597,7 @@ async function loadProducts() {
     if (searchQuery.value) params.search = searchQuery.value;
     if (selectedCategory.value) params.category = selectedCategory.value;
     if (selectedBrand.value) params.brand = selectedBrand.value;
-    if (availabilityFilter.value)
-      params.is_available = availabilityFilter.value;
+    if (availabilityFilter.value) params.is_available = availabilityFilter.value;
 
     const response = await productsAdminAPI.getAll(params);
     products.value = response.data.results || response.data;
@@ -683,7 +627,7 @@ async function loadBrands() {
   }
 }
 
-// Load features/tags by category (like Django filter_features.js)
+// Load the features of the category (like Django filter_features.js)
 async function loadCategoryData(categoryId: number) {
   try {
     const response = await categoryDataAPI.getByCategory(categoryId);
@@ -691,14 +635,10 @@ async function loadCategoryData(categoryId: number) {
 
     categoryFeatures.value = data.features || [];
     categoryFeatureValues.value = data.feature_values || [];
-    categoryTags.value = data.tags || [];
-    categoryTagNames.value = data.tag_names || [];
   } catch (e) {
     console.error("Failed to load category data:", e);
     categoryFeatures.value = [];
     categoryFeatureValues.value = [];
-    categoryTags.value = [];
-    categoryTagNames.value = [];
   }
 }
 
@@ -742,16 +682,24 @@ function resetForm() {
   form.category = null;
   form.brand = null;
   form.price = null;
+  form.old_price = null;
+  form.stock_quantity = null;
+  form.status = "";
+  form.is_recommended = false;
+  form.related = [];
+  form.documents = [];
+  form.newDocuments = [];
+  removedDocIds.value = [];
+  relatedSearch.value = "";
+  relatedResults.value = [];
   form.is_available = true;
   form.manufacturer_sku = "";
   form.internal_sku = "";
   form.images = [];
+  removedImageIds.value = [];
   form.features = [];
-  form.tag_groups = [];
   categoryFeatures.value = [];
   categoryFeatureValues.value = [];
-  categoryTags.value = [];
-  categoryTagNames.value = [];
   formError.value = "";
 }
 
@@ -775,11 +723,20 @@ async function editProduct(product: Product) {
     form.category = p.category;
     form.brand = p.brand;
     form.price = p.price;
+    form.old_price = p.old_price == null ? null : Number(p.old_price);
+    form.stock_quantity = p.stock_quantity ?? null;
+    form.status = p.status || "";
+    form.is_recommended = Boolean(p.is_recommended);
+    form.related = p.related || [];
+    form.documents = p.documents || [];
+    form.newDocuments = [];
+    removedDocIds.value = [];
     form.is_available = p.is_available;
     form.manufacturer_sku = p.manufacturer_sku || "";
     form.internal_sku = p.internal_sku || "";
 
     // Images
+    removedImageIds.value = [];
     form.images = (p.images || []).map((img: any) => ({
       id: img.id,
       image: img.image,
@@ -801,19 +758,9 @@ async function editProduct(product: Product) {
       }
     });
 
-    form.features = Array.from(featuresMap.entries()).map(
-      ([feature_id, value_ids]) => ({
-        feature_id,
-        value_ids,
-      }),
-    );
-
-    // Tag groups
-    form.tag_groups = (p.tag_groups || []).map((tg: any) => ({
-      id: tg.id,
-      group_name_id: tg.group_name_id,
-      group_name_text: tg.group_name_text,
-      tag_ids: tg.tag_ids || [],
+    form.features = Array.from(featuresMap.entries()).map(([feature_id, value_ids]) => ({
+      feature_id,
+      value_ids,
     }));
 
     // Load category-specific data
@@ -825,7 +772,7 @@ async function editProduct(product: Product) {
     showModal.value = true;
   } catch (e) {
     console.error("Failed to load product:", e);
-    alert(adminErrorMessage(e, "Ошибка при загрузке товара"));
+    toast.error(adminErrorMessage(e, "Ошибка при загрузке товара"));
   }
 }
 
@@ -835,19 +782,16 @@ function closeModal() {
   resetForm();
 }
 
-// Category change handler - reload features/tags
+// Category change handler - reload features
 async function onCategoryChange() {
   // Clear category-specific data
   form.features = [];
-  form.tag_groups = [];
 
   if (form.category) {
     await loadCategoryData(form.category);
   } else {
     categoryFeatures.value = [];
     categoryFeatureValues.value = [];
-    categoryTags.value = [];
-    categoryTagNames.value = [];
   }
 }
 
@@ -863,8 +807,70 @@ function addImage() {
   });
 }
 
+// ==================== RELATED PRODUCTS & DOCUMENTS ====================
+
+interface RelatedProduct {
+  id: number;
+  name: string;
+  internal_sku?: string | null;
+}
+interface ProductDocument {
+  id: number;
+  title: string;
+  url: string | null;
+}
+
+const relatedSearch = ref("");
+const relatedResults = ref<RelatedProduct[]>([]);
+const removedDocIds = ref<number[]>([]);
+let relatedTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Search after a pause in typing; the product itself and already chosen ones are not offered.
+function searchRelated() {
+  if (relatedTimer) clearTimeout(relatedTimer);
+  const q = relatedSearch.value.trim();
+  if (q.length < 2) {
+    relatedResults.value = [];
+    return;
+  }
+  relatedTimer = setTimeout(async () => {
+    try {
+      const { data } = await productsAdminAPI.getAll({ search: q, page_size: 10 });
+      const taken = new Set([editingProduct.value?.id, ...form.related.map((r) => r.id)]);
+      relatedResults.value = (data.results || [])
+        .filter((p: RelatedProduct) => !taken.has(p.id))
+        .map((p: RelatedProduct) => ({ id: p.id, name: p.name, internal_sku: p.internal_sku }));
+    } catch {
+      relatedResults.value = [];
+    }
+  }, 400);
+}
+
+function addRelated(item: RelatedProduct) {
+  form.related.push(item);
+  relatedResults.value = relatedResults.value.filter((r) => r.id !== item.id);
+}
+
+function removeRelated(id: number) {
+  form.related = form.related.filter((r) => r.id !== id);
+}
+
+function removeDocument(id: number) {
+  removedDocIds.value.push(id);
+  form.documents = form.documents.filter((d) => d.id !== id);
+}
+
+// Photos already on the server that the admin removed in the form; they are
+// deleted on save (images: [{id, _delete: true}]).
+const removedImageIds = ref<number[]>([]);
+
 function removeImage(idx: number) {
-  form.images.splice(idx, 1);
+  const [img] = form.images.splice(idx, 1);
+  if (img?.id) removedImageIds.value.push(img.id);
+  // The main photo was removed: the first remaining one becomes main.
+  if (img?.is_main && form.images.length && !form.images.some((i) => i.is_main)) {
+    form.images[0].is_main = true;
+  }
 }
 
 function setMainImage(idx: number) {
@@ -880,6 +886,13 @@ function onFileChange(event: Event, idx: number) {
     // Читаем файл как DataURL для превью
     const reader = new FileReader();
     reader.onload = (e) => {
+      // A new file chosen for a photo that is already on the server replaces it:
+      // the old one is deleted on save instead of staying next to the new one.
+      const oldId = form.images[idx].id;
+      if (oldId) {
+        removedImageIds.value.push(oldId);
+        form.images[idx].id = undefined;
+      }
       form.images[idx].preview = e.target?.result as string;
       form.images[idx].file = file;
       form.images[idx]._new = true;
@@ -909,46 +922,12 @@ function getValuesForFeature(featureId: number | null) {
   if (feature && feature.values && Array.isArray(feature.values)) {
     return feature.values;
   }
-  return categoryFeatureValues.value.filter(
-    (fv: any) => fv.feature_id === featureId,
-  );
+  return categoryFeatureValues.value.filter((fv: any) => fv.feature_id === featureId);
 }
 
 // Обработка изменения характеристики - сбрасываем значения
 function onFeatureChange(idx: number) {
   form.features[idx].value_ids = []; // Сброс на пустой массив
-}
-
-// ==================== TAG GROUPS ====================
-
-function addTagGroup() {
-  form.tag_groups.push({
-    group_name_id: null,
-    tag_ids: [],
-  });
-}
-
-function removeTagGroup(idx: number) {
-  form.tag_groups.splice(idx, 1);
-}
-
-// Получение тегов по выбранной группе (tag_name)
-function getTagsForGroup(groupNameId: number | null) {
-  if (!groupNameId) return [];
-  // Находим группу и возвращаем привязанные к ней теги
-  const tagName = categoryTagNames.value.find(
-    (tn: any) => tn.id === groupNameId,
-  );
-  if (tagName && tagName.tags) {
-    return tagName.tags;
-  }
-  // Fallback - фильтруем теги по tag_name
-  return categoryTags.value.filter((t: any) => t.tag_name === groupNameId);
-}
-
-// Обработка изменения группы тегов - сбрасываем выбранные теги
-function onTagGroupChange(idx: number) {
-  form.tag_groups[idx].tag_ids = [];
 }
 
 // ==================== SAVE PRODUCT ====================
@@ -966,6 +945,14 @@ async function saveProduct() {
       category: form.category,
       brand: form.brand,
       price: form.price,
+      old_price: form.old_price ?? "",
+      stock_quantity:
+        form.stock_quantity === null || (form.stock_quantity as unknown) === ""
+          ? null
+          : form.stock_quantity,
+      status: form.status,
+      is_recommended: form.is_recommended,
+      related_ids: form.related.map((r) => r.id),
       is_available: form.is_available,
       manufacturer_sku: form.manufacturer_sku,
       internal_sku: form.internal_sku || undefined,
@@ -978,29 +965,23 @@ async function saveProduct() {
             value_id: value_id,
           })),
         ),
-      tag_groups: form.tag_groups
-        .filter((tg) => tg.group_name_id)
-        .map((tg) => ({
-          group_name_id: tg.group_name_id,
-          tag_ids: tg.tag_ids,
-        })),
-      images: form.images
-        .filter((img) => img.id) // Only existing images for update
-        .map((img) => ({
-          id: img.id,
-          is_main: img.is_main,
-          order: img.order,
-        })),
+      images: [
+        ...form.images
+          .filter((img) => img.id) // Only existing images for update
+          .map((img) => ({
+            id: img.id,
+            is_main: img.is_main,
+            order: form.images.indexOf(img),
+          })),
+        ...removedImageIds.value.map((id) => ({ id, _delete: true })),
+      ],
     };
 
     let productId: number;
 
     if (editingProduct.value) {
       // Update
-      const response = await productsAdminAPI.update(
-        editingProduct.value.id,
-        productData,
-      );
+      const response = await productsAdminAPI.update(editingProduct.value.id, productData);
       productId = response.data.id;
     } else {
       // Create
@@ -1015,23 +996,41 @@ async function saveProduct() {
       (img) => {
         const formData = new FormData();
         formData.append("image", img.file as File);
+        formData.append("is_main", img.is_main ? "true" : "false");
+        formData.append("order", String(form.images.indexOf(img)));
         return productsAdminAPI.uploadImage(productId, formData);
       },
       (img) => (img.file as File).name,
     );
 
+    // Documents: removed ones first, then the new files (a bad file is reported, not lost).
+    for (const id of removedDocIds.value) {
+      await productsAdminAPI.deleteDocument(productId, id);
+    }
+    const newDocs = form.newDocuments.filter((d) => d.file);
+    failedUploads.push(
+      ...(await uploadEach(
+        newDocs,
+        (doc) => {
+          const formData = new FormData();
+          formData.append("title", doc.title.trim() || (doc.file as File).name);
+          formData.append("file", doc.file as File);
+          return productsAdminAPI.uploadDocument(productId, formData);
+        },
+        (doc) => (doc.file as File).name,
+      )),
+    );
+
     closeModal();
     loadProducts();
     if (failedUploads.length) {
-      alert(
-        "Товар сохранён, но эти изображения не загрузились:\n" +
-          failedUploads.join("\n"),
+      toast.error(
+        "Товар сохранён, но эти изображения не загрузились:\n" + failedUploads.join("\n"),
       );
     }
   } catch (e: any) {
     console.error("Failed to save product:", e);
-    formError.value =
-      adminErrorMessage(e, "Ошибка сохранения");
+    formError.value = adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     saving.value = false;
   }
@@ -1055,7 +1054,7 @@ async function deleteProduct() {
     loadProducts();
   } catch (e) {
     console.error("Failed to delete product:", e);
-    alert(adminErrorMessage(e, "Ошибка при удалении товара"));
+    toast.error(adminErrorMessage(e, "Ошибка при удалении товара"));
   } finally {
     deleting.value = false;
   }
@@ -1069,96 +1068,4 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
-.images-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.image-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--gray-200);
-  border-radius: 8px;
-  background: var(--gray-50);
-  width: 150px;
-}
-
-.image-preview-box {
-  width: 100%;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--gray-200);
-}
-
-.image-preview-box img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.no-preview {
-  font-size: 32px;
-  color: var(--gray-300);
-}
-
-.image-item input[type="file"] {
-  font-size: 11px;
-  width: 100%;
-}
-
-.image-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-}
-
-.image-controls label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-}
-
-.btn-remove-sm {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: none;
-  background: var(--error);
-  color: white;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.add-image-btn {
-  width: 150px;
-  height: 150px;
-  border: 2px dashed var(--gray-300);
-  border-radius: 8px;
-  background: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--gray-500);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.add-image-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  background: var(--primary-color-light, rgba(59, 130, 246, 0.05));
-}
-</style>
+<style scoped src="@/styles/views/ProductsManagement.css"></style>

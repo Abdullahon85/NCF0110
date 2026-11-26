@@ -1,0 +1,266 @@
+/* ========================================
+   Brand Detail Page
+   ======================================== */
+.brand-page {
+  padding: 0;
+  min-height: 80vh;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.breadcrumb a {
+  color: var(--gray-600);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb a:hover {
+  color: var(--primary);
+}
+
+.breadcrumb .separator {
+  color: var(--gray-300);
+}
+
+.breadcrumb .current {
+  color: var(--gray-800);
+  font-weight: 500;
+}
+
+/* Brand Header */
+.brand-header {
+  display: flex;
+  gap: var(--space-8);
+  align-items: flex-start;
+  padding: var(--space-8);
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  margin-bottom: var(--space-8);
+  border: 1px solid var(--gray-100);
+}
+
+.brand-logo {
+  flex-shrink: 0;
+  width: 180px;
+  height: 180px;
+  background: var(--gray-50);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.brand-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.brand-info {
+  flex: 1;
+}
+
+.brand-info h1 {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--space-4);
+}
+
+.brand-description {
+  font-size: var(--text-base);
+  color: var(--gray-600);
+  line-height: 1.7;
+}
+
+/* Brand Main Layout */
+.brand-main {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-8);
+}
+
+.brand-filters {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-6));
+  height: fit-content;
+}
+
+/* Brand Products Section */
+.brand-products {
+  min-width: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.section-header h2 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.section-header .products-count {
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+  background: var(--gray-100);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) 0;
+  gap: var(--space-4);
+}
+
+.loading-container p {
+  color: var(--gray-500);
+  font-size: var(--text-sm);
+}
+
+/* Brand Page Error State */
+.brand-page .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16);
+  text-align: center;
+  color: var(--gray-500);
+}
+
+.brand-page .error-state svg {
+  margin-bottom: var(--space-4);
+  color: var(--gray-300);
+}
+
+.brand-page .error-state .error-message {
+  font-size: var(--text-lg);
+  color: var(--gray-600);
+  margin-bottom: var(--space-6);
+  background: none;
+  padding: 0;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--primary);
+  color: var(--white);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-back:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+/* Clients Slider (Home Page Brands) */
+.clients-slider {
+  padding: var(--space-12) 0;
+  overflow: hidden;
+  background: var(--white);
+}
+
+.clients-viewport {
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow: hidden;
+  padding: 0 var(--space-4);
+}
+
+.clients-track {
+  display: flex;
+  gap: var(--space-6);
+  cursor: grab;
+  transition: transform 0.5s ease;
+  user-select: none;
+  justify-content: flex-start;
+}
+
+.clients-track.no-transition {
+  transition: none;
+}
+
+.clients-track:active {
+  cursor: grabbing;
+}
+
+.client-logo {
+  flex-shrink: 0;
+  width: 140px;
+  height: 80px;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  transition: all var(--transition-fast);
+  border: 1px solid var(--gray-100);
+}
+
+.client-logo:hover {
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+  border-color: var(--gray-200);
+}
+
+.client-logo a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.client-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.brand-placeholder {
+  width: 60px;
+  height: 60px;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+/* Responsive - Clients Slider & Brands */

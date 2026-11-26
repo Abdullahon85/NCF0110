@@ -33,18 +33,13 @@ export const useCartStore = defineStore("cart", () => {
     items.value = [];
   };
 
-  const isInCart = (productId: number) =>
-    items.value.some((i) => i.product.id === productId);
+  const isInCart = (productId: number) => items.value.some((i) => i.product.id === productId);
 
-  const totalQty = computed(() =>
-    items.value.reduce((s, it) => s + it.quantity, 0),
-  );
+  const totalQty = computed(() => items.value.reduce((s, it) => s + it.quantity, 0));
   const subtotal = computed(() =>
     items.value.reduce((s, it) => s + (it.product.price || 0) * it.quantity, 0),
   );
-  const hasPrice = computed(() =>
-    items.value.some((it) => it.product.price != null),
-  );
+  const hasPrice = computed(() => items.value.some((it) => it.product.price != null));
 
   return {
     items,

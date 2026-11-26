@@ -1,7 +1,6 @@
 <template>
   <div class="management-page">
     <div class="page-header">
-      <h1>✉️ Сообщения</h1>
       <span class="messages-count">{{ unprocessedCount }} непрочитанных</span>
     </div>
 
@@ -9,15 +8,11 @@
       <input
         v-model="search"
         type="text"
-        placeholder="🔍 Поиск..."
+        placeholder="Поиск..."
         class="search-input"
         @input="debouncedSearch"
       />
-      <select
-        v-model="processedFilter"
-        @change="loadItems"
-        class="filter-select"
-      >
+      <select v-model="processedFilter" class="filter-select" @change="loadItems">
         <option value="">Все</option>
         <option value="false">Непрочитанные</option>
         <option value="true">Обработанные</option>
@@ -39,11 +34,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="item in items"
-            :key="item.id"
-            :class="{ unread: !item.is_processed }"
-          >
+          <tr v-for="item in items" :key="item.id" :class="{ unread: !item.is_processed }">
             <td data-label="ID">{{ item.id }}</td>
             <td data-label="Имя" class="name-cell">{{ item.name }}</td>
             <td data-label="Email">
@@ -52,47 +43,41 @@
             <td data-label="Телефон">
               <a :href="'tel:' + item.phone">{{ item.phone }}</a>
             </td>
-            <td
-              data-label="Сообщение"
-              class="message-cell"
-              @click="viewMessage(item)"
-            >
+            <td data-label="Сообщение" class="message-cell" @click="viewMessage(item)">
               {{ truncate(item.message, 50) }}
             </td>
             <td data-label="Дата">{{ formatDate(item.created_at) }}</td>
             <td data-label="Статус">
-              <span
-                :class="[
-                  'badge',
-                  item.is_processed ? 'badge-success' : 'badge-warning',
-                ]"
-              >
+              <span :class="['badge', item.is_processed ? 'badge-success' : 'badge-warning']">
                 {{ item.is_processed ? "Обработано" : "Новое" }}
               </span>
             </td>
             <td data-label="Действия">
               <div class="actions">
                 <button
-                  @click="viewMessage(item)"
                   class="btn-icon"
                   title="Просмотр"
+                  aria-label="Просмотр"
+                  @click="viewMessage(item)"
                 >
-                  👁️
+                  <AdminIcon name="eye" />
                 </button>
                 <button
                   v-if="!item.is_processed"
-                  @click="markProcessed(item)"
                   class="btn-icon"
                   title="Пометить как обработанное"
+                  aria-label="Пометить как обработанное"
+                  @click="markProcessed(item)"
                 >
-                  ✅
+                  <AdminIcon name="check" />
                 </button>
                 <button
-                  @click="confirmDelete(item)"
                   class="btn-icon delete"
                   title="Удалить"
+                  aria-label="Удалить"
+                  @click="confirmDelete(item)"
                 >
-                  🗑️
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
@@ -105,15 +90,13 @@
     </div>
 
     <!-- View Modal -->
-    <div
-      v-if="showViewModal"
-      class="modal-overlay"
-      @click.self="showViewModal = false"
-    >
+    <div v-if="showViewModal" class="modal-overlay" @click.self="showViewModal = false">
       <div class="modal">
         <div class="modal-header">
           <h2>Сообщение #{{ viewingItem?.id }}</h2>
-          <button @click="showViewModal = false" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="showViewModal = false">
+            <AdminIcon name="close" />
+          </button>
         </div>
         <div class="modal-body message-view">
           <div class="message-field">
@@ -122,9 +105,7 @@
           </div>
           <div class="message-field">
             <label>Email:</label>
-            <a :href="'mailto:' + viewingItem?.email">{{
-              viewingItem?.email
-            }}</a>
+            <a :href="'mailto:' + viewingItem?.email">{{ viewingItem?.email }}</a>
           </div>
           <div class="message-field">
             <label>Телефон:</label>
@@ -132,9 +113,7 @@
           </div>
           <div class="message-field">
             <label>Дата:</label>
-            <span>{{
-              viewingItem ? formatDateTime(viewingItem.created_at) : ""
-            }}</span>
+            <span>{{ viewingItem ? formatDateTime(viewingItem.created_at) : "" }}</span>
           </div>
           <div class="message-field full">
             <label>Сообщение:</label>
@@ -144,46 +123,31 @@
         <div class="modal-actions">
           <button
             v-if="viewingItem && !viewingItem.is_processed"
+            class="btn btn-primary"
             @click="
               markProcessed(viewingItem);
               showViewModal = false;
             "
-            class="btn btn-primary"
           >
-            ✅ Отметить как обработанное
+            <AdminIcon name="check" /> Отметить как обработанное
           </button>
-          <button @click="showViewModal = false" class="btn btn-secondary">
-            Закрыть
-          </button>
+          <button class="btn btn-secondary" @click="showViewModal = false">Закрыть</button>
         </div>
       </div>
     </div>
 
     <!-- Delete Modal -->
-    <div
-      v-if="showDeleteModal"
-      class="modal-overlay"
-      @click.self="showDeleteModal = false"
-    >
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal modal-sm">
         <div class="modal-header"><h2>Подтверждение</h2></div>
         <div class="modal-body">
           <p>
-            Удалить сообщение от <strong>{{ deletingItem?.name }}</strong
-            >?
+            Удалить сообщение от <strong>{{ deletingItem?.name }}</strong>?
           </p>
         </div>
         <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn btn-secondary">
-            Отмена
-          </button>
-          <button
-            @click="deleteItem"
-            class="btn btn-danger"
-            :disabled="deleting"
-          >
-            Удалить
-          </button>
+          <button class="btn btn-secondary" @click="showDeleteModal = false">Отмена</button>
+          <button class="btn btn-danger" :disabled="deleting" @click="deleteItem">Удалить</button>
         </div>
       </div>
     </div>
@@ -191,6 +155,8 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { ref, computed, onMounted } from "vue";
 import { messagesAdminAPI } from "@/api/admin";
@@ -214,9 +180,7 @@ const showDeleteModal = ref(false);
 const deletingItem = ref<Message | null>(null);
 const deleting = ref(false);
 
-const unprocessedCount = computed(
-  () => items.value.filter((i) => !i.is_processed).length
-);
+const unprocessedCount = computed(() => items.value.filter((i) => !i.is_processed).length);
 
 function truncate(str: string, len: number) {
   return str.length > len ? str.slice(0, len) + "..." : str;
@@ -258,7 +222,7 @@ async function markProcessed(item: Message) {
     await messagesAdminAPI.markProcessed(item.id);
     item.is_processed = true;
   } catch (e) {
-    alert(adminErrorMessage(e, "Ошибка"));
+    toast.error(adminErrorMessage(e, "Ошибка"));
   }
 }
 
@@ -275,7 +239,7 @@ async function deleteItem() {
     showDeleteModal.value = false;
     loadItems();
   } catch (e) {
-    alert(adminErrorMessage(e, "Ошибка удаления"));
+    toast.error(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }
@@ -284,4 +248,4 @@ async function deleteItem() {
 onMounted(loadItems);
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

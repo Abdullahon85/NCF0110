@@ -37,4 +37,4 @@ const formatDate = (dateString: string) => {
 };
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

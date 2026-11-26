@@ -1,0 +1,398 @@
+/* Admin page bits: action row, filters, buttons, badges, tabs, pagination, messages.
+   Scoped under .ad-content so the shared .btn/.badge styles of the public site stay as they are. */
+
+.ad-content .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.ad-content .page-header:has(.messages-count:only-child) {
+  justify-content: flex-start;
+}
+
+.ad-content .messages-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--ad-amber-tint);
+  color: var(--ad-amber-ink);
+  font-size: var(--ad-fs-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  box-shadow: none;
+}
+
+/* ---------- Buttons ---------- */
+
+.ad-content .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--ad-control);
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--ad-radius-sm);
+  font-family: inherit;
+  font-size: var(--ad-fs-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+  box-shadow: none;
+  transform: none;
+  cursor: pointer;
+  transition:
+    background-color var(--ad-ease),
+    border-color var(--ad-ease),
+    color var(--ad-ease);
+}
+
+.ad-content .btn::before,
+.ad-content .btn::after {
+  content: none;
+}
+
+.ad-content .btn:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.ad-content .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ad-content .btn-primary {
+  background: var(--ad-forest);
+  border-color: var(--ad-forest);
+  color: #fff;
+}
+
+.ad-content .btn-primary:hover:not(:disabled) {
+  background: var(--ad-forest-hover);
+  border-color: var(--ad-forest-hover);
+  color: #fff;
+}
+
+.ad-content .btn-secondary {
+  background: var(--ad-surface);
+  border-color: var(--ad-line-strong);
+  color: var(--ad-ink);
+}
+
+.ad-content .btn-secondary:hover:not(:disabled) {
+  background: var(--ad-hover);
+  border-color: var(--ad-line-strong);
+  color: var(--ad-ink);
+}
+
+.ad-content .btn-danger {
+  background: var(--ad-danger);
+  border-color: var(--ad-danger);
+  color: #fff;
+}
+
+.ad-content .btn-danger:hover:not(:disabled) {
+  background: var(--ad-danger-hover);
+  border-color: var(--ad-danger-hover);
+  color: #fff;
+}
+
+.ad-content .btn-success {
+  background: var(--ad-forest);
+  border-color: var(--ad-forest);
+  color: #fff;
+}
+
+.ad-content .btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--ad-control);
+  padding: 0 14px;
+  border: 1px solid var(--ad-line-strong);
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-surface);
+  color: var(--ad-ink);
+  font-family: inherit;
+  font-size: var(--ad-fs-sm);
+  font-weight: 600;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.ad-content .btn-export:hover:not(:disabled) {
+  background: var(--ad-hover);
+}
+
+.ad-content .btn-icon,
+.ad-content .action-btn {
+  display: inline-grid;
+  place-items: center;
+  width: var(--ad-control);
+  height: var(--ad-control);
+  min-width: var(--ad-control);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ad-radius-sm);
+  background: transparent;
+  color: var(--ad-muted);
+  font-size: 16px;
+  box-shadow: none;
+  transform: none;
+  cursor: pointer;
+  transition:
+    background-color var(--ad-ease),
+    color var(--ad-ease);
+}
+
+.ad-content :is(.btn-icon, .action-btn):hover {
+  background: var(--ad-hover);
+  color: var(--ad-ink);
+  transform: none;
+}
+
+.ad-content :is(.btn-icon, .action-btn).delete:hover {
+  background: var(--ad-danger-tint);
+  color: var(--ad-danger);
+}
+
+/* ---------- Filters ---------- */
+
+.ad-content .filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.ad-content .filters-bar > * {
+  margin: 0;
+}
+
+.ad-content .search-input,
+.ad-content .filter-select,
+.ad-content .filters-bar input,
+.ad-content .filters-bar select {
+  min-height: var(--ad-control);
+  padding: 0 12px;
+  border: 1px solid var(--ad-line-strong);
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-surface);
+  color: var(--ad-ink);
+  font-family: inherit;
+  font-size: var(--ad-fs-sm);
+  box-shadow: none;
+}
+
+.ad-content .search-input {
+  flex: 1 1 260px;
+  width: auto;
+  max-width: 420px;
+  padding-left: 38px;
+  background: var(--ad-surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2356635b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E")
+    no-repeat 12px 50%;
+}
+
+.ad-content .filter-select {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 160px;
+}
+
+.ad-content .search-input::placeholder,
+.ad-content .filters-bar input::placeholder {
+  color: var(--ad-muted);
+  opacity: 1;
+}
+
+.ad-content :is(.search-input, .filter-select, .filters-bar input, .filters-bar select):hover {
+  border-color: var(--ad-muted);
+}
+
+.ad-content :is(.search-input, .filter-select, .filters-bar input, .filters-bar select):focus {
+  border-color: var(--ad-forest);
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.15);
+  outline: none;
+}
+
+/* ---------- Tabs ---------- */
+
+.ad-content .header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+}
+
+.ad-content .header-actions .btn {
+  margin-left: 8px;
+}
+
+.ad-content .tab-btn {
+  min-height: var(--ad-control);
+  padding: 0 14px;
+  border: 1px solid var(--ad-line-strong);
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-surface);
+  color: var(--ad-ink-2);
+  font-family: inherit;
+  font-size: var(--ad-fs-sm);
+  font-weight: 500;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.ad-content .tab-btn:hover {
+  background: var(--ad-hover);
+}
+
+.ad-content .tab-btn.active {
+  background: var(--ad-forest-tint);
+  border-color: var(--ad-forest);
+  color: var(--ad-forest);
+  font-weight: 600;
+}
+
+/* ---------- Badges ---------- */
+
+.ad-content .badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 0;
+  font-size: var(--ad-fs-xs);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0;
+  background: var(--ad-hover);
+  color: var(--ad-ink-2);
+}
+
+.ad-content .badge-success {
+  background: var(--ad-forest-tint);
+  color: var(--ad-forest);
+}
+
+.ad-content .badge-warning {
+  background: var(--ad-amber-tint);
+  color: var(--ad-amber-ink);
+}
+
+.ad-content .badge-danger,
+.ad-content .badge-error {
+  background: var(--ad-danger-tint);
+  color: var(--ad-danger);
+}
+
+/* ---------- Pagination ---------- */
+
+.ad-content .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+
+.ad-content .page-info {
+  color: var(--ad-muted);
+  font-size: var(--ad-fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Loading, messages ---------- */
+
+.ad-content :is(.loading, .loading-state, .loading-container) {
+  padding: 32px 16px;
+  color: var(--ad-muted);
+  text-align: center;
+}
+
+.ad-content :is(.error-msg, .error-message) {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #f3c1bb;
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-danger-tint);
+  color: var(--ad-danger);
+  font-size: var(--ad-fs-sm);
+}
+
+.ad-content :is(.success-msg, .success-message) {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #bcd3c4;
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-forest-tint);
+  color: var(--ad-forest);
+  font-size: var(--ad-fs-sm);
+}
+
+.ad-content :is(.hint-message, .hint-text, .info-msg) {
+  color: var(--ad-muted);
+  font-size: var(--ad-fs-sm);
+}
+
+/* ---------- Cards (settings, profile) ---------- */
+
+.ad-content :is(.settings-card, .card) {
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-line);
+  border-radius: var(--ad-radius);
+  box-shadow: none;
+}
+
+.ad-content .card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ad-line);
+  background: none;
+}
+
+.ad-content .card-header :is(h2, h3) {
+  margin: 0;
+  font-size: var(--ad-fs-md);
+  font-weight: 600;
+  color: var(--ad-ink);
+}
+
+.ad-content .card-body {
+  padding: 20px;
+}
+
+@media (max-width: 900px) {
+  .ad-content .page-header {
+    justify-content: flex-start;
+  }
+
+  .ad-content .search-input {
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .ad-content .filter-select {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+}

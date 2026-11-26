@@ -1,0 +1,91 @@
+/* Face: section page (filters + product grid) — head, filter panel, price fields. */
+
+.site .page-layout {
+  gap: 24px;
+  padding-top: 20px;
+  padding-bottom: 56px;
+}
+
+.site .page-layout > .breadcrumb {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  color: var(--site-muted);
+}
+
+.site .breadcrumb a {
+  color: var(--site-muted);
+}
+
+.site .breadcrumb a:hover {
+  color: var(--site-brand);
+  text-decoration: underline;
+}
+
+.site .breadcrumb .current {
+  color: var(--site-ink);
+}
+
+.site .cp-title {
+  grid-column: 1 / -1;
+  margin: -12px 0 0;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+  color: var(--site-ink);
+}
+
+/* filter panel: plain heading, no accent bar */
+.site .panel {
+  border: 1px solid var(--site-line);
+  border-radius: var(--site-radius-card);
+  box-shadow: none;
+}
+
+.site .panel h3 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--site-ink);
+}
+
+.site .panel h3::before {
+  content: none;
+}
+
+/* price fields: numbers must fit (e.g. 1 950 000) */
+.site .price-inputs {
+  gap: 8px;
+}
+
+.site .price-inputs input {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--site-line-strong);
+  border-radius: var(--site-radius-ctl);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.site .price-inputs input:focus {
+  border-color: var(--site-brand);
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.15);
+}
+
+/* phone filter drawer: above the sticky header (z 1000) so its title and close button are visible */
+.site .filters-overlay {
+  z-index: 1001;
+}
+
+.site .filters-column.show-mobile {
+  z-index: 1002;
+}
+
+@media (max-width: 640px) {
+  .site .cp-title {
+    margin-top: 0;
+    font-size: 24px;
+  }
+}

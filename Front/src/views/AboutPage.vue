@@ -16,10 +16,7 @@
           <img :src="aboutContent.image" :alt="aboutContent.title" />
         </div>
 
-        <div
-          class="content-text"
-          v-html="formatContent(aboutContent.content)"
-        ></div>
+        <div class="content-text" v-html="formatContent(aboutContent.content)"></div>
       </div>
 
       <div v-else class="empty-content">
@@ -55,4 +52,4 @@ onMounted(async () => {
 });
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

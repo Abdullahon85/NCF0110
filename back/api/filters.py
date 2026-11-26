@@ -1,20 +1,9 @@
 # filters.py
-import django_filters
 from decimal import Decimal, InvalidOperation
 
 from django.db import models
 from django.db.models import Q
 from rest_framework import filters
-from .models import Product
-
-class ProductFilter(django_filters.FilterSet):
-    price_min = django_filters.NumberFilter(field_name="price", lookup_expr='gte')
-    price_max = django_filters.NumberFilter(field_name="price", lookup_expr='lte')
-    category = django_filters.CharFilter(field_name="category__slug", lookup_expr='exact')
-    
-    class Meta:
-        model = Product
-        fields = ['price_min', 'price_max', 'category']
 
 MAX_PRICE_FILTER = Decimal(10) ** 23  # Product.price is DECIMAL(25, 2)
 
@@ -22,7 +11,7 @@ MAX_PRICE_FILTER = Decimal(10) ** 23  # Product.price is DECIMAL(25, 2)
 def parse_price(raw):
     """Query-string price -> Decimal, or None when missing/invalid/out of range
     (nan, inf, 1e999999 ...): such filters are ignored instead of causing a 500."""
-    if raw in (None, ''):
+    if raw in (None, ""):
         return None
     try:
         value = Decimal(raw)
@@ -36,11 +25,9 @@ def parse_price(raw):
 class BrandFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         # Поиск по имени и описанию
-        search = request.query_params.get('search')
+        search = request.query_params.get("search")
         if search:
-            queryset = queryset.filter(
-                Q(name__icontains=search) | Q(description__icontains=search)
-            )
+            queryset = queryset.filter(Q(name__icontains=search) | Q(description__icontains=search))
 
         # Фильтр по категориям через связанные продукты (поддержка нескольких через запятую)
         # Accepts a single slug or a comma-separated list of slugs;
@@ -48,21 +35,21 @@ class BrandFilter(filters.BaseFilterBackend):
         # On detail views this filter is intentionally skipped so that
         # get_object() is never affected by category params that are meant
         # for the products sub-action, not the brand lookup itself.
-        is_list_view = getattr(view, 'action', None) == 'list'
-        category = request.query_params.get('category')
+        is_list_view = getattr(view, "action", None) == "list"
+        category = request.query_params.get("category")
         if category and is_list_view:
-            slugs = [s.strip() for s in category.split(',') if s.strip()]
+            slugs = [s.strip() for s in category.split(",") if s.strip()]
             if slugs:
                 queryset = queryset.filter(products__category__slug__in=slugs).distinct()
 
         # Фильтр по наличию товаров
-        has_products = request.query_params.get('has_products')
+        has_products = request.query_params.get("has_products")
         if has_products:
             queryset = queryset.filter(products__isnull=False).distinct()
 
         # Фильтр по диапазону цен в продуктах
-        price_min = request.query_params.get('price_min')
-        price_max = request.query_params.get('price_max')
+        price_min = request.query_params.get("price_min")
+        price_max = request.query_params.get("price_max")
 
         price_min = parse_price(price_min)
         price_max = parse_price(price_max)
@@ -72,24 +59,24 @@ class BrandFilter(filters.BaseFilterBackend):
             queryset = queryset.filter(products__price__lte=price_max).distinct()
 
         # Фильтр по наличию продуктов (is_available)
-        has_available = request.query_params.get('has_available')
+        has_available = request.query_params.get("has_available")
         if has_available:
             queryset = queryset.filter(products__is_available=True).distinct()
 
         # Сортировка
-        ordering = request.query_params.get('ordering', '-created_at')
+        ordering = request.query_params.get("ordering", "-created_at")
         if ordering:
-            if ordering == 'name':
-                queryset = queryset.order_by('name')
-            elif ordering == '-name':
-                queryset = queryset.order_by('-name')
-            elif ordering == '-products_count':
-                queryset = queryset.annotate(
-                    products_count=models.Count('products')
-                ).order_by('-products_count')
-            elif ordering == 'products_count':
-                queryset = queryset.annotate(
-                    products_count=models.Count('products')
-                ).order_by('products_count')
+            if ordering == "name":
+                queryset = queryset.order_by("name")
+            elif ordering == "-name":
+                queryset = queryset.order_by("-name")
+            elif ordering == "-products_count":
+                queryset = queryset.annotate(products_count=models.Count("products")).order_by(
+                    "-products_count"
+                )
+            elif ordering == "products_count":
+                queryset = queryset.annotate(products_count=models.Count("products")).order_by(
+                    "products_count"
+                )
 
         return queryset

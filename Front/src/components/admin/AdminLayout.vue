@@ -1,175 +1,141 @@
 <template>
-  <div class="admin-layout">
-    <!-- Sidebar -->
+  <div class="ad-shell">
     <aside
-      class="admin-sidebar"
-      :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }"
+      id="ad-sidebar"
+      class="ad-sidebar"
+      :class="{ 'is-open': menuOpen }"
+      aria-label="Меню админки"
     >
-      <div class="sidebar-header">
-        <h2 v-if="!sidebarCollapsed">🎛️ Админ</h2>
+      <div class="ad-brand">
+        <span class="ad-brand-mark" aria-hidden="true">NCF</span>
+        <span class="ad-brand-name">
+          NCF
+          <small>Админ-панель</small>
+        </span>
         <button
-          class="collapse-btn"
-          @click="sidebarCollapsed = !sidebarCollapsed"
+          ref="closeBtn"
+          type="button"
+          class="ad-icon-btn ad-close-btn"
+          aria-label="Закрыть меню"
+          @click="closeMenu"
         >
-          {{ sidebarCollapsed ? "→" : "←" }}
+          <AdminIcon name="close" />
         </button>
       </div>
 
-      <nav class="sidebar-nav">
-        <router-link
-          v-for="item in menuItems"
-          :key="item.path"
-          :to="item.path"
-          class="nav-item"
-          :class="{ active: isActive(item.path) }"
-          @click="closeMobileMenu"
-        >
-          <span class="nav-icon">{{ item.icon }}</span>
-          <span v-if="!sidebarCollapsed" class="nav-label">{{
-            item.label
-          }}</span>
-          <span v-if="!sidebarCollapsed && item.badge" class="nav-badge">{{
-            item.badge
-          }}</span>
-        </router-link>
+      <nav class="ad-nav">
+        <div v-for="group in adminMenu" :key="group.title ?? 'main'" class="ad-nav-group">
+          <p v-if="group.title" class="ad-nav-title">{{ group.title }}</p>
+          <ul class="ad-nav-list">
+            <li v-for="item in group.items" :key="item.path">
+              <router-link
+                :to="item.path"
+                class="ad-nav-link"
+                :class="{ 'is-active': isActivePath(item.path, route.path) }"
+                :aria-current="isActivePath(item.path, route.path) ? 'page' : undefined"
+              >
+                <AdminIcon :name="item.icon" />
+                <span class="ad-nav-label">{{ item.label }}</span>
+                <span
+                  v-if="item.badge && counts[item.badge]"
+                  class="ad-count"
+                  :aria-label="`новых: ${counts[item.badge]}`"
+                  >{{ counts[item.badge] }}</span
+                >
+              </router-link>
+            </li>
+          </ul>
+        </div>
       </nav>
 
-      <div class="sidebar-footer">
-        <router-link to="/" class="nav-item" @click="closeMobileMenu">
-          <span class="nav-icon">🌐</span>
-          <span v-if="!sidebarCollapsed" class="nav-label">На сайт</span>
+      <div class="ad-sidebar-foot">
+        <router-link to="/admin/profile" class="ad-user">
+          <span class="ad-avatar" aria-hidden="true">{{ userInitials }}</span>
+          <span class="ad-user-text">
+            <strong>{{ authStore.fullName || "Администратор" }}</strong>
+            <small>Профиль</small>
+          </span>
         </router-link>
+        <button
+          type="button"
+          class="ad-icon-btn"
+          aria-label="Выйти"
+          title="Выйти"
+          @click="handleLogout"
+        >
+          <AdminIcon name="logout" />
+        </button>
       </div>
     </aside>
 
-    <!-- Mobile Menu Overlay -->
-    <div
-      v-if="mobileMenuOpen"
-      class="mobile-overlay"
-      @click="closeMobileMenu"
-    ></div>
+    <div v-if="menuOpen" class="ad-scrim" @click="closeMenu"></div>
 
-    <!-- Main Content -->
-    <div class="admin-main" :class="{ expanded: sidebarCollapsed }">
-      <!-- Header -->
-      <header class="admin-header">
-        <div class="header-left">
-          <button
-            class="mobile-menu-toggle"
-            @click="toggleMobileMenu"
-            aria-label="Toggle menu"
-          >
-            {{ mobileMenuOpen ? "✕" : "☰" }}
-          </button>
-          <h1>{{ currentPageTitle }}</h1>
-        </div>
-        <div class="header-right">
-          <div class="user-menu" @click="showUserMenu = !showUserMenu">
-            <span class="user-avatar">{{ userInitials }}</span>
-            <span class="user-name">{{ authStore.fullName }}</span>
-            <span class="dropdown-arrow">▼</span>
-
-            <div v-if="showUserMenu" class="user-dropdown">
-              <router-link to="/admin/profile" class="dropdown-item">
-                👤 Профиль
-              </router-link>
-              <router-link to="/admin/settings" class="dropdown-item">
-                ⚙️ Настройки
-              </router-link>
-              <div class="dropdown-divider"></div>
-              <button @click="handleLogout" class="dropdown-item logout">
-                🚪 Выйти
-              </button>
-            </div>
-          </div>
-        </div>
+    <div class="ad-main">
+      <header class="ad-topbar">
+        <button
+          type="button"
+          class="ad-icon-btn ad-menu-btn"
+          aria-label="Открыть меню"
+          aria-controls="ad-sidebar"
+          :aria-expanded="menuOpen"
+          @click="openMenu"
+        >
+          <AdminIcon name="menu" />
+        </button>
+        <h1 class="ad-title">{{ pageTitle(route.path) }}</h1>
+        <a href="/" target="_blank" rel="noopener" class="ad-site-link">
+          <AdminIcon name="external" />
+          <span>Открыть сайт</span>
+        </a>
       </header>
 
-      <!-- Content -->
-      <main class="admin-content">
+      <main class="ad-content">
         <router-view />
       </main>
+      <AdminToasts />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { statsAPI } from "@/api/admin";
+import AdminIcon from "./AdminIcon.vue";
+import AdminToasts from "./AdminToasts.vue";
+import { adminMenu, pageTitle, isActivePath, type BadgeKey } from "./adminMenu";
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-const sidebarCollapsed = ref(false);
-const showUserMenu = ref(false);
-const unreadMessages = ref(0);
-const newOrders = ref(0);
-const mobileMenuOpen = ref(false);
-
-const menuItems = computed(() => [
-  { path: "/admin", label: "Dashboard", icon: "📊" },
-  { path: "/admin/products", label: "Товары", icon: "📦" },
-  { path: "/admin/categories", label: "Каталог", icon: "📁" },
-  { path: "/admin/brands", label: "Бренды", icon: "🏷️" },
-  { path: "/admin/tags", label: "Теги", icon: "#️⃣" },
-  { path: "/admin/features", label: "Характеристики", icon: "📋" },
-  { path: "/admin/banners", label: "Баннеры", icon: "🖼️" },
-  { path: "/admin/news", label: "Новости", icon: "📰" },
-  {
-    path: "/admin/messages",
-    label: "Сообщения",
-    icon: "✉️",
-    badge: unreadMessages.value || undefined,
-  },
-  {
-    path: "/admin/orders",
-    label: "Заявки",
-    icon: "🛒",
-    badge: newOrders.value || undefined,
-  },
-  { path: "/admin/reviews", label: "Отзывы", icon: "⭐" },
-  { path: "/admin/questions", label: "Вопросы", icon: "❓" },
-  { path: "/admin/settings", label: "Настройки", icon: "⚙️" },
-]);
-
-const pageTitles: Record<string, string> = {
-  "/admin": "Dashboard",
-  "/admin/products": "Управление товарами",
-  "/admin/categories": "Управление каталогом",
-  "/admin/brands": "Управление брендами",
-  "/admin/tags": "Управление тегами",
-  "/admin/features": "Управление характеристиками",
-  "/admin/banners": "Управление баннерами",
-  "/admin/news": "Управление новостями",
-  "/admin/messages": "Сообщения",
-  "/admin/orders": "Заявки",
-  "/admin/reviews": "Управление отзывами",
-  "/admin/questions": "Управление вопросами",
-  "/admin/settings": "Настройки сайта",
-  "/admin/profile": "Профиль",
-};
-
-const currentPageTitle = computed(() => {
-  return pageTitles[route.path] || "Админ панель";
-});
+const menuOpen = ref(false);
+const closeBtn = ref<HTMLButtonElement | null>(null);
+const counts = reactive<Record<BadgeKey, number>>({ orders: 0, messages: 0 });
 
 const userInitials = computed(() => {
   const user = authStore.user;
   if (!user) return "?";
-
   const first = user.first_name?.[0] || "";
   const last = user.last_name?.[0] || "";
-
   if (first && last) return (first + last).toUpperCase();
-  return user.username[0].toUpperCase();
+  return (user.username?.[0] || "?").toUpperCase();
 });
 
-function isActive(path: string) {
-  if (path === "/admin") return route.path === "/admin";
-  return route.path.startsWith(path);
+function openMenu() {
+  menuOpen.value = true;
+  document.body.style.overflow = "hidden";
+  nextTick(() => closeBtn.value?.focus());
+}
+
+function closeMenu() {
+  menuOpen.value = false;
+  document.body.style.overflow = "";
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === "Escape" && menuOpen.value) closeMenu();
 }
 
 async function handleLogout() {
@@ -177,45 +143,31 @@ async function handleLogout() {
   router.push("/admin/login");
 }
 
-function toggleMobileMenu() {
-  mobileMenuOpen.value = !mobileMenuOpen.value;
-  if (mobileMenuOpen.value) {
-    document.body.style.overflow = "hidden";
-  } else {
-    document.body.style.overflow = "";
-  }
-}
-
-function closeMobileMenu() {
-  mobileMenuOpen.value = false;
-  document.body.style.overflow = "";
-}
-
-function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement;
-  if (!target.closest(".user-menu")) {
-    showUserMenu.value = false;
-  }
-}
-
-async function loadStats() {
+async function loadCounts() {
   try {
-    const response = await statsAPI.getDashboard();
-    unreadMessages.value = response.data.unread_messages || 0;
-    newOrders.value = response.data.new_orders_count || 0;
-  } catch (e) {
-    // Ignore
+    const { data } = await statsAPI.getDashboard();
+    counts.orders = data.new_orders_count || 0;
+    counts.messages = data.unread_messages || 0;
+  } catch {
+    // Counters are optional; the menu works without them.
   }
 }
+
+watch(
+  () => route.path,
+  () => {
+    closeMenu();
+    loadCounts();
+  },
+);
 
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-  loadStats();
+  document.addEventListener("keydown", onKeydown);
+  loadCounts();
 });
 
 onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
+  document.removeEventListener("keydown", onKeydown);
+  document.body.style.overflow = "";
 });
 </script>
-
-<!-- Styles in main.css -->

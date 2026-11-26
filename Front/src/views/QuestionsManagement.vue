@@ -1,7 +1,6 @@
 <template>
   <div class="management-page">
     <div class="page-header">
-      <h1>❓ Вопросы о товарах</h1>
       <span class="messages-count">{{ unansweredCount }} без ответа</span>
     </div>
 
@@ -9,15 +8,11 @@
       <input
         v-model="search"
         type="text"
-        placeholder="🔍 Поиск по имени или тексту..."
+        placeholder="Поиск по имени или тексту..."
         class="search-input"
         @input="debouncedSearch"
       />
-      <select
-        v-model="publishedFilter"
-        @change="loadItems"
-        class="filter-select"
-      >
+      <select v-model="publishedFilter" class="filter-select" @change="loadItems">
         <option value="">Все</option>
         <option value="true">Опубликованные</option>
         <option value="false">Скрытые</option>
@@ -39,60 +34,48 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="item in items"
-            :key="item.id"
-            :class="{ unread: !item.admin_reply }"
-          >
+          <tr v-for="item in items" :key="item.id" :class="{ unread: !item.admin_reply }">
             <td data-label="ID">{{ item.id }}</td>
             <td data-label="Автор" class="name-cell">{{ item.author_name }}</td>
             <td data-label="Товар">{{ item.product_name }}</td>
-            <td
-              data-label="Вопрос"
-              class="message-cell"
-              @click="openReply(item)"
-            >
+            <td data-label="Вопрос" class="message-cell" @click="openReply(item)">
               {{ truncate(item.text, 60) }}
             </td>
             <td data-label="Дата">{{ formatDate(item.created_at) }}</td>
             <td data-label="Ответ">
-              <span v-if="item.admin_reply" class="badge badge-success"
-                >Отвечен</span
-              >
+              <span v-if="item.admin_reply" class="badge badge-success">Отвечен</span>
               <span v-else class="badge badge-warning">Ожидает</span>
             </td>
             <td data-label="Статус">
-              <span
-                :class="[
-                  'badge',
-                  item.is_published ? 'badge-success' : 'badge-warning',
-                ]"
-              >
+              <span :class="['badge', item.is_published ? 'badge-success' : 'badge-warning']">
                 {{ item.is_published ? "Опубликован" : "Скрыт" }}
               </span>
             </td>
             <td data-label="Действия">
               <div class="actions">
                 <button
-                  @click="openReply(item)"
                   class="btn-icon"
                   title="Просмотр / Ответить"
+                  aria-label="Просмотр / Ответить"
+                  @click="openReply(item)"
                 >
-                  💬
+                  <AdminIcon name="reply" />
                 </button>
                 <button
-                  @click="togglePublished(item)"
                   class="btn-icon"
                   :title="item.is_published ? 'Скрыть' : 'Опубликовать'"
+                  :aria-label="item.is_published ? 'Скрыть' : 'Опубликовать'"
+                  @click="togglePublished(item)"
                 >
-                  {{ item.is_published ? "🚫" : "✅" }}
+                  <AdminIcon :name="item.is_published ? 'hide' : 'check'" />
                 </button>
                 <button
-                  @click="confirmDelete(item)"
                   class="btn-icon delete"
                   title="Удалить"
+                  aria-label="Удалить"
+                  @click="confirmDelete(item)"
                 >
-                  🗑️
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
@@ -105,15 +88,13 @@
     </div>
 
     <!-- Reply / View Modal -->
-    <div
-      v-if="showReplyModal"
-      class="modal-overlay"
-      @click.self="showReplyModal = false"
-    >
+    <div v-if="showReplyModal" class="modal-overlay" @click.self="showReplyModal = false">
       <div class="modal">
         <div class="modal-header">
           <h2>Вопрос #{{ editingItem?.id }}</h2>
-          <button @click="showReplyModal = false" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="showReplyModal = false">
+            <AdminIcon name="close" />
+          </button>
         </div>
         <div class="modal-body">
           <div class="message-field">
@@ -126,9 +107,7 @@
           </div>
           <div class="message-field">
             <label>Дата:</label>
-            <span>{{
-              editingItem ? formatDateTime(editingItem.created_at) : ""
-            }}</span>
+            <span>{{ editingItem ? formatDateTime(editingItem.created_at) : "" }}</span>
           </div>
           <div class="message-field full">
             <label>Вопрос:</label>
@@ -136,49 +115,30 @@
           </div>
           <div class="form-group">
             <label>Ответ администратора:</label>
-            <textarea
-              v-model="replyText"
-              rows="4"
-              placeholder="Напишите ответ..."
-            ></textarea>
+            <textarea v-model="replyText" rows="4" placeholder="Напишите ответ..."></textarea>
           </div>
         </div>
         <div class="modal-actions">
-          <button @click="saveReply" class="btn btn-primary" :disabled="saving">
+          <button class="btn btn-primary" :disabled="saving" @click="saveReply">
             💾 Сохранить ответ
           </button>
-          <button @click="showReplyModal = false" class="btn btn-secondary">
-            Закрыть
-          </button>
+          <button class="btn btn-secondary" @click="showReplyModal = false">Закрыть</button>
         </div>
       </div>
     </div>
 
     <!-- Delete Modal -->
-    <div
-      v-if="showDeleteModal"
-      class="modal-overlay"
-      @click.self="showDeleteModal = false"
-    >
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal modal-sm">
         <div class="modal-header"><h2>Подтверждение</h2></div>
         <div class="modal-body">
           <p>
-            Удалить вопрос от <strong>{{ deletingItem?.author_name }}</strong
-            >?
+            Удалить вопрос от <strong>{{ deletingItem?.author_name }}</strong>?
           </p>
         </div>
         <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn btn-secondary">
-            Отмена
-          </button>
-          <button
-            @click="deleteItem"
-            class="btn btn-danger"
-            :disabled="deleting"
-          >
-            Удалить
-          </button>
+          <button class="btn btn-secondary" @click="showDeleteModal = false">Отмена</button>
+          <button class="btn btn-danger" :disabled="deleting" @click="deleteItem">Удалить</button>
         </div>
       </div>
     </div>
@@ -186,6 +146,8 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { ref, computed, onMounted } from "vue";
 import { questionsAdminAPI } from "@/api/admin";
@@ -213,9 +175,7 @@ const deletingItem = ref<QuestionItem | null>(null);
 const deleting = ref(false);
 const saving = ref(false);
 
-const unansweredCount = computed(
-  () => items.value.filter((i) => !i.admin_reply).length,
-);
+const unansweredCount = computed(() => items.value.filter((i) => !i.admin_reply).length);
 
 function truncate(str: string, len: number) {
   return str.length > len ? str.slice(0, len) + "..." : str;
@@ -264,7 +224,7 @@ async function saveReply() {
     showReplyModal.value = false;
     loadItems();
   } catch (e) {
-    alert(adminErrorMessage(e, "Ошибка сохранения"));
+    toast.error(adminErrorMessage(e, "Ошибка сохранения"));
   } finally {
     saving.value = false;
   }
@@ -277,7 +237,7 @@ async function togglePublished(item: QuestionItem) {
     });
     item.is_published = !item.is_published;
   } catch (e) {
-    alert(adminErrorMessage(e, "Ошибка"));
+    toast.error(adminErrorMessage(e, "Ошибка"));
   }
 }
 
@@ -294,7 +254,7 @@ async function deleteItem() {
     showDeleteModal.value = false;
     loadItems();
   } catch (e) {
-    alert(adminErrorMessage(e, "Ошибка удаления"));
+    toast.error(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }
@@ -303,4 +263,4 @@ async function deleteItem() {
 onMounted(loadItems);
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

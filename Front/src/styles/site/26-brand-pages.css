@@ -1,0 +1,227 @@
+/* ===========================================
+   26. BRAND PAGES - All Brands & Brand Detail
+   =========================================== */
+
+/* All Brands Page */
+.all-brands {
+  padding: var(--space-8) 0;
+  min-height: 80vh;
+}
+
+.brands-column,
+.content-column {
+  min-width: 0;
+}
+
+.brands-column .topbar,
+.content-column .topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-100);
+}
+
+.brands-column .topbar h1,
+.content-column .topbar h1 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.results-info {
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+}
+
+/* Brands Grid */
+.brands-grid {
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
+}
+
+.brands-grid .brand-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-100);
+  transition: all var(--transition-fast);
+}
+
+.brands-grid .brand-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--gray-200);
+}
+
+.brands-grid .brand-card a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-5);
+  text-decoration: none;
+  color: inherit;
+}
+
+.brands-grid .brand-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: var(--space-4);
+  padding: var(--space-2);
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+}
+
+.brands-grid .brand-card h3 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--gray-800);
+  text-align: center;
+  margin-bottom: var(--space-2);
+  transition: color var(--transition-fast);
+}
+
+.brands-grid .brand-card:hover h3 {
+  color: var(--primary);
+}
+
+.brands-grid .brand-card .products-count {
+  font-size: var(--text-xs);
+  color: var(--gray-500);
+}
+
+/* Categories List in Filters */
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--text-sm);
+  color: var(--gray-700);
+}
+
+.category-item:hover {
+  background: var(--gray-50);
+}
+
+.category-item input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Price Range Filter */
+.price-range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.price-range input {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  width: 100%;
+  transition: all var(--transition-fast);
+}
+
+.price-range input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.price-range span {
+  color: var(--gray-400);
+}
+
+/* Toggle Labels */
+.has-products-label,
+.has-available-label,
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--text-sm);
+  color: var(--gray-700);
+}
+
+.has-products-label:hover,
+.has-available-label:hover,
+.toggle-label:hover {
+  background: var(--gray-50);
+}
+
+.has-products-label input,
+.has-available-label input,
+.toggle-label input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Search Field in Panel */
+.search-field {
+  position: relative;
+  margin-bottom: var(--space-5);
+}
+
+.search-field input {
+  width: 100%;
+  padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+}
+
+.search-field input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.search-field .btn-search {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: var(--space-2);
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.search-field .btn-search:hover {
+  background: var(--primary-hover);
+}

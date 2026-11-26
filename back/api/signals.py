@@ -5,12 +5,19 @@ ncf-data volume in Docker) would keep growing. A file is deleted when its row is
 deleted or when the field gets a different file, and only after the database
 transaction commits (a rolled-back delete keeps its file).
 """
+
 from django.db import transaction
 from django.db.models.signals import post_delete, pre_save
 
-from .models import Banner, Brand, Category, Image
+from .models import Banner, Brand, Category, Image, ProductDocument
 
-FILE_FIELDS = {Image: "image", Category: "image", Brand: "logo", Banner: "image"}
+FILE_FIELDS = {
+    Image: "image",
+    Category: "image",
+    Brand: "logo",
+    Banner: "image",
+    ProductDocument: "file",
+}
 
 
 def _delete_after_commit(storage, name):
@@ -34,5 +41,9 @@ def delete_replaced_file(sender, instance, **kwargs):
 
 
 for model in FILE_FIELDS:
-    post_delete.connect(delete_file_with_row, sender=model, dispatch_uid=f"media-delete-{model.__name__}")
-    pre_save.connect(delete_replaced_file, sender=model, dispatch_uid=f"media-replace-{model.__name__}")
+    post_delete.connect(
+        delete_file_with_row, sender=model, dispatch_uid=f"media-delete-{model.__name__}"
+    )
+    pre_save.connect(
+        delete_replaced_file, sender=model, dispatch_uid=f"media-replace-{model.__name__}"
+    )

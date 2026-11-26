@@ -1,4 +1,5 @@
 """Single-container mode: Vue routes get index.html, API and media keep their own handlers."""
+
 import tempfile
 from pathlib import Path
 

@@ -1,9 +1,8 @@
 <template>
   <div class="management-page">
     <div class="page-header">
-      <h1>🏷️ Управление брендами</h1>
-      <button @click="openCreateModal" class="btn btn-primary">
-        ➕ Добавить бренд
+      <button class="btn btn-primary" @click="openCreateModal">
+        <AdminIcon name="plus" /> Добавить бренд
       </button>
     </div>
 
@@ -11,7 +10,7 @@
       <input
         v-model="search"
         type="text"
-        placeholder="🔍 Поиск..."
+        placeholder="Поиск..."
         class="search-input"
         @input="debouncedSearch"
       />
@@ -34,12 +33,7 @@
           <tr v-for="item in items" :key="item.id">
             <td data-label="ID">{{ item.id }}</td>
             <td data-label="Лого">
-              <img
-                v-if="item.logo_url"
-                :src="item.logo_url"
-                class="thumb"
-                alt=""
-              />
+              <img v-if="item.logo_url" :src="item.logo_url" class="thumb" alt="" />
               <span v-else class="no-image">—</span>
             </td>
             <td data-label="Название" class="name-cell">{{ item.name }}</td>
@@ -48,15 +42,22 @@
             <td data-label="Товаров">{{ item.products_count }}</td>
             <td data-label="Действия">
               <div class="actions">
-                <button @click="editItem(item)" class="btn-icon">✏️</button>
-                <button @click="confirmDelete(item)" class="btn-icon delete">
-                  🗑️
+                <button class="btn-icon" aria-label="Редактировать" @click="editItem(item)">
+                  <AdminIcon name="edit" />
+                </button>
+                <button class="btn-icon delete" aria-label="Удалить" @click="confirmDelete(item)">
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
           </tr>
           <tr v-if="items.length === 0">
-            <td colspan="7" class="empty">Бренды не найдены</td>
+            <td colspan="7" class="empty">
+              <p class="empty-text">Бренды не найдены</p>
+              <button class="btn btn-primary" @click="openCreateModal">
+                <AdminIcon name="plus" /> Добавить бренд
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -67,17 +68,14 @@
       <div class="modal">
         <div class="modal-header">
           <h2>{{ editingItem ? "Редактировать бренд" : "Новый бренд" }}</h2>
-          <button @click="closeModal" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="closeModal">
+            <AdminIcon name="close" />
+          </button>
         </div>
-        <form @submit.prevent="saveItem" class="modal-body">
+        <form class="modal-body" @submit.prevent="saveItem">
           <div class="form-group">
             <label>Название *</label>
-            <input
-              v-model="form.name"
-              type="text"
-              required
-              @input="generateSlug"
-            />
+            <input v-model="form.name" type="text" required @input="generateSlug" />
           </div>
           <div class="form-group">
             <label>Slug *</label>
@@ -92,44 +90,35 @@
           <div class="form-group">
             <label>Логотип бренда</label>
             <div class="image-upload-container">
-              <div
-                v-if="logoPreview || editingItem?.logo_url"
-                class="image-preview"
-              >
-                <img
-                  :src="logoPreview || editingItem?.logo_url"
-                  alt="Logo Preview"
-                />
+              <div v-if="logoPreview || editingItem?.logo_url" class="image-preview">
+                <img :src="logoPreview || editingItem?.logo_url" alt="Logo Preview" />
                 <button
                   type="button"
-                  @click="removeLogo"
                   class="remove-image-btn"
                   title="Удалить логотип"
+                  aria-label="Удалить логотип"
+                  @click="removeLogo"
                 >
-                  ✕
+                  <AdminIcon name="close" />
                 </button>
               </div>
               <div v-else class="upload-placeholder">
                 <input
+                  id="logoInput"
                   ref="fileInput"
                   type="file"
                   accept="image/*"
-                  @change="handleLogoSelect"
                   class="file-input"
-                  id="logoInput"
+                  @change="handleLogoSelect"
                 />
-                <label for="logoInput" class="upload-label">
-                  📷 Выбрать логотип
-                </label>
+                <label for="logoInput" class="upload-label"> 📷 Выбрать логотип </label>
               </div>
             </div>
           </div>
 
           <div v-if="error" class="error-msg">{{ error }}</div>
           <div class="modal-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              Отмена
-            </button>
+            <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
               {{ saving ? "Сохранение..." : "Сохранить" }}
             </button>
@@ -139,31 +128,18 @@
     </div>
 
     <!-- Delete Modal -->
-    <div
-      v-if="showDeleteModal"
-      class="modal-overlay"
-      @click.self="showDeleteModal = false"
-    >
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal modal-sm">
         <div class="modal-header"><h2>Подтверждение удаления</h2></div>
         <div class="modal-body">
           <p>
-            Удалить бренд <strong>{{ deletingItem?.name }}</strong
-            >?
+            Удалить бренд <strong>{{ deletingItem?.name }}</strong>?
           </p>
           <p class="warning">⚠️ Это действие нельзя отменить!</p>
         </div>
         <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn btn-secondary">
-            Отмена
-          </button>
-          <button
-            @click="deleteItem"
-            class="btn btn-danger"
-            :disabled="deleting"
-          >
-            Удалить
-          </button>
+          <button class="btn btn-secondary" @click="showDeleteModal = false">Отмена</button>
+          <button class="btn btn-danger" :disabled="deleting" @click="deleteItem">Удалить</button>
         </div>
       </div>
     </div>
@@ -171,6 +147,8 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, onMounted } from "vue";
 import { makeSlug } from "@/utils/slug";
@@ -330,9 +308,7 @@ async function deleteItem() {
     deletingItem.value = null;
     loadItems();
   } catch (e: any) {
-    alert(
-      adminErrorMessage(e, "Ошибка удаления")
-    );
+    toast.error(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }
@@ -341,4 +317,4 @@ async function deleteItem() {
 onMounted(loadItems);
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

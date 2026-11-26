@@ -2,9 +2,8 @@
   <div class="management-page">
     <!-- Header -->
     <div class="page-header">
-      <h1>📁 Управление каталогом</h1>
-      <button @click="openCreateModal" class="btn btn-primary">
-        ➕ Добавить каталог
+      <button class="btn btn-primary" @click="openCreateModal">
+        <AdminIcon name="plus" /> Добавить каталог
       </button>
     </div>
 
@@ -13,11 +12,11 @@
       <input
         v-model="search"
         type="text"
-        placeholder="🔍 Поиск по названию..."
+        placeholder="Поиск по названию..."
         class="search-input"
         @input="debouncedSearch"
       />
-      <select v-model="parentFilter" @change="loadItems" class="filter-select">
+      <select v-model="parentFilter" class="filter-select" @change="loadItems">
         <option value="">Весь каталог</option>
         <option value="null">Только корневые</option>
         <option v-for="cat in allCategories" :key="cat.id" :value="cat.id">
@@ -56,24 +55,31 @@
             <td data-label="Действия">
               <div class="actions">
                 <button
-                  @click="editItem(item)"
                   class="btn-icon"
                   title="Редактировать"
+                  aria-label="Редактировать"
+                  @click="editItem(item)"
                 >
-                  ✏️
+                  <AdminIcon name="edit" />
                 </button>
                 <button
-                  @click="confirmDelete(item)"
                   class="btn-icon delete"
                   title="Удалить"
+                  aria-label="Удалить"
+                  @click="confirmDelete(item)"
                 >
-                  🗑️
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
           </tr>
           <tr v-if="items.length === 0">
-            <td colspan="8" class="empty">Каталог не найден</td>
+            <td colspan="8" class="empty">
+              <p class="empty-text">Каталог не найден</p>
+              <button class="btn btn-primary" @click="openCreateModal">
+                <AdminIcon name="plus" /> Добавить каталог
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -86,17 +92,14 @@
           <h2>
             {{ editingItem ? "Редактировать каталог" : "Новый каталог" }}
           </h2>
-          <button @click="closeModal" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="closeModal">
+            <AdminIcon name="close" />
+          </button>
         </div>
-        <form @submit.prevent="saveItem" class="modal-body">
+        <form class="modal-body" @submit.prevent="saveItem">
           <div class="form-group">
             <label>Название *</label>
-            <input
-              v-model="form.name"
-              type="text"
-              required
-              @input="generateSlug"
-            />
+            <input v-model="form.name" type="text" required @input="generateSlug" />
           </div>
           <div class="form-group">
             <label>Slug *</label>
@@ -106,11 +109,7 @@
             <label>Родительский каталог</label>
             <select v-model="form.parent">
               <option :value="null">— Нет (корневой) —</option>
-              <option
-                v-for="cat in availableParents"
-                :key="cat.id"
-                :value="cat.id"
-              >
+              <option v-for="cat in availableParents" :key="cat.id" :value="cat.id">
                 {{ cat.name }}
               </option>
             </select>
@@ -131,34 +130,31 @@
                 <img :src="imagePreview || getImageUrl(editingItem?.image ?? null)" alt="Preview" />
                 <button
                   type="button"
-                  @click="removeImage"
                   class="remove-image-btn"
                   title="Удалить изображение"
+                  aria-label="Удалить изображение"
+                  @click="removeImage"
                 >
-                  ✕
+                  <AdminIcon name="close" />
                 </button>
               </div>
               <div v-else class="upload-placeholder">
                 <input
+                  id="imageInput"
                   ref="fileInput"
                   type="file"
                   accept="image/*"
-                  @change="handleImageSelect"
                   class="file-input"
-                  id="imageInput"
+                  @change="handleImageSelect"
                 />
-                <label for="imageInput" class="upload-label">
-                  📷 Выбрать изображение
-                </label>
+                <label for="imageInput" class="upload-label"> 📷 Выбрать изображение </label>
               </div>
             </div>
           </div>
 
           <div v-if="error" class="error-msg">{{ error }}</div>
           <div class="modal-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              Отмена
-            </button>
+            <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
               {{ saving ? "Сохранение..." : "Сохранить" }}
             </button>
@@ -168,11 +164,7 @@
     </div>
 
     <!-- Delete Confirmation -->
-    <div
-      v-if="showDeleteModal"
-      class="modal-overlay"
-      @click.self="showDeleteModal = false"
-    >
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h2>Подтверждение удаления</h2>
@@ -180,23 +172,16 @@
         <div class="modal-body">
           <p>
             Вы уверены, что хотите удалить каталог
-            <strong>{{ deletingItem?.name }}</strong
-            >?
+            <strong>{{ deletingItem?.name }}</strong>?
           </p>
           <p class="warning">
-            ⚠️ Это действие нельзя отменить! Удалить можно только каталог без
-            товаров и подкаталогов: сначала перенесите или удалите их.
+            ⚠️ Это действие нельзя отменить! Удалить можно только каталог без товаров и
+            подкаталогов: сначала перенесите или удалите их.
           </p>
         </div>
         <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn btn-secondary">
-            Отмена
-          </button>
-          <button
-            @click="deleteItem"
-            class="btn btn-danger"
-            :disabled="deleting"
-          >
+          <button class="btn btn-secondary" @click="showDeleteModal = false">Отмена</button>
+          <button class="btn btn-danger" :disabled="deleting" @click="deleteItem">
             {{ deleting ? "Удаление..." : "Удалить" }}
           </button>
         </div>
@@ -206,6 +191,8 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { ref, reactive, computed, onMounted } from "vue";
 import { makeSlug } from "@/utils/slug";
@@ -412,8 +399,7 @@ async function saveItem() {
     loadItems();
     loadAllCategories();
   } catch (e: any) {
-    error.value =
-      adminErrorMessage(e, "Ошибка сохранения");
+    error.value = adminErrorMessage(e, "Ошибка сохранения");
   } finally {
     saving.value = false;
   }
@@ -435,9 +421,7 @@ async function deleteItem() {
     loadItems();
     loadAllCategories();
   } catch (e: any) {
-    alert(
-      adminErrorMessage(e, "Ошибка удаления")
-    );
+    toast.error(adminErrorMessage(e, "Ошибка удаления"));
   } finally {
     deleting.value = false;
   }
@@ -449,4 +433,4 @@ onMounted(() => {
 });
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

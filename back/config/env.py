@@ -3,18 +3,21 @@
 Pure functions: they take the environment mapping explicitly so they can be
 unit-tested without touching os.environ or Django settings.
 """
+
 import os
 import re
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
 
 # Keys that were ever committed to the repository. Never accept them.
-LEAKED_SECRET_KEYS = frozenset({
-    "django-insecure-zo(g8-19uk$1amqpb5obk!@=)fdt-=mv7n3voxe-#zhz#k!0x(",
-})
+LEAKED_SECRET_KEYS = frozenset(
+    {
+        "django-insecure-zo(g8-19uk$1amqpb5obk!@=)fdt-=mv7n3voxe-#zhz#k!0x(",
+    }
+)
 
 MIN_SECRET_KEY_LENGTH = 50
 
@@ -42,7 +45,9 @@ def env_list(name: str, default: list[str], environ: Mapping[str, str] = os.envi
 def resolve_secret_key(environ: Mapping[str, str], debug: bool) -> str:
     key = environ.get("SECRET_KEY", "")
     if key in LEAKED_SECRET_KEYS:
-        raise ImproperlyConfigured("SECRET_KEY is a leaked key from the repository; generate a new one.")
+        raise ImproperlyConfigured(
+            "SECRET_KEY is a leaked key from the repository; generate a new one."
+        )
     if not key:
         if debug:
             # Random per process: nothing committed to the repo can sign tokens.
@@ -69,7 +74,9 @@ def build_allowed_hosts(environ: Mapping[str, str], debug: bool) -> list[str]:
     if "*" in hosts:
         raise ImproperlyConfigured("ALLOWED_HOSTS must list real host names; '*' is not allowed.")
     if not hosts:
-        raise ImproperlyConfigured("ALLOWED_HOSTS is required when DEBUG is off (e.g. ALLOWED_HOSTS=shop.uz,api.shop.uz).")
+        raise ImproperlyConfigured(
+            "ALLOWED_HOSTS is required when DEBUG is off (e.g. ALLOWED_HOSTS=shop.uz,api.shop.uz)."
+        )
     return list(dict.fromkeys(hosts))
 
 
@@ -133,7 +140,10 @@ def cache_dir(environ: Mapping[str, str]) -> str:
     """Directory of the file-based caches (rate-limit counters). Empty CACHE_DIR
     (e.g. copied from .env.example) falls back to the system temp dir."""
     import tempfile
-    return environ.get("CACHE_DIR", "").strip() or os.path.join(tempfile.gettempdir(), "ncf_django_cache")
+
+    return environ.get("CACHE_DIR", "").strip() or os.path.join(
+        tempfile.gettempdir(), "ncf_django_cache"
+    )
 
 
 def media_url(environ: Mapping[str, str]) -> str:
@@ -142,5 +152,7 @@ def media_url(environ: Mapping[str, str]) -> str:
     domain, so image URLs in API responses work from the frontend's domain too."""
     value = environ.get("MEDIA_URL", "").strip() or "/media/"
     if not (value.startswith("/") or _ORIGIN_RE.match(value)):
-        raise ImproperlyConfigured("MEDIA_URL must be '/media/' or an absolute http(s) URL ending with /media/.")
+        raise ImproperlyConfigured(
+            "MEDIA_URL must be '/media/' or an absolute http(s) URL ending with /media/."
+        )
     return value if value.endswith("/") else value + "/"

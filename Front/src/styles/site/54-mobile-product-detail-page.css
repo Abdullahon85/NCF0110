@@ -1,0 +1,135 @@
+/* ===========================================
+   8. PRODUCT DETAIL PAGE
+   =========================================== */
+@media (max-width: 768px) {
+  .product-detail-page {
+    padding: 12px 0;
+    background: var(--white);
+  }
+
+  /* Gallery components (not scoped) */
+  .image-gallery,
+  .product-gallery {
+    width: 100%;
+  }
+
+  .main-image-wrapper,
+  .gallery-main {
+    height: 280px;
+    border-radius: 14px;
+    background: #fafafa;
+  }
+
+  .thumbnail {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+  }
+
+  .thumbnail.active {
+    border-color: var(--primary);
+  }
+
+  .thumbnails-row {
+    gap: 6px;
+    padding: 8px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .thumbnails-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Fullscreen gallery */
+  .fullscreen-overlay {
+    padding: 0;
+  }
+
+  .fullscreen-image {
+    max-width: 100%;
+    max-height: 85vh;
+    object-fit: contain;
+  }
+
+  .fullscreen-close {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .nav-arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .nav-arrow.left {
+    left: 8px;
+  }
+
+  .nav-arrow.right {
+    right: 8px;
+  }
+
+  /* Features table (global) */
+  .features-table,
+  .product-features {
+    font-size: 13px;
+  }
+
+  .features-table td,
+  .features-table th {
+    padding: 10px 12px;
+  }
+
+  .features-table tr {
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .feature-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 10px 12px;
+  }
+
+  /* Zoom hint */
+  .zoom-hint {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .zoom-hint svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Modal */
+  .modal-content {
+    padding: 20px 16px;
+    border-radius: 16px;
+    width: 95%;
+  }
+
+  .modal-title {
+    font-size: 1.15rem;
+  }
+
+  .contact-value {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 390px) {
+  .main-image-wrapper,
+  .gallery-main {
+    height: 240px;
+  }
+
+  .thumbnail {
+    width: 46px;
+    height: 46px;
+  }
+}

@@ -1,0 +1,127 @@
+/* Admin tables: one frame, dense 44px rows, sentence-case headers. */
+
+.ad-content .table-container {
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-line);
+  border-radius: var(--ad-radius);
+  box-shadow: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ad-content .data-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background: transparent;
+  font-size: var(--ad-fs-sm);
+  font-variant-numeric: tabular-nums;
+  box-shadow: none;
+}
+
+.ad-content .data-table th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--ad-line);
+  background: #f8faf8;
+  color: var(--ad-muted);
+  font-size: var(--ad-fs-xs);
+  font-weight: 600;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.ad-content .data-table td {
+  height: 48px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--ad-line);
+  background: transparent;
+  color: var(--ad-ink);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Only free-text cells wrap; ids, SKUs, prices and dates stay on one line. */
+.ad-content .data-table td:is(.name-cell, .message-cell, .message-text),
+.ad-content .data-table td :is(.description-preview, .message-text, .question-text, .review-text) {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.ad-content .data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ad-content .data-table tbody tr {
+  background: transparent;
+  transition: none;
+}
+
+.ad-content .data-table tbody tr:hover td {
+  background: #f8faf8;
+}
+
+.ad-content .data-table :is(.name-cell, .message-cell) {
+  min-width: 240px;
+  max-width: 420px;
+  font-weight: 500;
+}
+
+.ad-content .data-table .slug-cell {
+  color: var(--ad-muted);
+  font-size: var(--ad-fs-xs);
+}
+
+.ad-content .data-table .actions {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.ad-content .data-table th:last-child {
+  text-align: right;
+}
+
+.ad-content .data-table :is(td.empty, td.empty-row) {
+  height: auto;
+  padding: 48px 16px;
+  background: transparent;
+  color: var(--ad-muted);
+  text-align: center;
+}
+
+.ad-content .data-table td.empty .empty-text {
+  margin: 0 0 12px;
+  font-size: var(--ad-fs-md);
+  color: var(--ad-ink-2);
+}
+
+.ad-content .data-table img {
+  border-radius: var(--ad-radius-sm);
+}
+
+.ad-content .data-table :is(.product-thumb, .table-image, .no-image) {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--ad-radius-sm);
+  object-fit: cover;
+  font-size: 16px;
+}
+
+.ad-content .status-select {
+  min-height: var(--ad-control);
+  padding: 0 8px;
+  border-radius: var(--ad-radius-sm);
+  font-family: inherit;
+  font-size: var(--ad-fs-xs);
+  font-weight: 600;
+}

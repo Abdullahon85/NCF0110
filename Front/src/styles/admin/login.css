@@ -1,0 +1,137 @@
+/* Admin sign-in page (rendered outside AdminLayout). */
+
+.ad-login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--ad-paper);
+  color: var(--ad-ink);
+  font-family: var(--ad-font);
+  font-size: var(--ad-fs-sm);
+}
+
+.ad-login-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 32px;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-line);
+  border-radius: 12px;
+}
+
+.ad-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  color: var(--ad-muted);
+  font-size: var(--ad-fs-sm);
+}
+
+.ad-login-title {
+  margin: 0;
+  font-size: var(--ad-fs-xl);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ad-ink);
+}
+
+.ad-login-sub {
+  margin: 6px 0 24px;
+  color: var(--ad-muted);
+}
+
+.ad-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.ad-login-field label {
+  font-weight: 600;
+  color: var(--ad-ink-2);
+}
+
+.ad-login-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--ad-line-strong);
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-surface);
+  color: var(--ad-ink);
+  font-family: inherit;
+  font-size: var(--ad-fs-md);
+  box-shadow: none;
+}
+
+.ad-login-field input:focus {
+  border-color: var(--ad-forest);
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.15);
+  outline: none;
+}
+
+.ad-login-password {
+  position: relative;
+}
+
+.ad-login-password input {
+  padding-right: 48px;
+}
+
+.ad-login-password .ad-icon-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.ad-login-error {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-danger-tint);
+  color: var(--ad-danger);
+}
+
+.ad-login-submit {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--ad-radius-sm);
+  background: var(--ad-forest);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--ad-fs-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ad-login-submit:hover:not(:disabled) {
+  background: var(--ad-forest-hover);
+}
+
+.ad-login-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.ad-login-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: 16px;
+  color: var(--ad-muted);
+  text-decoration: none;
+}
+
+.ad-login-back:hover {
+  color: var(--ad-ink);
+  text-decoration: underline;
+}
+
+.ad-login :where(a, button, input):focus-visible {
+  outline: 2px solid var(--ad-forest);
+  outline-offset: 2px;
+}

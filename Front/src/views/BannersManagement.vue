@@ -1,9 +1,8 @@
 <template>
   <div class="management-page">
     <div class="page-header">
-      <h1>🖼️ Управление баннерами</h1>
-      <button @click="openCreateModal" class="btn btn-primary">
-        ➕ Добавить баннер
+      <button class="btn btn-primary" @click="openCreateModal">
+        <AdminIcon name="plus" /> Добавить баннер
       </button>
     </div>
 
@@ -11,11 +10,11 @@
       <input
         v-model="search"
         type="text"
-        placeholder="🔍 Поиск..."
+        placeholder="Поиск..."
         class="search-input"
         @input="debouncedSearch"
       />
-      <select v-model="activeFilter" @change="loadItems" class="filter-select">
+      <select v-model="activeFilter" class="filter-select" @change="loadItems">
         <option value="">Все</option>
         <option value="true">Активные</option>
         <option value="false">Неактивные</option>
@@ -40,80 +39,70 @@
           <tr v-for="item in filteredItems" :key="item.id">
             <td data-label="Порядок">{{ item.order }}</td>
             <td data-label="Изображение">
-              <img
-                v-if="item.image"
-                :src="item.image"
-                :alt="item.title"
-                class="table-image"
-              />
+              <img v-if="item.image" :src="item.image" :alt="item.title" class="table-image" />
               <span v-else class="no-image">Нет фото</span>
             </td>
             <td data-label="Заголовок" class="name-cell">
-              <strong>{{ item.title || '—' }}</strong>
+              <strong>{{ item.title || "—" }}</strong>
               <small v-if="item.description" class="description-preview">
-                {{ item.description.slice(0, 50)
-                }}{{ item.description.length > 50 ? "..." : "" }}
+                {{ item.description.slice(0, 50) }}{{ item.description.length > 50 ? "..." : "" }}
               </small>
             </td>
             <td data-label="Ссылка">
-              <a
-                v-if="item.link"
-                :href="item.link"
-                target="_blank"
-                class="link-preview"
-              >
-                {{ item.link.slice(0, 30)
-                }}{{ item.link.length > 30 ? "..." : "" }}
+              <a v-if="item.link" :href="item.link" target="_blank" class="link-preview">
+                {{ item.link.slice(0, 30) }}{{ item.link.length > 30 ? "..." : "" }}
               </a>
               <span v-else class="text-muted">—</span>
             </td>
             <td data-label="Статус">
-              <span
-                :class="[
-                  'badge',
-                  item.is_active ? 'badge-success' : 'badge-warning',
-                ]"
-              >
+              <span :class="['badge', item.is_active ? 'badge-success' : 'badge-warning']">
                 {{ item.is_active ? "Активен" : "Неактивен" }}
               </span>
             </td>
             <td data-label="Действия">
               <div class="actions">
                 <button
-                  @click="moveUp(item)"
                   class="btn-icon"
                   title="Вверх"
                   :disabled="item.order <= 1"
+                  @click="moveUp(item)"
                 >
                   ⬆️
                 </button>
                 <button
-                  @click="moveDown(item)"
                   class="btn-icon"
                   title="Вниз"
                   :disabled="item.order >= items.length"
+                  @click="moveDown(item)"
                 >
                   ⬇️
                 </button>
                 <button
-                  @click="editItem(item)"
                   class="btn-icon"
                   title="Редактировать"
+                  aria-label="Редактировать"
+                  @click="editItem(item)"
                 >
-                  ✏️
+                  <AdminIcon name="edit" />
                 </button>
                 <button
-                  @click="confirmDelete(item)"
                   class="btn-icon delete"
                   title="Удалить"
+                  aria-label="Удалить"
+                  @click="confirmDelete(item)"
                 >
-                  🗑️
+                  <AdminIcon name="trash" />
                 </button>
               </div>
             </td>
           </tr>
           <tr v-if="filteredItems.length === 0">
-            <td colspan="6" class="empty">Баннеры не найдены</td>
+            <td colspan="6" class="empty">
+              <p class="empty-text">Баннеры не найдены</p>
+              <button class="btn btn-primary" @click="openCreateModal">
+                <AdminIcon name="plus" /> Добавить баннер
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -124,9 +113,11 @@
       <div class="modal modal-lg">
         <div class="modal-header">
           <h2>{{ editingItem ? "Редактировать баннер" : "Новый баннер" }}</h2>
-          <button @click="closeModal" class="close-btn">✕</button>
+          <button class="close-btn" aria-label="Закрыть" @click="closeModal">
+            <AdminIcon name="close" />
+          </button>
         </div>
-        <form @submit.prevent="saveItem" class="modal-body">
+        <form class="modal-body" @submit.prevent="saveItem">
           <div class="form-row">
             <div class="form-group">
               <label>Заголовок</label>
@@ -149,11 +140,7 @@
 
           <div class="form-group">
             <label>Ссылка</label>
-            <input
-              v-model="form.link"
-              type="text"
-              placeholder="/catalog или https://..."
-            />
+            <input v-model="form.link" type="text" placeholder="/catalog или https://..." />
           </div>
 
           <div class="form-group">
@@ -166,27 +153,23 @@
                     📷 Изменить
                     <input
                       type="file"
-                      @change="handleFileSelect"
                       accept="image/*"
                       class="file-input-hidden"
+                      @change="handleFileSelect"
                     />
                   </label>
-                  <button
-                    type="button"
-                    @click="removeImage"
-                    class="remove-image-btn"
-                  >
-                    ✕ Удалить
+                  <button type="button" class="remove-image-btn" @click="removeImage">
+                    <AdminIcon name="close" /> Удалить
                   </button>
                 </div>
               </div>
               <label v-else class="upload-placeholder">
                 <input
-                  type="file"
                   ref="fileInput"
-                  @change="handleFileSelect"
+                  type="file"
                   accept="image/*"
                   class="file-input-hidden"
+                  @change="handleFileSelect"
                 />
                 <span>📷 Выберите изображение</span>
                 <small>Рекомендуемый размер: 1920x800</small>
@@ -204,9 +187,7 @@
           <div v-if="error" class="error-msg">{{ error }}</div>
 
           <div class="modal-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              Отмена
-            </button>
+            <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
               {{ saving ? "Сохранение..." : "Сохранить" }}
             </button>
@@ -216,30 +197,19 @@
     </div>
 
     <!-- Delete Modal -->
-    <div
-      v-if="showDeleteModal"
-      class="modal-overlay"
-      @click.self="showDeleteModal = false"
-    >
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h2>Подтверждение удаления</h2>
         </div>
         <div class="modal-body">
           <p>
-            Удалить баннер <strong>{{ deletingItem?.title }}</strong
-            >?
+            Удалить баннер <strong>{{ deletingItem?.title }}</strong>?
           </p>
         </div>
         <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn btn-secondary">
-            Отмена
-          </button>
-          <button
-            @click="deleteItem"
-            class="btn btn-danger"
-            :disabled="deleting"
-          >
+          <button class="btn btn-secondary" @click="showDeleteModal = false">Отмена</button>
+          <button class="btn btn-danger" :disabled="deleting" @click="deleteItem">
             {{ deleting ? "Удаление..." : "Удалить" }}
           </button>
         </div>
@@ -249,6 +219,8 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { ref, computed, onMounted } from "vue";
 import { bannersAdminAPI } from "@/api/admin";
@@ -285,9 +257,7 @@ const filteredItems = computed(() => {
   if (search.value) {
     const q = search.value.toLowerCase();
     result = result.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q)
+      (item) => item.title.toLowerCase().includes(q) || item.description?.toLowerCase().includes(q),
     );
   }
 
@@ -380,7 +350,6 @@ function removeImage() {
 }
 
 async function saveItem() {
-
   saving.value = true;
   error.value = "";
 
@@ -438,9 +407,7 @@ async function deleteItem() {
     await loadItems();
   } catch (e: any) {
     console.error("Failed to delete banner:", e);
-    alert(
-      adminErrorMessage(e, "Ошибка при удалении баннера")
-    );
+    toast.error(adminErrorMessage(e, "Ошибка при удалении баннера"));
   } finally {
     deleting.value = false;
   }
@@ -469,165 +436,4 @@ async function moveDown(item: Banner) {
 onMounted(loadItems);
 </script>
 
-<style scoped>
-.table-image {
-  width: 120px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: 4px;
-}
-
-.no-image {
-  color: var(--gray-400);
-  font-size: 0.875rem;
-}
-
-.name-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.description-preview {
-  color: var(--gray-500);
-  font-size: 0.8125rem;
-}
-
-.link-preview {
-  color: var(--primary-color);
-  font-size: 0.875rem;
-  text-decoration: none;
-}
-
-.link-preview:hover {
-  text-decoration: underline;
-}
-
-.text-muted {
-  color: var(--gray-400);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 16px;
-}
-
-.form-row .form-group:last-child {
-  width: 100px;
-}
-
-.image-upload-area {
-  border: 2px dashed var(--gray-300);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.image-preview {
-  position: relative;
-  min-height: 200px;
-  max-height: 400px;
-  background: var(--gray-100);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.image-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  max-height: 400px;
-}
-
-.image-actions {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 10;
-  align-items: flex-end;
-}
-
-.change-image-btn {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  cursor: pointer;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-
-.change-image-btn:hover {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-.file-input-hidden {
-  display: none;
-}
-
-.remove-image-btn {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: rgba(220, 38, 38, 0.9);
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  transition: background 0.2s;
-}
-
-.remove-image-btn:hover {
-  background: rgba(220, 38, 38, 1);
-}
-
-.upload-placeholder {
-  position: relative;
-  padding: 48px;
-  text-align: center;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.upload-placeholder span {
-  font-size: 1rem;
-  color: var(--gray-600);
-}
-
-.upload-placeholder small {
-  font-size: 0.8125rem;
-  color: var(--gray-400);
-}
-
-.upload-placeholder:hover {
-  background: var(--gray-50);
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-}
-
-</style>
+<style scoped src="@/styles/views/BannersManagement.css"></style>

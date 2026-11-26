@@ -1,0 +1,123 @@
+/* ============================================
+   MOBILE OPTIMIZATION - COMPLETE RESPONSIVE
+   ============================================ */
+
+/* Mobile First - Small Phones (max-width: 480px) */
+
+/* Tablet Portrait (481px - 768px) */
+
+/* Tablet Landscape (769px - 1024px) */
+
+/* Touch Device Improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Увеличиваем области тапа */
+  .btn,
+  .nav-link,
+  .category-item,
+  .product-card,
+  .tab {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Убираем hover эффекты */
+  .product-card:hover,
+  .btn:hover,
+  .nav-link:hover {
+    transform: none;
+  }
+
+  /* Улучшенная обратная связь при нажатии */
+  .btn:active,
+  .nav-link:active,
+  .product-card:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+
+  /* Плавная прокрутка */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Landscape Mode на мобильных */
+@media (max-height: 500px) and (orientation: landscape) {
+  .header {
+    position: relative;
+  }
+
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .section {
+    padding: 1rem 0;
+  }
+}
+
+/* Очень маленькие экраны (max-width: 360px) */
+
+/* Large Phones (iPhone Pro Max и подобные) */
+
+/* Улучшения для iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  /* Фиксируем проблему с 100vh */
+  .modal-overlay,
+  .fullscreen-container {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Убираем bounce эффект */
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  /* Safe area для iPhone с вырезом */
+  .header {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+
+  .footer {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Print Styles */
+@media print {
+  .header,
+  .footer,
+  .sidebar,
+  .nav-links,
+  .categories-menu,
+  .btn,
+  .modal {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+}
+
+/* ============================================
+   ADDITIONAL MOBILE IMPROVEMENTS
+   ============================================ */
+
+/* Mobile Navigation Improvements */
+
+/* Mobile Menu Animation */
+
+/* Smooth Transitions for Mobile Elements */
+
+/* Accessibility - увеличиваем размеры тапов на телефонах */
+
+/* Fix overflow issues on mobile */
+
+/* Extra Small Devices - очень узкие экраны */

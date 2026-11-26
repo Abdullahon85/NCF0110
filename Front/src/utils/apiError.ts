@@ -50,7 +50,6 @@ const FIELD_LABELS: Record<string, string> = {
   old_password: "Текущий пароль",
   new_password: "Новый пароль",
   features: "Характеристики",
-  tag_groups: "Группы тегов",
 };
 
 // First human-readable message in a DRF error body (strings, lists, nested objects).

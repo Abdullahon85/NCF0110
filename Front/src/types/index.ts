@@ -7,6 +7,7 @@ export interface Category {
   parent: number | null;
   children: Category[];
   products_count: number;
+  ancestors?: { name: string; slug: string }[]; // detail only: from the root down to the parent
 }
 
 export interface Banner {
@@ -55,8 +56,24 @@ export interface Product {
   manufacturer_sku: string | number;
   internal_sku: string | number;
   brand?: number | string | Brand | null;
-  tags?: Tag[];
-  tag_groups?: ProductTagGroup[];
+  // Commerce fields (old price with the computed discount, stock, label), see utils/productView.ts
+  old_price?: number | string | null;
+  discount_percent?: number | null;
+  stock_quantity?: number | null;
+  status?: "" | "new" | "promo" | "sale";
+  status_label?: string;
+  // Product page only
+  breadcrumbs?: { name: string; slug: string }[];
+  feature_groups?: { group: string; items: { name: string; values: string[] }[] }[];
+  related?: Product[];
+  documents?: {
+    id: number;
+    title: string;
+    url: string | null;
+    ext: string;
+    size: number | null;
+    order: number;
+  }[];
 }
 export interface Image {
   id: number;
@@ -107,17 +124,6 @@ export interface ContactMessage {
   email: string;
   message: string;
 }
-export interface ProductFilters {
-  category?: string;
-  price_min?: number;
-  price_max?: number;
-  brand?: string;
-  quick?: string;
-  is_available?: boolean;
-  ordering?: string;
-  page?: number;
-  page_size?: number;
-}
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
@@ -128,10 +134,6 @@ export interface PaginatedResponse<T> {
   total_pages?: number;
   min_price?: number;
   max_price?: number;
-}
-export interface PriceRangeResponse {
-  min_price: number | null;
-  max_price: number | null;
 }
 export interface CartItem {
   product: Product;
@@ -187,16 +189,4 @@ export interface ProductQuestion {
   is_published?: boolean;
   admin_reply?: string;
   admin_reply_date?: string;
-}
-export interface Tag {
-  id: number;
-  name: string;
-  slug: string;
-  category?: number;
-  product_count?: number;
-}
-export interface ProductTagGroup {
-  id: number;
-  group_name: string;
-  tags: Tag[];
 }

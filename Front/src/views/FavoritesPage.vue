@@ -25,16 +25,12 @@
         />
       </svg>
       <p>Вы ещё не добавили ни одного товара в избранное</p>
-      <router-link to="/catalog" class="btn primary"
-        >Перейти в каталог</router-link
-      >
+      <router-link to="/catalog" class="btn primary">Перейти в каталог</router-link>
     </div>
 
     <div v-else>
       <div class="fav-toolbar">
-        <button class="btn muted" @click="favStore.items.splice(0)">
-          Очистить список
-        </button>
+        <button class="btn muted" @click="favStore.items.splice(0)">Очистить список</button>
       </div>
       <ProductGrid :products="favStore.items" />
     </div>
@@ -48,4 +44,4 @@ import ProductGrid from "@/components/ProductGrid.vue";
 const favStore = useFavoritesStore();
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

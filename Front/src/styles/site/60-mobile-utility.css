@@ -1,0 +1,83 @@
+/* ===========================================
+   24. UTILITY — Touch targets & spacing
+   =========================================== */
+@media (max-width: 768px) {
+  /* Touch-friendly click targets */
+  button,
+  .btn,
+  a.btn {
+    min-height: 44px;
+  }
+
+  /* Buttons: cleaner on mobile */
+  .btn {
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    box-shadow: 0 2px 8px rgba(27, 67, 50, 0.2);
+  }
+
+  /* Checkbox and radio sizing */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
+  }
+
+  /* Responsive grid defaults */
+  .grid-responsive {
+    grid-template-columns: 1fr;
+  }
+
+  /* Container padding adjustment */
+  .container {
+    padding: 0 16px;
+  }
+
+  /* Page titles */
+  .page-title,
+  .page-heading {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  /* Search results section */
+  .search-results-section {
+    margin-bottom: 12px;
+  }
+
+  .search-header h1 {
+    font-size: 1.25rem;
+    margin-bottom: 8px;
+  }
+
+  .search-query-display {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .no-results-container {
+    padding: 40px 20px;
+  }
+
+  .no-results-icon {
+    width: 64px;
+    height: 64px;
+    opacity: 0.5;
+  }
+
+  .no-results-container h2 {
+    font-size: 1.1rem;
+  }
+
+  .no-results-container p {
+    font-size: 13px;
+    opacity: 0.7;
+  }
+}

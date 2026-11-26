@@ -1,0 +1,89 @@
+/* ===========================================
+   ADMIN PANEL MOBILE OPTIMIZATION
+   =========================================== */
+
+/* Mobile Menu Button */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--gray-700);
+  transition: color 0.2s;
+}
+
+.mobile-menu-toggle:hover {
+  color: var(--primary);
+}
+
+/* Mobile Overlay */
+
+/* Tablet (1024px and below) */
+
+/* Mobile (768px and below) */
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Admin layout needs full width, override #app overflow-x */
+
+  /* Tables should scroll independently */
+  .data-table-wrapper,
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Form layouts */
+  .form-row,
+  .form-grid {
+    flex-direction: column;
+  }
+
+  /* Stats grid */
+
+  /* Action buttons wrap */
+  .actions,
+  .toolbar,
+  .page-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .actions .btn,
+  .toolbar .btn,
+  .page-actions .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+}
+
+/* Small Mobile (480px and below) */
+
+/* Extra Small Mobile (375px and below) */
+
+/* Landscape mode optimization */
+
+/* PWA safe areas for iOS */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .modal-content {
+    transition: none;
+  }
+}

@@ -1,0 +1,674 @@
+/* ===========================================
+   НОВЫЕ ЭЛЕМЕНТЫ: Избранное, Сравнение, Копирование
+   =========================================== */
+
+/* --- Product Card Action Buttons (fav / compare) --- */
+.product-card {
+  position: relative;
+}
+
+.pc-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 5;
+  opacity: 0;
+  transform: translateX(8px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.product-card:hover .pc-actions,
+.product-card:focus .pc-actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.card-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.card-action-btn:hover {
+  background: var(--primary, #0ea5e9);
+  border-color: var(--primary, #0ea5e9);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.card-action-btn.active {
+  background: var(--primary, #0ea5e9);
+  border-color: var(--primary, #0ea5e9);
+  color: #fff;
+}
+
+.card-action-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.card-action-btn.disabled:hover {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.85);
+  transform: none;
+}
+
+/* --- Product Name Row (name + copy btn) --- */
+.product-name-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.product-name-row .product-name {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Product SKU Row --- */
+.product-sku-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.product-sku {
+  font-size: 0.72rem;
+  color: var(--gray-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Copy Button --- */
+.copy-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.copy-btn:hover {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* --- Tag count badge --- */
+.tag-count {
+  font-size: 0.72rem;
+  color: var(--gray-400);
+  font-weight: 400;
+}
+
+/* --- Header icons (favorites / compare) --- */
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.header-icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  color: var(--white);
+  text-decoration: none;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.header-icon-btn:hover,
+.header-icon-btn.router-link-active {
+  color: var(--white);
+  background: var(--primary-light);
+}
+
+.header-icon-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--primary);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+/* --- Favorites Page & Compare Page common --- */
+.page-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.page-count {
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+}
+
+.fav-toolbar {
+  margin-bottom: 20px;
+}
+
+/* --- Compare Table --- */
+.compare-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.compare-diff-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--gray-700);
+  user-select: none;
+}
+
+.compare-diff-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Category tabs */
+.compare-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--gray-200);
+  flex-wrap: wrap;
+}
+
+.compare-tab-btn {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--gray-500);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.compare-tab-btn:hover {
+  color: var(--gray-800);
+}
+
+.compare-tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.compare-tab-count {
+  background: var(--gray-200);
+  color: var(--gray-600);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.compare-tab-btn.active .compare-tab-count {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* Table wrapper */
+.compare-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.compare-table {
+  border-collapse: collapse;
+  min-width: 640px;
+  width: 100%;
+  font-size: var(--text-sm);
+  background: var(--white);
+}
+
+.compare-table th,
+.compare-table td {
+  border-right: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 10px 14px;
+  vertical-align: middle;
+  text-align: left;
+}
+
+.compare-table th:last-child,
+.compare-table td:last-child {
+  border-right: none;
+}
+
+/* Label column (left) */
+.compare-label-col {
+  width: 160px;
+  min-width: 130px;
+}
+
+.compare-label {
+  font-weight: 600;
+  color: var(--gray-600);
+  background: var(--gray-50);
+  white-space: nowrap;
+}
+
+.compare-sticky-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--gray-50);
+}
+
+/* Product card column */
+.compare-product-col {
+  min-width: 200px;
+  max-width: 260px;
+}
+
+/* Products header row */
+.compare-products-row th {
+  background: var(--gray-50);
+  vertical-align: top;
+  padding: 12px;
+}
+
+.compare-category-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Product card inside header */
+.cmp-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  padding-top: 4px;
+}
+
+.cmp-remove-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-400);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.cmp-remove-btn:hover {
+  color: var(--error);
+  background: var(--error-light);
+}
+
+.cmp-card-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+}
+
+.cmp-card-link:hover .cmp-name {
+  color: var(--primary);
+}
+
+.cmp-img-wrap {
+  width: 110px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  overflow: hidden;
+  background: var(--gray-50);
+  flex-shrink: 0;
+}
+
+.cmp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cmp-img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-300);
+}
+
+.cmp-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  text-align: center;
+  line-height: 1.35;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cmp-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.cmp-price {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+  text-align: center;
+}
+
+/* Feature rows */
+.compare-cell {
+  color: var(--gray-700);
+  line-height: 1.4;
+}
+
+.compare-cell-diff {
+  background: var(--accent-light);
+}
+
+.compare-section-row td {
+  background: var(--primary-dark);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 14px;
+  border: none;
+}
+
+.compare-feature-row:hover td {
+  background: var(--gray-50);
+}
+
+.compare-feature-row:hover td.compare-cell-diff {
+  background: var(--accent-light);
+}
+
+.compare-empty-features {
+  text-align: center;
+  padding: 24px;
+  color: var(--gray-400);
+  font-size: var(--text-sm);
+}
+
+/* Availability badge inside compare (non-absolute) */
+.cmp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cmp-badge-ok {
+  background: var(--success-light);
+  color: var(--success-dark);
+}
+
+.cmp-badge-no {
+  background: var(--error-light);
+  color: var(--error-dark);
+}
+
+/* Mobile: show pc-actions always */
+
+/* ─── Compare: sticky thead ─── */
+.compare-thead-sticky tr th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--gray-50);
+}
+.compare-thead-sticky .compare-sticky-label {
+  z-index: 11;
+}
+
+/* ─── Toolbar extras ─── */
+.compare-limit-notice {
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+  background: var(--gray-100);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.cmp-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  padding: 6px 14px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--gray-700);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.cmp-share-btn:hover {
+  background: var(--gray-100);
+  color: var(--gray-900);
+}
+.cmp-share-btn--copied {
+  background: var(--success-light);
+  border-color: var(--success-dark);
+  color: var(--success-dark);
+}
+
+/* ─── Add-to-cart button in compare card ─── */
+.cmp-cart-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  max-width: 160px;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: var(--primary);
+  color: var(--white);
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+  text-decoration: none;
+}
+.cmp-cart-btn:hover {
+  background: var(--primary-dark);
+}
+.cmp-cart-btn:active {
+  transform: scale(0.97);
+}
+.cmp-cart-btn--added {
+  background: var(--success-dark);
+  pointer-events: none;
+}
+.cmp-cart-btn--request {
+  background: var(--gray-200);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+}
+.cmp-cart-btn--request:hover {
+  background: var(--gray-300);
+  color: var(--gray-900);
+}
+
+/* ─── Empty slot column ─── */
+.compare-empty-col {
+  min-width: 200px;
+  max-width: 260px;
+  border: 2px dashed var(--gray-200) !important;
+  background: var(--gray-50) !important;
+}
+
+.cmp-empty-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 16px 8px;
+}
+
+.cmp-empty-slot-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--gray-400);
+  transition: color 0.15s ease;
+}
+.cmp-empty-slot-link:hover {
+  color: var(--primary);
+}
+.cmp-empty-slot-link:hover .cmp-empty-icon {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.cmp-empty-slot-link span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.cmp-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px dashed var(--gray-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+/* Empty body cells */
+.compare-cell-empty {
+  background: var(--gray-50);
+  border-right: 1px dashed var(--gray-200) !important;
+}
+
+/* ─── Page header count badge ─── */
+.page-count {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--gray-200);
+  align-self: center;
+}

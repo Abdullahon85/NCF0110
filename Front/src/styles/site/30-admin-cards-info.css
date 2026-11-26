@@ -1,0 +1,124 @@
+/* ===========================================
+   28. ADMIN CARDS & INFO
+   =========================================== */
+.card {
+  background: white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.card-body {
+  padding: 24px;
+}
+
+.card-actions {
+  padding-top: 16px;
+  border-top: 1px solid var(--gray-200);
+  margin-top: 16px;
+}
+
+.info-card {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: var(--gray-500);
+}
+.info-value {
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+/* Settings */
+
+.preview-image {
+  margin-top: 8px;
+  max-width: 100%;
+  max-height: 150px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+}
+
+/* Messages */
+
+tr.unread {
+  background: var(--warning-light);
+}
+
+.message-cell {
+  cursor: pointer;
+  color: var(--primary);
+  max-width: 200px;
+}
+
+.message-cell:hover {
+  text-decoration: underline;
+}
+
+.message-view .message-field {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.message-view .message-field.full {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message-view label {
+  font-weight: 600;
+  color: var(--gray-500);
+  min-width: 80px;
+}
+
+.message-text {
+  background: var(--gray-50);
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}

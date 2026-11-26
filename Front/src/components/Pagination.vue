@@ -5,8 +5,8 @@
     <button
       class="pagination-btn"
       :disabled="currentPage === 1"
-      @click="changePage(currentPage - 1)"
       aria-label="Предыдущая страница"
+      @click="changePage(currentPage - 1)"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -40,8 +40,8 @@
           :key="page"
           class="pagination-number"
           :class="{ active: page === currentPage, ellipsis: page === '...' }"
-          @click="page !== '...' && changePage(Number(page))"
           :disabled="page === '...'"
+          @click="page !== '...' && changePage(Number(page))"
         >
           {{ page }}
         </button>
@@ -51,8 +51,8 @@
     <button
       class="pagination-btn"
       :disabled="currentPage === totalPages"
-      @click="changePage(currentPage + 1)"
       aria-label="Следующая страница"
+      @click="changePage(currentPage + 1)"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -124,4 +124,4 @@ const changePage = (page: number) => {
 };
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

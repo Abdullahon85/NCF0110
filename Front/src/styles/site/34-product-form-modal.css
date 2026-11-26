@@ -1,0 +1,162 @@
+/* ===========================================
+   29. PRODUCT FORM MODAL
+   =========================================== */
+.product-form {
+  padding: 30px;
+}
+
+.product-form .form-fieldset {
+  margin-bottom: 30px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  background: var(--gray-50);
+}
+
+.product-form .form-fieldset legend {
+  padding: 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.product-form .form-row-2cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.product-form .form-input-small {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.product-form .form-input-small:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.product-form .file-input {
+  display: none;
+}
+
+.product-form .inline-table {
+  margin-bottom: 15px;
+  overflow-x: auto;
+}
+
+.product-form .inline-table table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--gray-200);
+  font-size: 13px;
+}
+
+.product-form .inline-table thead {
+  background: var(--gray-50);
+}
+
+.product-form .inline-table th {
+  padding: 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--gray-300);
+  color: var(--gray-900);
+}
+
+.product-form .inline-table tbody tr {
+  border-bottom: 1px solid var(--gray-200);
+  transition: background var(--transition-fast);
+}
+
+.product-form .inline-table tbody tr:hover {
+  background: var(--gray-50);
+}
+
+.product-form .inline-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.product-form .inline-table td {
+  padding: 10px;
+}
+
+.product-form .inline-table img {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.product-form .inline-table input[type="number"] {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+.product-form .inline-table input[type="number"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 15px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--gray-500);
+  border: 1px solid var(--gray-300);
+}
+
+.btn-ghost:hover {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-small.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-small.btn-danger:hover {
+  background: #dc2626;
+}
+
+/* ===========================================
+   30. ADMIN LAYOUT
+   =========================================== */
+
+.mobile-menu-toggle {
+  display: none;
+}
+
+/* Desktop compact mode */

@@ -1,0 +1,71 @@
+/* ===========================================
+   ADMIN ADDITIONAL MOBILE ENHANCEMENTS
+   =========================================== */
+
+/* Top Bar & Filters Mobile */
+
+/* Image Upload & Preview Mobile */
+
+/* Tags & Chips Mobile */
+
+/* Status Badges Mobile */
+
+/* Editor Toolbar Mobile */
+
+/* Multi-select Mobile */
+
+/* Alert & Notification Mobile */
+
+/* Loading States Mobile */
+
+/* Drag & Drop Mobile */
+
+/* Sidebar Filters Mobile */
+
+/* Breadcrumbs Mobile */
+
+/* Color Picker Mobile */
+
+/* Date Picker Mobile */
+
+/* Accordion Mobile */
+
+/* Tabs Mobile */
+
+/* Progress Bar Mobile */
+
+/* Tooltip Mobile - Hide on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .tooltip {
+    display: none !important;
+  }
+
+  [data-tooltip]:hover::after,
+  [data-tooltip]:hover::before {
+    display: none !important;
+  }
+}
+
+/* Print Styles for Admin */
+@media print {
+  .mobile-menu-toggle,
+  .btn,
+  .actions {
+    display: none !important;
+  }
+
+  .card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .data-table {
+    font-size: 10pt;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px;
+  }
+}

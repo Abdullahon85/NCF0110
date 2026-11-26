@@ -1,0 +1,42 @@
+/* ===========================================
+   13. BRANDS SLIDER
+   =========================================== */
+@media (max-width: 768px) {
+  .clients-section {
+    padding: 12px 0;
+  }
+
+  .client-logo {
+    flex: 0 0 calc(100% / 3);
+    min-height: 80px;
+    padding: 10px;
+  }
+
+  .client-logo img {
+    max-height: 40px;
+    object-fit: contain;
+  }
+
+  .slider-wrapper {
+    padding: 0 36px;
+  }
+
+  .nav-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@media (max-width: 390px) {
+  .client-logo {
+    flex: 0 0 50%;
+    min-height: 70px;
+  }
+
+  .client-logo img {
+    max-height: 36px;
+  }
+}

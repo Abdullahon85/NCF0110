@@ -1,0 +1,59 @@
+/* ===========================================
+   4. TYPOGRAPHY SYSTEM
+   =========================================== */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  color: var(--gray-900);
+  letter-spacing: var(--tracking-tight);
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, var(--text-5xl));
+  font-weight: 800;
+  letter-spacing: var(--tracking-tighter);
+}
+
+h2 {
+  font-size: clamp(1.5rem, 4vw, var(--text-4xl));
+  font-weight: 700;
+}
+
+h3 {
+  font-size: clamp(1.25rem, 3vw, var(--text-2xl));
+  font-weight: 600;
+}
+
+h4 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+h5 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+h6 {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: var(--space-4);
+  color: var(--gray-600);
+  line-height: var(--leading-relaxed);
+}
+
+.text-gradient {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

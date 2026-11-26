@@ -17,6 +17,16 @@
           </ul>
         </div>
 
+        <div v-if="pages.length" class="footer-section">
+          <h3>Покупателям</h3>
+          <ul>
+            <li><router-link to="/promo">Акции</router-link></li>
+            <li v-for="p in pages" :key="p.slug">
+              <router-link :to="`/info/${p.slug}`">{{ p.title }}</router-link>
+            </li>
+          </ul>
+        </div>
+
         <div class="footer-section">
           <h3>Контакты</h3>
           <p v-if="contactInfo">
@@ -90,7 +100,7 @@
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; {{ currentYear }} Company Name. Все права защищены.</p>
+        <p>&copy; {{ currentYear }} Future Stars. Все права защищены.</p>
       </div>
     </div>
   </footer>
@@ -98,9 +108,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { contactAPI } from "@/api";
+import { contactAPI, pagesAPI } from "@/api";
 import type { ContactInfo } from "@/types";
 const contactInfo = ref<ContactInfo | null>(null);
+// Pages for buyers written in the admin panel; the column is hidden while there are none.
+const pages = ref<{ slug: string; title: string }[]>([]);
+pagesAPI
+  .list()
+  .then((r) => (pages.value = r.data))
+  .catch(() => (pages.value = []));
 const currentYear = computed(() => new Date().getFullYear());
 
 onMounted(async () => {
@@ -113,4 +129,4 @@ onMounted(async () => {
 });
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

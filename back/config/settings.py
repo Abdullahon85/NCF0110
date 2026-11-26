@@ -10,20 +10,32 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
 import os
+from datetime import timedelta
+from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from config.env import (
+    build_allowed_hosts,
+    build_cors_origins,
+    cache_dir,
+    database_config,
+    env_bool,
+    frontend_dir,
+    media_root,
+    media_url,
+    resolve_secret_key,
+)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-from config.env import build_allowed_hosts, build_cors_origins, cache_dir, database_config, frontend_dir, media_root, media_url, env_bool, resolve_secret_key
 
 # SECURITY: DEBUG is off unless explicitly enabled (DEBUG=True in the environment).
-DEBUG = env_bool('DEBUG', False)
+DEBUG = env_bool("DEBUG", False)
 
 # SECURITY: production refuses to start without its own SECRET_KEY;
 # keys that were ever committed to the repository are always rejected.
@@ -33,41 +45,40 @@ SECRET_KEY = resolve_secret_key(os.environ, DEBUG)
 ALLOWED_HOSTS = build_allowed_hosts(os.environ, DEBUG)
 
 # Uploaded media are served by Django itself unless a web server (nginx) serves /media/ (then set SERVE_MEDIA=False).
-SERVE_MEDIA = env_bool('SERVE_MEDIA', True)
+SERVE_MEDIA = env_bool("SERVE_MEDIA", True)
 
 # The stock Django admin (/dashboard-ctrl-panel/) has no login rate limiting;
 # the Vue admin panel covers day-to-day work. Off in production unless enabled.
-ENABLE_DJANGO_ADMIN = env_bool('ENABLE_DJANGO_ADMIN', DEBUG)
+ENABLE_DJANGO_ADMIN = env_bool("ENABLE_DJANGO_ADMIN", DEBUG)
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
-    'api',
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
-    'corsheaders',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "api",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.gzip.GZipMiddleware',  # GZIP сжатие - первым!
-    'django.middleware.security.SecurityMiddleware',
+    "django.middleware.gzip.GZipMiddleware",  # GZIP сжатие - первым!
+    "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 # CORS: browser origins of the frontend allowed to call the API
 # (CORS_ALLOWED_ORIGINS env, comma-separated; Vite dev server added in debug).
@@ -75,50 +86,50 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = build_cors_origins(os.environ, DEBUG)
 
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-    'cache-control',
-    'pragma',
-    'expires',
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "cache-control",
+    "pragma",
+    "expires",
 ]
 
 CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 # Tests run with in-memory caches (no shared files between runs or with a dev server).
-TEST_RUNNER = 'config.test_runner.IsolatedCacheTestRunner'
+TEST_RUNNER = "config.test_runner.IsolatedCacheTestRunner"
 
 
 # Database
@@ -126,7 +137,7 @@ TEST_RUNNER = 'config.test_runner.IsolatedCacheTestRunner'
 
 # SQLite only. SQLITE_PATH env: empty -> back/db.sqlite3; Docker: /data/db.sqlite3 (volume).
 DATABASES = {
-    'default': database_config(os.environ, BASE_DIR),
+    "default": database_config(os.environ, BASE_DIR),
 }
 
 
@@ -135,42 +146,42 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 12,
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 12,
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
     ],
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '1000/hour' if DEBUG else '500/hour',  # Строже в production
-        'user': '5000/hour' if DEBUG else '2000/hour',
-        'login': '5/hour',  # Защита от брутфорса
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "1000/hour" if DEBUG else "500/hour",  # Строже в production
+        "user": "5000/hour" if DEBUG else "2000/hour",
+        "login": "5/hour",  # Защита от брутфорса
     },
-    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
 }
 
 # SECURITY: number of trusted reverse proxies that append to X-Forwarded-For.
@@ -178,26 +189,26 @@ REST_FRAMEWORK = {
 # throttles, so a client-supplied X-Forwarded-For cannot dodge them. Catalog
 # reads (default anon/user throttles) do not use it. A wrong value merges all
 # visitors into one bucket for those limits: verify it after every infra change.
-TRUSTED_PROXY_COUNT = int(os.environ.get('TRUSTED_PROXY_COUNT', '1'))
+TRUSTED_PROXY_COUNT = int(os.environ.get("TRUSTED_PROXY_COUNT", "1"))
 
 # Shared by all gunicorn workers on the instance, so throttle counters are not
 # per-process (LocMemCache) and survive worker restarts. No migrations needed.
 _CACHE_DIR = cache_dir(os.environ)
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(_CACHE_DIR, 'default'),
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": os.path.join(_CACHE_DIR, "default"),
     },
     # Login rate-limit counters live apart from cache_page entries so that page
     # caching (one entry per URL + query string) can never cull them.
-    'throttle': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(_CACHE_DIR, 'throttle'),
-        'OPTIONS': {'MAX_ENTRIES': 100000},
+    "throttle": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": os.path.join(_CACHE_DIR, "throttle"),
+        "OPTIONS": {"MAX_ENTRIES": 100000},
     },
 }
 
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = not DEBUG  # HTTPS only in production
 CSRF_COOKIE_HTTPONLY = False  # JS needs to read CSRF token for API calls
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
@@ -206,32 +217,31 @@ CORS_ALLOW_ALL_ORIGINS = False  # НИКОГДА не ставьте True в pro
 CORS_ALLOW_CREDENTIALS = True
 
 # JWT Settings
-from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     # Tokens only for active staff, checked on login AND on every refresh.
-    'USER_AUTHENTICATION_RULE': 'api.auth.staff_user_authentication_rule',
+    "USER_AUTHENTICATION_RULE": "api.auth.staff_user_authentication_rule",
     # Access tokens carry a password-hash claim: any password change (API, Django admin,
     # manage.py changepassword) invalidates every access token issued before it.
-    'CHECK_REVOKE_TOKEN': True,
+    "CHECK_REVOKE_TOKEN": True,
     # Refresh also checks the password-hash claim (SimpleJWT only checks it on access tokens).
-    'TOKEN_REFRESH_SERIALIZER': 'api.auth.PasswordAwareTokenRefreshSerializer',
+    "TOKEN_REFRESH_SERIALIZER": "api.auth.PasswordAwareTokenRefreshSerializer",
 }
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 # Russian: validation messages shown in the admin panel come from Django/DRF.
-LANGUAGE_CODE = 'ru'
+LANGUAGE_CODE = "ru"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -250,56 +260,56 @@ FRONTEND_DIR = frontend_dir(os.environ)
 if FRONTEND_DIR:
     WHITENOISE_ROOT = FRONTEND_DIR
 # Vite puts a content hash into every file name under /assets/: browsers may cache them for a year.
-WHITENOISE_IMMUTABLE_FILE_TEST = r'^/assets/'
+WHITENOISE_IMMUTABLE_FILE_TEST = r"^/assets/"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Django 5.1+ ignores STATICFILES_STORAGE; STORAGES is the current setting.
 # Compressed (gzip/brotli) without manifest: no 500s if collectstatic was not re-run.
 STORAGES = {
-    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
-    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Security Settings для Production
 if not DEBUG:
     # HTTPS Enforcement
     # Redirect HTTP -> HTTPS in Django. Set SECURE_SSL_REDIRECT=False if the web
     # server/proxy already does it, or if it does not send X-Forwarded-Proto (loop).
-    SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
+    SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", True)
     SECURE_HSTS_SECONDS = 31536000  # 1 year - браузер будет использовать только HTTPS
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    
+
     # Cookie Security
     SECURE_CONTENT_TYPE_NOSNIFF = True  # Защита от MIME-sniffing
-    
+
     # Frame Options
-    X_FRAME_OPTIONS = 'DENY'  # Защита от clickjacking
-    
+    X_FRAME_OPTIONS = "DENY"  # Защита от clickjacking
+
     # Behind a reverse proxy (nginx etc.) that terminates HTTPS and sets
     # X-Forwarded-Proto: https. The proxy must overwrite this header from clients.
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
     # Cookie настройки для production
     SESSION_COOKIE_SECURE = True  # Только HTTPS
     CSRF_COOKIE_SECURE = True  # Только HTTPS
-    
+
     # Дополнительная защита
-    SECURE_REFERRER_POLICY = 'same-origin'  # Защита от утечки информации
+    SECURE_REFERRER_POLICY = "same-origin"  # Защита от утечки информации
 else:
     # Development settings
-    X_FRAME_OPTIONS = 'SAMEORIGIN'
-    
+    X_FRAME_OPTIONS = "SAMEORIGIN"
+
 # Общие настройки безопасности (всегда активны)
 SECURE_CONTENT_TYPE_NOSNIFF = True
-X_CONTENT_TYPE_OPTIONS = 'nosniff'
+X_CONTENT_TYPE_OPTIONS = "nosniff"
 
 # Ограничение размера загружаемых данных (10MB)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
@@ -316,40 +326,40 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # Password validation - строгая проверка паролей
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 8,  # Минимум 8 символов
-        }
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8,  # Минимум 8 символов
+        },
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 # Logging для отслеживания проблем безопасности
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO' if DEBUG else 'WARNING',
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO" if DEBUG else "WARNING",
     },
-    'loggers': {
-        'django.security': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': False,
+    "loggers": {
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
         },
     },
 }

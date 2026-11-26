@@ -1,0 +1,113 @@
+/* ============================================================
+   ORDERS MANAGEMENT — Admin
+   ============================================================ */
+
+/* Status select */
+.status-select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--color-border, #e2e8f0);
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.status-select.status-new {
+  border-color: #f59e0b;
+  color: #92400e;
+  background: #fef3c7;
+}
+.status-select.status-processing {
+  border-color: #3b82f6;
+  color: #1e40af;
+  background: #dbeafe;
+}
+.status-select.status-completed {
+  border-color: #22c55e;
+  color: #14532d;
+  background: #dcfce7;
+}
+.status-select.status-cancelled {
+  border-color: #ef4444;
+  color: #7f1d1d;
+  background: #fee2e2;
+}
+.status-select.status-wrong_phone {
+  border-color: #f97316;
+  color: #7c2d12;
+  background: #ffedd5;
+}
+.status-select.status-no_answer {
+  border-color: #8b5cf6;
+  color: #4c1d95;
+  background: #ede9fe;
+}
+
+/* Expanded order details */
+
+/* Order items inner table */
+.text-right {
+  text-align: right;
+}
+
+/* Delete confirm modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-box {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 32px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+.modal-box h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+.modal-box p {
+  margin: 0 0 20px;
+  color: var(--color-text-secondary, #64748b);
+  font-size: 0.9rem;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+.btn-danger {
+  padding: 9px 20px;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btn-danger:hover {
+  background: #dc2626;
+}
+.btn-cancel {
+  padding: 9px 20px;
+  background: transparent;
+  border: 1.5px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--color-text-secondary, #64748b);
+  transition: border-color 0.15s;
+}
+.btn-cancel:hover {
+  border-color: var(--color-primary, #0ea5e9);
+  color: var(--color-primary, #0ea5e9);
+}

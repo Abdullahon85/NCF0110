@@ -1,0 +1,60 @@
+/* ===========================================
+   0. GLOBAL MOBILE OVERRIDES
+   =========================================== */
+@media (max-width: 768px) {
+  /* iOS zoom prevention on inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Touch-friendly defaults */
+  * {
+    -webkit-tap-highlight-color: rgba(27, 67, 50, 0.08);
+  }
+
+  /* Bottom nav spacing */
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Hide scrollbars on mobile for cleaner look */
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  /* Prevent horizontal overflow */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Tighter section spacing globally */
+  section {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  /* Containers should use 16px padding */
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* All page titles smaller */
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+  }
+}

@@ -1,0 +1,113 @@
+/* ===========================================
+   11. CATEGORY CARDS - Premium Design
+   =========================================== */
+.category-card {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  position: relative;
+  border: 1px solid var(--gray-100);
+}
+
+.category-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  transition: all 0.75s var(--ease-out-expo);
+  pointer-events: none;
+}
+
+.category-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(212, 165, 116, 0.2);
+}
+
+.category-card:hover::after {
+  left: 125%;
+}
+
+.category-card .card-image {
+  height: 220px;
+  background: linear-gradient(145deg, var(--gray-50), var(--white));
+  position: relative;
+  overflow: hidden;
+}
+
+.category-card .card-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.02) 100%);
+  z-index: 1;
+}
+
+.category-card .card-image img {
+  transition: transform var(--transition-slow);
+  object-fit: cover;
+}
+
+.category-card:hover .card-image img {
+  transform: scale(1.08);
+}
+
+.category-card .card-content {
+  text-align: center;
+  padding: var(--space-6) var(--space-4) var(--space-8);
+  position: relative;
+}
+
+.category-card .card-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 3px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-full);
+  opacity: 0;
+  transition: all var(--transition-base);
+}
+
+.category-card:hover .card-content::before {
+  opacity: 1;
+  width: 60px;
+}
+
+.category-card .card-content h3 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+  transition: color var(--transition-fast);
+  color: var(--gray-900);
+}
+
+.category-card:hover .card-content h3 {
+  color: var(--primary);
+}
+
+.products-count {
+  color: var(--gray-500);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-6);
+}

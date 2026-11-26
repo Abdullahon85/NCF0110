@@ -1,0 +1,63 @@
+/* ===========================================
+   2b. BRANDS SLIDER — native touch scroll on mobile
+   =========================================== */
+@media (max-width: 768px) {
+  /* Hide arrows — finger swipe is enough */
+  .nav-btn.left,
+  .nav-btn.right {
+    display: none !important;
+  }
+
+  /* Wrapper: remove the JS-transform clipping, allow native scroll */
+  .slider-wrapper {
+    overflow-x: auto !important;
+    overflow-y: visible;
+    padding: 4px 16px;
+    /* Hide scrollbar visually but keep it functional */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* Remove the fixed padding that was for arrow buttons */
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .slider-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Track: disable JS transform, lay items out in a natural row */
+  .clients-track {
+    /* Override the JS-injected transform — pointer events handle scrolling now */
+    transform: none !important;
+    transition: none !important;
+    width: max-content !important;
+    /* Scroll snap for crisp card-by-card feel */
+    scroll-snap-type: x mandatory;
+    display: flex;
+    gap: 0;
+  }
+
+  /* Each logo card: fixed width, snap point */
+  .client-logo {
+    flex: 0 0 120px !important;
+    min-height: 80px;
+    margin: 0 6px;
+    scroll-snap-align: start;
+    border-radius: 12px;
+    padding: 12px;
+    /* Disable hover effects on touch */
+    transform: none !important;
+  }
+
+  .client-logo img {
+    max-height: 48px;
+    opacity: 0.85;
+    filter: grayscale(30%);
+  }
+
+  .clients-section {
+    /* Stretch full width edge-to-edge */
+    margin: 0 -16px;
+    width: calc(100% + 32px);
+    overflow: hidden;
+  }
+}

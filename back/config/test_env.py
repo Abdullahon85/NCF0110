@@ -9,12 +9,12 @@ from config.env import (
     build_allowed_hosts,
     build_cors_origins,
     cache_dir,
-    media_url,
     database_config,
-    frontend_dir,
-    media_root,
     env_bool,
     env_list,
+    frontend_dir,
+    media_root,
+    media_url,
     resolve_secret_key,
 )
 
@@ -74,8 +74,10 @@ class AllowedHostsTest(SimpleTestCase):
             build_allowed_hosts({}, debug=False)
 
     def test_production_hosts_from_env(self):
-        self.assertEqual(build_allowed_hosts({"ALLOWED_HOSTS": "shop.uz, api.shop.uz"}, False),
-                         ["shop.uz", "api.shop.uz"])
+        self.assertEqual(
+            build_allowed_hosts({"ALLOWED_HOSTS": "shop.uz, api.shop.uz"}, False),
+            ["shop.uz", "api.shop.uz"],
+        )
 
     def test_localhost_only_in_debug(self):
         self.assertNotIn("localhost", build_allowed_hosts({"ALLOWED_HOSTS": "shop.uz"}, False))
@@ -86,24 +88,38 @@ class AllowedHostsTest(SimpleTestCase):
             build_allowed_hosts({"ALLOWED_HOSTS": "example.uz,*"}, False)
 
     def test_no_hosting_specific_hosts(self):
-        hosts = build_allowed_hosts({"ALLOWED_HOSTS": "a.uz", "RENDER_EXTERNAL_HOSTNAME": "x.onrender.com",
-                                     "REPLIT_DEV_DOMAIN": "x.replit.dev"}, False)
+        hosts = build_allowed_hosts(
+            {
+                "ALLOWED_HOSTS": "a.uz",
+                "RENDER_EXTERNAL_HOSTNAME": "x.onrender.com",
+                "REPLIT_DEV_DOMAIN": "x.replit.dev",
+            },
+            False,
+        )
         self.assertEqual(hosts, ["a.uz"])
 
     def test_no_duplicates(self):
-        self.assertEqual(build_allowed_hosts({"ALLOWED_HOSTS": "localhost"}, True).count("localhost"), 1)
+        self.assertEqual(
+            build_allowed_hosts({"ALLOWED_HOSTS": "localhost"}, True).count("localhost"), 1
+        )
 
 
 class CorsOriginsTest(SimpleTestCase):
     def test_origins_from_env(self):
-        self.assertEqual(build_cors_origins({"CORS_ALLOWED_ORIGINS": "https://shop.uz, https://admin.shop.uz"}, False),
-                         ["https://shop.uz", "https://admin.shop.uz"])
+        self.assertEqual(
+            build_cors_origins(
+                {"CORS_ALLOWED_ORIGINS": "https://shop.uz, https://admin.shop.uz"}, False
+            ),
+            ["https://shop.uz", "https://admin.shop.uz"],
+        )
 
     def test_empty_in_production_by_default(self):
         self.assertEqual(build_cors_origins({}, False), [])
 
     def test_vite_dev_server_allowed_in_debug(self):
-        self.assertEqual(build_cors_origins({}, True), ["http://localhost:5173", "http://127.0.0.1:5173"])
+        self.assertEqual(
+            build_cors_origins({}, True), ["http://localhost:5173", "http://127.0.0.1:5173"]
+        )
 
     def test_invalid_origins_rejected(self):
         for value in ("*", "shop.uz", "https://shop.uz/", "ftp://shop.uz"):
@@ -116,11 +132,15 @@ class DatabaseConfigTest(SimpleTestCase):
 
     def test_sqlite_by_default(self):
         cfg = database_config({}, self.BASE)
-        self.assertEqual((cfg["ENGINE"], cfg["NAME"]), ("django.db.backends.sqlite3", self.BASE / "db.sqlite3"))
+        self.assertEqual(
+            (cfg["ENGINE"], cfg["NAME"]), ("django.db.backends.sqlite3", self.BASE / "db.sqlite3")
+        )
 
     def test_sqlite_path(self):
         cfg = database_config({"SQLITE_PATH": "/data/db.sqlite3"}, self.BASE)
-        self.assertEqual((cfg["ENGINE"], str(cfg["NAME"])), ("django.db.backends.sqlite3", "/data/db.sqlite3"))
+        self.assertEqual(
+            (cfg["ENGINE"], str(cfg["NAME"])), ("django.db.backends.sqlite3", "/data/db.sqlite3")
+        )
 
     def test_concurrent_writers_settings(self):
         opts = database_config({}, self.BASE)["OPTIONS"]
@@ -150,9 +170,12 @@ class MediaRootAndFrontendDirTest(SimpleTestCase):
 class CacheDirTest(SimpleTestCase):
     def test_empty_cache_dir_falls_back_to_temp(self):
         import tempfile
+
         for env in ({}, {"CACHE_DIR": ""}, {"CACHE_DIR": "  "}):
             with self.subTest(env=env):
-                self.assertEqual(cache_dir(env), os.path.join(tempfile.gettempdir(), "ncf_django_cache"))
+                self.assertEqual(
+                    cache_dir(env), os.path.join(tempfile.gettempdir(), "ncf_django_cache")
+                )
 
     def test_explicit_cache_dir(self):
         self.assertEqual(cache_dir({"CACHE_DIR": "/var/cache/ncf"}), "/var/cache/ncf")
@@ -163,7 +186,9 @@ class MediaUrlTest(SimpleTestCase):
         self.assertEqual(media_url({}), "/media/")
 
     def test_absolute_for_separate_api_domain(self):
-        self.assertEqual(media_url({"MEDIA_URL": "https://api.shop.uz/media"}), "https://api.shop.uz/media/")
+        self.assertEqual(
+            media_url({"MEDIA_URL": "https://api.shop.uz/media"}), "https://api.shop.uz/media/"
+        )
 
     def test_invalid_rejected(self):
         for value in ("media/", "ftp://x/media/"):

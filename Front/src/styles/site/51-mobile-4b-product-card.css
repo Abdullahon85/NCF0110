@@ -1,0 +1,86 @@
+/* ===========================================
+   4b. PRODUCT CARD — Staggered entrance animation
+   =========================================== */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .products-grid .product-card {
+    animation: cardEntrance 0.32s ease both;
+  }
+
+  /* Staggered delays for first 12 cards */
+  .products-grid .product-card:nth-child(1) {
+    animation-delay: 0.03s;
+  }
+  .products-grid .product-card:nth-child(2) {
+    animation-delay: 0.07s;
+  }
+  .products-grid .product-card:nth-child(3) {
+    animation-delay: 0.11s;
+  }
+  .products-grid .product-card:nth-child(4) {
+    animation-delay: 0.15s;
+  }
+  .products-grid .product-card:nth-child(5) {
+    animation-delay: 0.19s;
+  }
+  .products-grid .product-card:nth-child(6) {
+    animation-delay: 0.23s;
+  }
+  .products-grid .product-card:nth-child(7) {
+    animation-delay: 0.27s;
+  }
+  .products-grid .product-card:nth-child(8) {
+    animation-delay: 0.31s;
+  }
+  .products-grid .product-card:nth-child(n + 9) {
+    animation-delay: 0.34s;
+  }
+
+  /* Respect prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    .products-grid .product-card {
+      animation: none;
+    }
+  }
+}
+
+/* ===========================================
+   5. CATALOG & CATEGORY PAGE — Layout
+   =========================================== */
+@media (max-width: 768px) {
+  .catalog-page {
+    padding: 12px 0;
+  }
+
+  .catalog-page h1 {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+
+  .category-block {
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+  }
+
+  .category-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+
+  .category-header h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+}

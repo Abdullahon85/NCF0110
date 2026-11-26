@@ -1,4 +1,5 @@
 """Slugs: always non-empty ASCII, unique, transliterated from Russian/Uzbek names."""
+
 import importlib
 
 from django.apps import apps
@@ -6,7 +7,7 @@ from django.contrib.auth.models import User
 from django.test import SimpleTestCase, TestCase
 from rest_framework.test import APIClient
 
-from .models import Brand, Category, NewsItem, Product, Tag
+from .models import Brand, Category, NewsItem, Product
 from .slugs import make_slug
 
 
@@ -39,8 +40,9 @@ class ModelSlugTest(TestCase):
 
     def test_every_model_fills_slug(self):
         self.assertEqual(Brand.objects.create(name="Ўзбек").slug, "ozbek")
-        self.assertEqual(NewsItem.objects.create(title="Новость", content="c", preview="p").slug, "novost")
-        self.assertEqual(Tag.objects.create(name="Уличная").slug, "ulichnaya")
+        self.assertEqual(
+            NewsItem.objects.create(title="Новость", content="c", preview="p").slug, "novost"
+        )
 
     def test_migration_fills_empty_slugs(self):
         cat = Category.objects.create(name="Камеры", slug="kamery")
@@ -65,7 +67,13 @@ class AdminProductSlugTest(TestCase):
         self.admin.force_authenticate(self.staff)
 
     def create(self, **extra):
-        data = {"name": "Камера X", "slug": "kamera-x", "description": "d", "category": self.cat.id, **extra}
+        data = {
+            "name": "Камера X",
+            "slug": "kamera-x",
+            "description": "d",
+            "category": self.cat.id,
+            **extra,
+        }
         return self.admin.post("/api/admin/products/", data, format="json")
 
     def test_admin_create_duplicate_slug_201(self):
@@ -82,7 +90,9 @@ class AdminProductSlugTest(TestCase):
     def test_admin_update_to_taken_slug_400(self):
         self.create()
         other = self.create(name="Y", slug="y").json()
-        response = self.admin.patch(f"/api/admin/products/{other['id']}/", {"slug": "kamera-x"}, format="json")
+        response = self.admin.patch(
+            f"/api/admin/products/{other['id']}/", {"slug": "kamera-x"}, format="json"
+        )
         self.assertEqual(response.status_code, 400)
         self.assertIn("занят", str(response.json()["slug"]))
         self.assertEqual(Product.objects.get(pk=other["id"]).slug, "y")

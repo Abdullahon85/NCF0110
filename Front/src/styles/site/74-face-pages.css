@@ -1,0 +1,53 @@
+/* Face: remaining public pages — plain labels (no caps) and flat backgrounds (no gradients). */
+
+.site
+  :is(
+    .badge,
+    .product-brand,
+    .category,
+    .card-date,
+    .data-table th,
+    .filter-group > label,
+    .compare-category-label,
+    .compare-section-row td
+  ) {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.site .product-detail-page {
+  background: var(--site-paper);
+}
+
+.site .gallery-main {
+  background: #fff;
+}
+
+.site .image-placeholder {
+  background: var(--site-paper);
+}
+
+.site .price-section {
+  background: var(--site-surface);
+  border: 1px solid var(--site-line);
+}
+
+.site .news-page {
+  padding-top: 24px;
+  padding-bottom: 56px;
+}
+
+.site .news-page h1 {
+  margin: 0 0 20px;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+  color: var(--site-ink);
+}
+
+@media (max-width: 640px) {
+  .site .news-page h1 {
+    font-size: 24px;
+  }
+}

@@ -1,0 +1,143 @@
+/* ===========================================
+   18. ALL BRANDS PAGE
+   =========================================== */
+@media (max-width: 768px) {
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .brand-card {
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+    text-align: center;
+    border-radius: 14px;
+  }
+
+  .brand-card:hover {
+    transform: none;
+  }
+
+  .brand-card:active {
+    transform: scale(0.97);
+  }
+
+  .brand-image {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    margin: 0 auto;
+  }
+
+  .brand-logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .brand-info h3 {
+    font-size: 13px;
+  }
+
+  .brand-name {
+    font-size: 13px;
+  }
+}
+
+/* ===========================================
+   19. FAVORITES & COMPARE PAGES
+   =========================================== */
+@media (max-width: 768px) {
+  .favorites-page,
+  .compare-page {
+    padding: 12px 0;
+  }
+
+  .favorites-page h1,
+  .compare-page h1 {
+    font-size: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  .compare-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+
+  /* Favorites uses standard product grid */
+  .favorites-page .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+/* ===========================================
+   20. TABLES
+   =========================================== */
+@media (max-width: 768px) {
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    padding: 0 16px;
+    border-radius: 0;
+  }
+
+  .table-container table {
+    min-width: 600px;
+  }
+
+  td,
+  th {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+/* ===========================================
+   21. SCROLL-TO-TOP — adjust for bottom nav
+   =========================================== */
+@media (max-width: 768px) {
+  .scroll-to-top {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    right: 12px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .scroll-to-top svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* ===========================================
+   22. SKELETON LOADING
+   =========================================== */
+@media (max-width: 768px) {
+  .skeleton-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .skeleton-card {
+    border-radius: 12px;
+  }
+}
+
+/* ===========================================
+   23. ADMIN PAGES — Basic mobile fixes
+   =========================================== */
+@media (max-width: 768px) {
+  .admin-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .admin-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

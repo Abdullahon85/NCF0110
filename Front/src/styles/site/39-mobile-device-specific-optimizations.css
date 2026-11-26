@@ -1,0 +1,142 @@
+/* ===========================================
+   MOBILE DEVICE SPECIFIC OPTIMIZATIONS
+   =========================================== */
+
+/* iOS Specific Optimizations */
+@supports (-webkit-touch-callout: none) {
+  /* Safe area for iPhone notch */
+
+  /* Prevent iOS bounce scroll on admin sidebar */
+
+  /* Fix iOS input zoom */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Android Specific Optimizations */
+
+/* Small Phone Screens (320px - iPhone SE) */
+
+/* Very Small Screens */
+
+/* Tablet Portrait (768px - 1024px) */
+
+/* Large Tablets & Small Laptops (1024px - 1280px) */
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus Visible for Keyboard Navigation */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* High Performance Scrolling */
+.data-table-wrapper,
+.modal-body {
+  will-change: scroll-position;
+}
+
+/* Orientation Change Handling */
+
+/* Fix for Safari Mobile Viewport Height */
+@supports (-webkit-touch-callout: none) {
+  .modal {
+    max-height: -webkit-fill-available;
+  }
+}
+
+/* PWA Standalone Mode */
+@media (display-mode: standalone) {
+  /* Hide browser-specific elements in PWA mode */
+  .external-link-icon {
+    display: none;
+  }
+}
+
+/* Foldable Devices Support */
+
+/* ===== PRODUCTS MANAGEMENT MOBILE ===== */
+
+/* ===== CATEGORIES MANAGEMENT MOBILE ===== */
+
+/* ===== MODALS MOBILE ===== */
+
+/* ===== SETTINGS PAGE MOBILE ===== */
+
+/* ===== MESSAGES PAGE MOBILE ===== */
+
+/* ===== NEWS MANAGEMENT MOBILE ===== */
+
+/* ===== TAGS & FEATURES MOBILE ===== */
+
+/* ===== 480px BREAKPOINT ===== */
+
+/* ===== 375px BREAKPOINT (iPhone SE, small phones) ===== */
+
+/* ===== 320px BREAKPOINT (Smallest phones) ===== */
+
+/* ===== TOUCH IMPROVEMENTS FOR ALL ADMIN ===== */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets */
+
+  .tab-btn {
+    min-height: 44px;
+  }
+
+  .modal .form-group input,
+  .modal .form-group select,
+  .modal .form-group textarea {
+    min-height: 44px;
+  }
+
+  /* Better tap feedback */
+  .btn-icon:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+
+  .data-table tr:active {
+    background: var(--gray-100);
+  }
+
+  /* Prevent text selection on buttons */
+  .btn,
+  .btn-icon,
+  .tab-btn {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+/* ===== LANDSCAPE MODE FOR ADMIN ===== */
+
+/* ===== iOS SAFE AREAS FOR ADMIN ===== */
+
+/* ===== DARK MODE PLACEHOLDER FOR ADMIN ===== */

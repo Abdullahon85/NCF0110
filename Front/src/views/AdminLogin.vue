@@ -1,63 +1,63 @@
 <template>
-  <div class="login-page">
-    <div class="login-container">
-      <div class="login-header">
-        <h1>🔐 Вход в админку</h1>
-        <p>Введите данные для входа</p>
+  <div class="ad-login">
+    <div class="ad-login-card">
+      <div class="ad-login-brand">
+        <span class="ad-brand-mark" aria-hidden="true">NCF</span>
+        <span>Админ-панель</span>
       </div>
+      <h1 class="ad-login-title">Вход</h1>
+      <p class="ad-login-sub">Введите логин и пароль администратора</p>
 
-      <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
+      <form class="ad-login-form" @submit.prevent="handleLogin">
+        <div class="ad-login-field">
           <label for="username">Логин</label>
           <input
             id="username"
             v-model="form.username"
             type="text"
-            placeholder="Введите логин"
+            autocomplete="username"
             required
             :disabled="loading"
           />
         </div>
 
-        <div class="form-group">
+        <div class="ad-login-field">
           <label for="password">Пароль</label>
-          <div class="password-input">
+          <div class="ad-login-password">
             <input
               id="password"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
-              placeholder="Введите пароль"
+              autocomplete="current-password"
               required
               :disabled="loading"
             />
             <button
               type="button"
-              class="toggle-password"
+              class="ad-icon-btn"
+              :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
+              :aria-pressed="showPassword"
               @click="showPassword = !showPassword"
             >
-              {{ showPassword ? "👁️" : "👁️‍🗨️" }}
+              <AdminIcon :name="showPassword ? 'eye-off' : 'eye'" />
             </button>
           </div>
         </div>
 
-        <div v-if="error" class="error-message">
-          {{ error }}
-        </div>
+        <p v-if="error" class="ad-login-error" role="alert">{{ error }}</p>
 
-        <button type="submit" class="login-btn" :disabled="loading">
-          <span v-if="loading">Вход...</span>
-          <span v-else>Войти</span>
+        <button type="submit" class="ad-login-submit" :disabled="loading">
+          {{ loading ? "Входим…" : "Войти" }}
         </button>
       </form>
 
-      <div class="login-footer">
-        <router-link to="/" class="back-link">← Вернуться на сайт</router-link>
-      </div>
+      <router-link to="/" class="ad-login-back">Вернуться на сайт</router-link>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { ref, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
@@ -91,4 +91,4 @@ async function handleLogin() {
 }
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

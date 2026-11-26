@@ -1,7 +1,6 @@
 <template>
   <div class="management-page">
     <div class="page-header">
-      <h1>🛒 Заявки</h1>
       <span class="messages-count">{{ newCount }} новых</span>
     </div>
 
@@ -10,11 +9,11 @@
       <input
         v-model="search"
         type="text"
-        placeholder="🔍 Имя, телефон, email..."
+        placeholder="Имя, телефон, email..."
         class="search-input"
         @input="debouncedSearch"
       />
-      <select v-model="statusFilter" @change="loadOrders" class="filter-select">
+      <select v-model="statusFilter" class="filter-select" @change="loadOrders">
         <option value="">Все статусы</option>
         <option value="new">Новые</option>
         <option value="processing">В обработке</option>
@@ -37,9 +36,9 @@
         title="Дата до"
         @change="loadOrders"
       />
-      <button class="btn-export" @click="exportCsv" :disabled="exporting" title="Скачать CSV">
-        <span v-if="exporting">⏳</span>
-        <span v-else>⬇️ CSV</span>
+      <button class="btn-export" :disabled="exporting" title="Скачать CSV" @click="exportCsv">
+        <AdminIcon name="download" />
+        <span>{{ exporting ? "Готовим…" : "CSV" }}</span>
       </button>
     </div>
 
@@ -85,29 +84,20 @@
                 </div>
               </td>
               <td>
-                <a
-                  :href="'tel:' + order.customer_phone"
-                  class="order-phone"
-                  @click.stop
-                >
+                <a :href="'tel:' + order.customer_phone" class="order-phone" @click.stop>
                   {{ order.customer_phone }}
                 </a>
               </td>
               <td>
-                <span class="order-items-count"
-                  >{{ order.items?.length ?? 0 }} поз.</span
-                >
+                <span class="order-items-count">{{ order.items?.length ?? 0 }} поз.</span>
               </td>
               <td class="order-date">{{ formatDate(order.created_at) }}</td>
               <td @click.stop>
                 <select
                   :value="order.status"
-                  @change="
-                    (e) =>
-                      updateStatus(order, (e.target as HTMLSelectElement).value)
-                  "
                   class="status-select"
                   :class="'status-' + order.status"
+                  @change="(e) => updateStatus(order, (e.target as HTMLSelectElement).value)"
                 >
                   <option value="new">Новый</option>
                   <option value="processing">В обработке</option>
@@ -121,9 +111,10 @@
                 <button
                   class="action-btn delete"
                   title="Удалить"
+                  aria-label="Удалить"
                   @click="confirmDelete(order)"
                 >
-                  🗑️
+                  <AdminIcon name="trash" />
                 </button>
               </td>
             </tr>
@@ -134,7 +125,12 @@
                 <div class="order-details">
                   <div v-if="order.customer_telegram" class="order-comment">
                     <strong>Telegram:</strong>
-                    <a :href="'https://t.me/' + order.customer_telegram.replace('@','')" target="_blank" class="order-tg-link">{{ order.customer_telegram }}</a>
+                    <a
+                      :href="'https://t.me/' + order.customer_telegram.replace('@', '')"
+                      target="_blank"
+                      class="order-tg-link"
+                      >{{ order.customer_telegram }}</a
+                    >
                   </div>
                   <div v-if="order.comment" class="order-comment">
                     <strong>Комментарий:</strong> {{ order.comment }}
@@ -156,17 +152,11 @@
                           {{ item.product_sku || "—" }}
                         </td>
                         <td>
-                          {{
-                            item.price ? formatPrice(item.price) : "По запросу"
-                          }}
+                          {{ item.price ? formatPrice(item.price) : "По запросу" }}
                         </td>
                         <td>{{ item.quantity }}</td>
                         <td>
-                          {{
-                            item.price
-                              ? formatPrice(item.price * item.quantity)
-                              : "—"
-                          }}
+                          {{ item.price ? formatPrice(item.price * item.quantity) : "—" }}
                         </td>
                       </tr>
                     </tbody>
@@ -191,35 +181,19 @@
 
     <!-- Пагинация -->
     <div v-if="totalPages > 1" class="pagination">
-      <button :disabled="page <= 1" @click="goPage(page - 1)" class="page-btn">
-        ←
-      </button>
+      <button :disabled="page <= 1" class="page-btn" @click="goPage(page - 1)">←</button>
       <span class="page-info">{{ page }} / {{ totalPages }}</span>
-      <button
-        :disabled="page >= totalPages"
-        @click="goPage(page + 1)"
-        class="page-btn"
-      >
-        →
-      </button>
+      <button :disabled="page >= totalPages" class="page-btn" @click="goPage(page + 1)">→</button>
     </div>
 
     <!-- Диалог подтверждения удаления -->
-    <div
-      v-if="deleteTarget"
-      class="modal-overlay"
-      @click.self="deleteTarget = null"
-    >
+    <div v-if="deleteTarget" class="modal-overlay" @click.self="deleteTarget = null">
       <div class="modal-box">
         <h3>Удалить заявку #{{ deleteTarget.id }}?</h3>
-        <p>
-          «{{ deleteTarget.customer_name }}» — {{ deleteTarget.customer_phone }}
-        </p>
+        <p>«{{ deleteTarget.customer_name }}» — {{ deleteTarget.customer_phone }}</p>
         <div class="modal-actions">
           <button class="btn-danger" @click="doDelete">Удалить</button>
-          <button class="btn-cancel" @click="deleteTarget = null">
-            Отмена
-          </button>
+          <button class="btn-cancel" @click="deleteTarget = null">Отмена</button>
         </div>
       </div>
     </div>
@@ -227,6 +201,8 @@
 </template>
 
 <script setup lang="ts">
+import { toast } from "@/components/admin/toast";
+import AdminIcon from "@/components/admin/AdminIcon.vue";
 import { adminErrorMessage } from "@/utils/apiError";
 import { ref, computed, onMounted } from "vue";
 import { ordersAdminAPI } from "@/api/admin";
@@ -265,9 +241,7 @@ const deleteTarget = ref<OrderData | null>(null);
 const exporting = ref(false);
 
 const totalPages = computed(() => Math.ceil(total.value / pageSize));
-const newCount = computed(
-  () => orders.value.filter((o) => o.status === "new").length,
-);
+const newCount = computed(() => orders.value.filter((o) => o.status === "new").length);
 
 let searchTimer: ReturnType<typeof setTimeout>;
 const debouncedSearch = () => {
@@ -318,7 +292,7 @@ const exportCsv = async () => {
     // Revoking at once can cancel the download in some browsers.
     setTimeout(() => URL.revokeObjectURL(link.href), 10_000);
   } catch (e: any) {
-    alert(adminErrorMessage(e, "Ошибка экспорта"));
+    toast.error(adminErrorMessage(e, "Ошибка экспорта"));
   } finally {
     exporting.value = false;
   }
@@ -340,7 +314,7 @@ const updateStatus = async (order: OrderData, newStatus: string) => {
     await ordersAdminAPI.updateStatus(order.id, newStatus);
   } catch (e: any) {
     order.status = prev;
-    alert(adminErrorMessage(e, "Не удалось изменить статус заказа"));
+    toast.error(adminErrorMessage(e, "Не удалось изменить статус заказа"));
   }
 };
 
@@ -363,8 +337,7 @@ const doDelete = async () => {
   }
 };
 
-const hasTotal = (order: OrderData) =>
-  order.items?.some((i) => i.price != null);
+const hasTotal = (order: OrderData) => order.items?.some((i) => i.price != null);
 
 const calcTotal = (order: OrderData) =>
   order.items?.reduce((s, i) => s + (i.price ?? 0) * i.quantity, 0) ?? 0;
@@ -390,4 +363,4 @@ const formatDate = (dt: string) => {
 onMounted(loadOrders);
 </script>
 
-<!-- Styles in admin-common.css / main.css -->
+<!-- Styles in styles/admin/ -->

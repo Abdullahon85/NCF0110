@@ -84,9 +84,16 @@
         </svg>
       </div>
 
-      <!-- Availability badge -->
-      <div v-if="!props.product.is_available" class="badge out-of-stock">
-        Нет в наличии
+      <!-- Label and discount, like shop.nag.uz cards -->
+      <div v-if="props.product.status_label || price.discount" class="pc-badges">
+        <span v-if="price.discount" class="badge pc-discount">{{ price.discount }}</span>
+        <span
+          v-if="props.product.status_label"
+          class="badge pc-status"
+          :class="`is-${props.product.status}`"
+        >
+          {{ props.product.status_label }}
+        </span>
       </div>
     </div>
 
@@ -128,26 +135,13 @@
       <!-- Brand -->
       <p v-if="props.product.brand" class="product-brand">
         {{
-          typeof props.product.brand === "object"
-            ? props.product.brand.name
-            : props.product.brand
+          typeof props.product.brand === "object" ? props.product.brand.name : props.product.brand
         }}
       </p>
 
-      <!-- Tags -->
-      <div v-if="firstGroupTags.length > 0" class="product-tags">
-        <span v-for="tag in firstGroupTags" :key="tag.id" class="product-tag-chip">{{ tag.name }}</span>
-      </div>
-
       <!-- SKU / Article with copy -->
-      <div
-        v-if="props.product.manufacturer_sku"
-        class="product-sku-row"
-        @click.stop
-      >
-        <span class="product-sku"
-          >Арт: {{ props.product.manufacturer_sku }}</span
-        >
+      <div v-if="props.product.manufacturer_sku" class="product-sku-row" @click.stop>
+        <span class="product-sku">Арт: {{ props.product.manufacturer_sku }}</span>
         <button
           class="copy-btn"
           title="Копировать артикул"
@@ -179,41 +173,52 @@
         </button>
       </div>
 
-      <!-- Price -->
+      <!-- Stock, price and the cart button -->
       <div class="product-footer">
-        <p v-if="props.product.price" class="product-price">
-          {{ formatPrice(props.product.price) }}
-        </p>
-        <p v-else class="product-price text-muted">По запросу</p>
+        <p class="pc-stock" :class="`is-${stock.tone}`">{{ stock.text }}</p>
+        <div class="pc-prices">
+          <p class="product-price" :class="{ 'text-muted': props.product.price == null }">
+            {{ price.price }}
+          </p>
+          <s v-if="price.old" class="old-price">{{ price.old }}</s>
+        </div>
 
         <div class="product-footer-actions">
-          <!-- Если в корзине: inline qty controls -->
           <transition name="cart-qty-fade" mode="out-in">
-            <div v-if="inCart" class="card-qty-control" @click.stop key="qty">
+            <!-- Already in the cart: change the quantity right on the card -->
+            <div v-if="inCart" key="qty" class="card-qty-control" @click.stop>
               <button
                 class="card-qty-btn"
+                :aria-label="cartQty <= 1 ? 'Убрать из корзины' : 'Уменьшить количество'"
+                :title="cartQty <= 1 ? 'Убрать из корзины' : 'Уменьшить количество'"
                 @click.stop="decCartQty"
-                title="Уменьшить"
               >
-                −
+                <svg
+                  v-if="cartQty <= 1"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+                <span v-else aria-hidden="true">−</span>
               </button>
-              <span class="card-qty-value">{{ cartQty }}</span>
+              <span class="card-qty-value" aria-live="polite">{{ cartQty }} шт</span>
               <button
                 class="card-qty-btn"
+                aria-label="Увеличить количество"
+                title="Увеличить количество"
                 @click.stop="incCartQty"
-                title="Увеличить"
               >
-                +
+                <span aria-hidden="true">+</span>
               </button>
             </div>
-            <!-- Если не в корзине: кнопка добавить -->
-            <button
-              v-else
-              key="add"
-              class="btn-cart"
-              title="В корзину"
-              @click.stop="cartStore.add(props.product, 1)"
-            >
+            <button v-else key="add" class="btn-cart" @click.stop="cartStore.add(props.product, 1)">
               <svg
                 width="17"
                 height="17"
@@ -221,28 +226,15 @@
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
+                aria-hidden="true"
               >
                 <circle cx="9" cy="21" r="1" />
                 <circle cx="20" cy="21" r="1" />
-                <path
-                  d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
-                />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
               </svg>
+              <span>{{ cartText }}</span>
             </button>
           </transition>
-
-          <button class="btn-view" @click.stop="goToProduct">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </button>
         </div>
       </div>
     </div>
@@ -255,6 +247,7 @@ import { useRouter } from "vue-router";
 import type { PropType } from "vue";
 import type { Product } from "@/types";
 import { getImageUrl } from "@/api";
+import { cartButtonText, priceView, stockLabel } from "@/utils/productView";
 import { useFavoritesStore } from "@/stores/useFavoritesStore";
 import { useCompareStore } from "@/stores/useCompareStore";
 import { useCartStore } from "@/stores/useCartStore";
@@ -280,19 +273,10 @@ const cartStore = useCartStore();
 
 const isFav = computed(() => favStore.isFavorite(props.product.id));
 
-const firstGroupTags = computed(() => {
-  const groups = props.product.tag_groups;
-  if (!groups || groups.length === 0) return [];
-  return groups[0].tags.slice(0, 3);
-});
-const isInCompare = computed(() =>
-  compareStore.items.some((p) => p.id === props.product.id),
-);
+const isInCompare = computed(() => compareStore.items.some((p) => p.id === props.product.id));
 const inCart = computed(() => cartStore.isInCart(props.product.id));
 const cartQty = computed(
-  () =>
-    cartStore.items.find((i) => i.product.id === props.product.id)?.quantity ??
-    0,
+  () => cartStore.items.find((i) => i.product.id === props.product.id)?.quantity ?? 0,
 );
 
 const toggleFav = () => {
@@ -355,14 +339,9 @@ const handleImageError = () => {
   imageError.value = true;
 };
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("ru-RU", {
-    style: "currency",
-    currency: "UZS",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price);
-};
+const price = computed(() => priceView(props.product));
+const stock = computed(() => stockLabel(props.product));
+const cartText = computed(() => cartButtonText(props.product));
 
 const goToProduct = () => {
   const slug = props.product?.slug;
@@ -371,4 +350,4 @@ const goToProduct = () => {
 };
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

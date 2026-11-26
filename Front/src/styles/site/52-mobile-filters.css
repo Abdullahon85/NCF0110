@@ -1,0 +1,157 @@
+/* ===========================================
+   6. FILTERS — Bottom sheet on mobile
+   =========================================== */
+@media (max-width: 768px) {
+  /* Grid becomes single column */
+  .page-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 12px 0;
+  }
+
+  /* Show mobile filter button */
+  .mobile-filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--primary, #0ea5e9);
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .mobile-filter-btn:active {
+    background: color-mix(in srgb, var(--primary, #0ea5e9) 85%, #000);
+    transform: scale(0.98);
+  }
+
+  /* Overlay */
+  .filters-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+  }
+
+  /* Filter sidebar becomes bottom sheet */
+  .filters-column {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    z-index: 999;
+    max-height: 85vh;
+    max-height: 85dvh;
+    height: auto;
+    background: var(--white);
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .filters-column.show-mobile {
+    transform: translateY(0);
+  }
+
+  /* Handle bar at top of bottom sheet */
+  .filters-column::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--gray-300);
+    border-radius: 2px;
+    margin: 12px auto 8px;
+  }
+
+  /* Close button */
+  .mobile-filter-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--gray-100);
+    border: none;
+    cursor: pointer;
+    z-index: 10;
+    color: var(--gray-600);
+  }
+
+  /* Panel inside bottom sheet */
+  .panel {
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    padding: 16px;
+  }
+
+  .panel h3 {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+  }
+
+  .filter-group {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .filter-group > label {
+    font-size: 14px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Filter actions */
+  .filter-actions {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    position: sticky;
+    bottom: 0;
+    background: var(--white);
+    border-top: 1px solid var(--gray-100);
+  }
+
+  .filter-actions .btn {
+    flex: 1;
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  /* Filter lists */
+  .brands-list,
+  .tags-list,
+  .categories-list {
+    max-height: 200px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent body scroll when filters open */
+  body:has(.filters-column.show-mobile) {
+    overflow: hidden;
+  }
+}

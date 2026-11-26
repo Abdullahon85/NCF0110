@@ -1,16 +1,12 @@
 <template>
   <div class="management-page settings-page">
-    <div class="page-header">
-      <h1>⚙️ Настройки сайта</h1>
-    </div>
-
     <div class="settings-grid">
       <!-- About Section -->
       <div class="settings-card">
         <div class="card-header">
-          <h2>📄 О компании</h2>
+          <h2>О компании</h2>
         </div>
-        <form @submit.prevent="saveAbout" class="card-body">
+        <form class="card-body" @submit.prevent="saveAbout">
           <div class="form-group">
             <label>Заголовок *</label>
             <input v-model="about.title" type="text" required />
@@ -22,21 +18,12 @@
           <div class="form-group">
             <label>Ссылка на изображение</label>
             <input v-model="about.image" type="url" placeholder="https://..." />
-            <img
-              v-if="about.image"
-              :src="about.image"
-              class="preview-image"
-              alt="Preview"
-            />
+            <img v-if="about.image" :src="about.image" class="preview-image" alt="Preview" />
           </div>
           <div v-if="aboutError" class="error-msg">{{ aboutError }}</div>
           <div v-if="aboutSuccess" class="success-msg">✓ Сохранено</div>
           <div class="card-actions">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="savingAbout"
-            >
+            <button type="submit" class="btn btn-primary" :disabled="savingAbout">
               {{ savingAbout ? "Сохранение..." : "Сохранить" }}
             </button>
           </div>
@@ -46,17 +33,12 @@
       <!-- Contact Section -->
       <div class="settings-card">
         <div class="card-header">
-          <h2>📞 Контактная информация</h2>
+          <h2>Контактная информация</h2>
         </div>
-        <form @submit.prevent="saveContact" class="card-body">
+        <form class="card-body" @submit.prevent="saveContact">
           <div class="form-group">
             <label>Телефон *</label>
-            <input
-              v-model="contact.phone"
-              type="tel"
-              required
-              placeholder="+7 (XXX) XXX-XX-XX"
-            />
+            <input v-model="contact.phone" type="tel" required placeholder="+7 (XXX) XXX-XX-XX" />
           </div>
           <div class="form-group">
             <label>Email *</label>
@@ -68,28 +50,16 @@
           </div>
           <div class="form-group">
             <label>Ссылка на карту (Yandex/Google Maps)</label>
-            <input
-              v-model="contact.map_url"
-              type="url"
-              placeholder="https://..."
-            />
+            <input v-model="contact.map_url" type="url" placeholder="https://..." />
           </div>
           <div class="form-group">
             <label>Режим работы</label>
-            <input
-              v-model="contact.working_hours"
-              type="text"
-              placeholder="Пн-Пт: 9:00-18:00"
-            />
+            <input v-model="contact.working_hours" type="text" placeholder="Пн-Пт: 9:00-18:00" />
           </div>
           <div v-if="contactError" class="error-msg">{{ contactError }}</div>
           <div v-if="contactSuccess" class="success-msg">✓ Сохранено</div>
           <div class="card-actions">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="savingContact"
-            >
+            <button type="submit" class="btn btn-primary" :disabled="savingContact">
               {{ savingContact ? "Сохранение..." : "Сохранить" }}
             </button>
           </div>
@@ -99,49 +69,29 @@
       <!-- Social Links -->
       <div class="settings-card">
         <div class="card-header">
-          <h2>🔗 Социальные сети</h2>
+          <h2>Социальные сети</h2>
         </div>
-        <form @submit.prevent="saveSocial" class="card-body">
+        <form class="card-body" @submit.prevent="saveSocial">
           <div class="form-group">
             <label>Instagram</label>
-            <input
-              v-model="social.instagram"
-              type="url"
-              placeholder="https://instagram.com/..."
-            />
+            <input v-model="social.instagram" type="url" placeholder="https://instagram.com/..." />
           </div>
           <div class="form-group">
             <label>Telegram</label>
-            <input
-              v-model="social.telegram"
-              type="url"
-              placeholder="https://t.me/..."
-            />
+            <input v-model="social.telegram" type="url" placeholder="https://t.me/..." />
           </div>
           <div class="form-group">
             <label>WhatsApp</label>
-            <input
-              v-model="social.whatsapp"
-              type="url"
-              placeholder="https://wa.me/..."
-            />
+            <input v-model="social.whatsapp" type="url" placeholder="https://wa.me/..." />
           </div>
           <div class="form-group">
             <label>Facebook</label>
-            <input
-              v-model="social.facebook"
-              type="url"
-              placeholder="https://facebook.com/..."
-            />
+            <input v-model="social.facebook" type="url" placeholder="https://facebook.com/..." />
           </div>
           <div v-if="socialError" class="error-msg">{{ socialError }}</div>
           <div v-if="socialSuccess" class="success-msg">✓ Сохранено</div>
           <div class="card-actions">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="savingSocial"
-            >
+            <button type="submit" class="btn btn-primary" :disabled="savingSocial">
               {{ savingSocial ? "Сохранение..." : "Сохранить" }}
             </button>
           </div>
@@ -262,4 +212,4 @@ async function saveSocial() {
 onMounted(loadSettings);
 </script>
 
-<!-- Styles in main.css -->
+<!-- Styles in styles/site/ -->

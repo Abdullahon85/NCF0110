@@ -1,0 +1,54 @@
+/* ===========================================
+   27. PAGES - About, Contact, etc
+   =========================================== */
+.about-page {
+  padding: var(--space-8) 0;
+  min-height: 60vh;
+}
+
+.about-content {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--white);
+  padding: var(--space-10);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray-100);
+}
+
+.about-content h1 {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.about-image {
+  width: 100%;
+  margin-bottom: var(--space-8);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.content-text {
+  font-size: var(--text-lg);
+  line-height: var(--leading-loose);
+  color: var(--gray-700);
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-16) 0;
+}
+
+.error-state {
+  text-align: center;
+  padding: var(--space-16) 0;
+  color: var(--gray-500);
+}
+
+.empty-content {
+  text-align: center;
+  padding: var(--space-16) 0;
+  color: var(--gray-500);
+}

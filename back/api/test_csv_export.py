@@ -1,4 +1,5 @@
 """Orders CSV export must not let customer input run as spreadsheet formulas (audit item 4)."""
+
 from django.contrib.auth.models import User
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
@@ -29,10 +30,13 @@ class SafeCsvCellTest(SimpleTestCase):
 
 class OrdersCsvExportTest(TestCase):
     def test_export_escapes_customer_fields(self):
-        Order.objects.create(customer_name='=cmd|"/c calc"!A1', customer_phone="+998 90 123-45-67",
-                             comment="+SUM(1)")
+        Order.objects.create(
+            customer_name='=cmd|"/c calc"!A1', customer_phone="+998 90 123-45-67", comment="+SUM(1)"
+        )
         api = APIClient()
-        api.force_authenticate(User.objects.create_user("staff", password="pw-staff-123", is_staff=True))
+        api.force_authenticate(
+            User.objects.create_user("staff", password="pw-staff-123", is_staff=True)
+        )
         resp = api.get(reverse("export-orders-csv"))
         self.assertEqual(resp.status_code, 200)
         body = resp.content.decode("utf-8-sig")
